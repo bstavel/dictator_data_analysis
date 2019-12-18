@@ -1,0 +1,50 @@
+---
+title: "Subject Exclusion"
+author: "Brooke Staveland"
+date: "12/17/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,  # don't print the code chunk
+  warning = FALSE,  # don't print warnings
+  message = FALSE,  # don't print messages
+  fig.width = 12,  # set default width of figures
+  fig.height = 6,  # set default height of figures
+  fig.align = "center",  # always align figure in center
+  fig.pos = "H",  # always plot figure at the exact location of the code chunk
+  cache = TRUE)  # cache results
+
+## libraries ##
+library(tidyverse)
+library(ggplot2)
+library(magrittr)
+library(ggthemr)
+library(grid)
+library(gtable)
+library(gridExtra)
+library(wesanderson)
+library(ggsci)
+library(zoo)
+library(kableExtra)
+library(lme4)
+library(RColorBrewer)
+library(lme4)
+
+## hand written functions ##
+
+source('~/Projects/nice_r_functions/ggpaired_pretty.R')
+
+```
+
+
+# Intro
+
+This script determines which subjects/trials need to be excluded due to:
+
+* missingness
+* too fast response times
+* missing check trials
+* extreme side bias
+
