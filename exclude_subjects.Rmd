@@ -48,3 +48,108 @@ This script determines which subjects/trials need to be excluded due to:
 * missing check trials
 * extreme side bias
 
+```{r load-data}
+## load in data ##
+
+# load behav files #
+filenames <- dir("../dg_behave_formatted/","behav.csv")
+DATA <- NULL
+
+for (i in 1:length(filenames)) {
+  temp <- cbind(SID=substr(filenames[i],1,6),read.csv(paste0("../dg_behave_formatted/", filenames[i]), header=TRUE))
+  temp$RT <- as.numeric(as.character(temp$RT))
+  DATA <- rbind(DATA,temp)
+}
+
+# load task structure files #
+trialTypes <- read.csv('../../trial_type.csv', header = T)
+
+# merge them #
+respData <- merge.data.frame(DATA, trialTypes, by.x = "round", by.y = "X")
+
+```
+
+```{r missingness}
+## exclude subjects based on missingness ##
+
+# look at different na maetrics to make sure they are the same #
+numNAS <- respData %>%
+  select(SID, round, RT, buttonpress.time, side.chosen) %>%
+  mutate(rt_na = if_else(is.na(RT), 1, 0)) %>%
+  mutate(rt_button = if_else(is.na(buttonpress.time), 1, 0)) %>%
+  mutate(rt_side = if_else(is.na(side.chosen), 1, 0)) %>%
+  mutate(na_equiv = rt_na + rt_button + rt_side)
+
+# should be either 0 or 3, but there is a 1 column :( #
+table(numNAS$na_equiv)
+
+# where to look #
+discrepantNA <- numNAS %>% filter(na_equiv == 1)
+
+# ugh why is rt a NA when it has a button press time? #
+respData %>%
+  filter(SID == "DG_s09" & round > 112) %>%
+  head(.)
+
+rtCheck <- respData %>%
+  mutate(manual_rt = buttonpress.time - choice.time) %>%
+  mutate(rt_error = manual_rt - RT)
+
+# error between them is rounding error low, so I will go with this to recover the one NA
+max(rtCheck$rt_error, na.rm = T)
+
+# modify respData #
+respData <- respData %>%
+  mutate(RT = buttonpress.time - choice.time) %>%
+  mutate(rt_na = if_else(is.na(RT), 1, 0))
+  
+
+# now plot NAs By subject #
+respData %>%
+  ggplot(., aes(x = SID, y = rt_na, fill = SID)) +
+  geom_col() +
+  theme(panel.background = element_rect(fill = "white")) +
+  scale_fill_manual(values = getPalette(12)) +
+  ylim(0, 40)
+```
+How many missing datapoints do we feel comfortable with?
+
+
+```{r speedy-rts}
+## which subjects/trials had rts < 20ms? ##
+
+respData <- respData %>%
+  mutate(speedy_responses = if_else(RT < .20, 1, 0))
+
+respData %>%
+  ggplot(., aes(x = SID, y = speedy_responses, fill = SID)) +
+  geom_col() +
+  theme(panel.background = element_rect(fill = "white")) +
+  scale_fill_manual(values = getPalette(12))
+
+
+```
+Nothing, yay!
+
+```{r check-trials}
+
+## how many subjects missed trials where the better option for both self and other were better than 10? ##
+
+respData <- respData %>%
+    mutate(sanity_trials = if_else((L.self > 10 & L.other > 10) | (R.self > 10 & R.other > 10), 1, 0)) 
+
+checkTrials <- respData %>%
+    filter(sanity_trials == 1 & !is.na(side.chosen)) %>%
+    mutate(side_chosen = if_else(side.chosen == 76, "Left", if_else(side.chosen == 82, "Right", "Other"))) %>%
+    mutate(best_side = if_else((L.self > 10 & L.other > 10), "Left", "Right")) %>%
+    mutate(chose_better_side = if_else(best_side == side_chosen, "yes", "no")) %>%
+    select(SID, round, L.self, L.other, R.self, R.other, side_chosen, best_side, chose_better_side) 
+
+checkTrials %>%
+  ggplot(., aes(x = chose_better_side, fill = SID)) +
+  geom_bar(position = "dodge") +
+  theme(panel.background = element_rect(fill = "white")) +
+  scale_fill_manual(values = getPalette(12))
+
+```
+So person 5 should def go. but 

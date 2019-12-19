@@ -36,9 +36,79 @@ library(lme4)
 
 source('~/Projects/nice_r_functions/ggpaired_pretty.R')
 
+## plotting helpers ##
+ggthemr("solarized")
+getPalette = colorRampPalette(brewer.pal(9, "Set1"))
+
 ```
 
 # Intro
 
 These scripts are to examines the reaction times across subjects in order to determine on a binning process time-locked either to choice time or presentation time (or both). We will run our regressions in each bin so this step is critical to get right. We want to make sure that we are binning such that we can capture meaingful snapshots of neural behavior, but we do not want to standardize/extend the time bins in a way that is inconsistent across people. In other words, we do not want to split the time between presentation and choice into thirds, if that means participant A will have 600ms bins and participant B will 100ms bins. It is also perferable that all subjects have close to the same number of bins. Finally, we want the bins to be small enough that we are not averaging over interesting neural beahvior.
+
+```{r load-data}
+## load in data ##
+
+# load behav files #
+filenames <- dir("../dg_behave_formatted/","behav.csv")
+DATA <- NULL
+
+for (i in 1:length(filenames)) {
+  temp <- cbind(SID=substr(filenames[i],1,6),read.csv(paste0("../dg_behave_formatted/", filenames[i]), header=TRUE))
+  temp$RT <- as.numeric(as.character(temp$RT))
+  DATA <- rbind(DATA,temp)
+}
+
+# load task structure files #
+trialTypes <- read.csv('../../trial_type.csv', header = T)
+
+# merge them #
+respDataRaw <- merge.data.frame(DATA, trialTypes, by.x = "round", by.y = "X")
+
+# select only the reaction times since that is what we want here #
+respData <- respDataRaw %>%
+  select(SID, RT) %>%
+  filter(!is.na(RT))
+
+respFilter <- respDataRaw %>%
+  select(SID, RT) %>%
+  filter(!is.na(RT)) %>%
+  filter(RT < 250)
+
+
+```
+
+
+```{r rt-density-overall}
+ggthemr("solarized")
+
+respData %>%
+  ggplot(., aes(x = RT)) +
+  geom_density(alpha = .7, fill = "blue") +
+  theme(panel.background = element_rect(fill = "white")) + 
+  ggtitle("All data points")
+
+respFilter %>%
+  ggplot(., aes(x = RT)) +
+  geom_density(alpha = .7, fill = "blue") +
+  theme(panel.background = element_rect(fill = "white")) +
+  ggtitle("Excluding on trial from one subject")
+
+```
+Since a reaction time was 257 seconds, I think this person paused-- there was a huge timing jump at round 102 in person DG_s07. I think it should be excluded.
+
+
+```{r rt-density-overall}
+ggthemr("solarized")
+
+
+respFilter %>%
+  ggplot(., aes(x = RT, fill = SID, color = SID)) +
+  geom_density(alpha = .7) +
+  theme(panel.background = element_rect(fill = "white")) +
+  scale_fill_manual(values = getPalette(12)) +
+  scale_color_manual(values = getPalette(12)) 
+  
+
+```
 
