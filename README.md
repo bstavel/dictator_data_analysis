@@ -31,10 +31,28 @@ Z & I were looking at the following bin sizes: `200, 160, 120, 80, 40` They all 
 
 ## High Gamma Filtering
 
-Z&I look like they bandpassed at 70-200Hz after subtracting the global average reference (separately from CARS?)
+Z&I look like they bandpassed at 70-200Hz/250Hz after subtracting the global average reference (separately from CARS?)
 
 Then they took the absolute value of the hilbert transform which is called the analytical amplitude. This is the value that is averaged in the moving time window.
 
 ## Regressions-- Modeling Choices
+
+| Possible Predictors | Priority? |
+| ------------------- | :-------: |
+| self_choice_payoff | |
+| other_choice_payoff | |
+| self_foregone | |
+| other_foregone | |
+| self_var_payoff | |
+| other_var_payoff | |
+| ineq_var_abs | |
+| ineq_choice_abs | |
+| ineq_foregone_abs | |
+| ineq_var_disadvant | |
+| ineq_var_advant | |
+| self_diff_ch_foregone | |
+| other_diff_ch_foregone | |
+| side_chosen | |
+| RT | |
 
 ## Regressions-- Corrections, Significance Thresholds, CV, etc
