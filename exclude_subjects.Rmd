@@ -146,10 +146,11 @@ checkTrials <- respData %>%
     select(SID, round, L.self, L.other, R.self, R.other, side_chosen, best_side, chose_better_side) 
 
 checkTrials %>%
-  ggplot(., aes(x = chose_better_side, fill = SID)) +
+  ggplot(., aes(x = SID, fill = SID, alpha = chose_better_side)) +
   geom_bar(position = "dodge") +
   theme(panel.background = element_rect(fill = "white")) +
-  scale_fill_manual(values = getPalette(12))
+  scale_fill_manual(values = getPalette(12)) +
+  scale_alpha_discrete(range = c(.7, 1))
 
 ```
 So person 5 should def go. but 

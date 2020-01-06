@@ -103,6 +103,7 @@ ggthemr("solarized")
 
 
 respFilter %>%
+  filter(!SID %in% c("DG_s05", "DG_s07")) %>%
   ggplot(., aes(x = RT, fill = SID, color = SID)) +
   geom_density(alpha = .7) +
   theme(panel.background = element_rect(fill = "white")) +
@@ -112,3 +113,24 @@ respFilter %>%
 
 ```
 
+```{r which-min}
+
+respFilter <- respFilter %>%
+  group_by(SID) %>%
+  mutate(min_rt = min(RT)) %>%
+  mutate(mean_rt = mean(RT))
+
+respFilter %>%
+  ggplot(., aes (x = min_rt)) +
+  geom_density(fill = "blue", alpha = .7) + 
+  theme(panel.background = element_rect(fill = "white"))
+
+respFilter %>%
+  ggplot(., aes (x = mean_rt)) +
+  geom_histogram(binwidth = .01, fill = "blue", alpha = .7) + 
+  theme(panel.background = element_rect(fill = "white"))
+
+time_matrix <- data.frame("time_zero" = unique(respFilter$min_rt))
+max(respFilter$min_rt)
+
+```

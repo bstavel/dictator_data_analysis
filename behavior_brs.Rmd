@@ -824,3 +824,65 @@ colnames(final_new_trial_df)[5] <- "X"
 write.csv(final_new_trial_df, "./new_trials_counterbalanced.csv", row.names = F)
 
 ```
+
+# check modifications from Deborah
+
+```{r check-deb-df}
+
+## some sanity checks to see if df was properly counterbalanced ##
+ggthemr("solarized")
+
+# read in data #
+debTrials <- read.csv('~/Downloads/new_trials_counterbalanced2.csv', header = T)
+
+debTest <- debTrials %>%
+    mutate(trial_type_full = paste0(L.self, ":", L.other, ":",  R.self, ":", R.other))
+
+trial_totals <- table(debTest$trial_type_full)
+trialTotals <- data.frame(trial_totals)
+colnames(trialTotals) <- c("Type", "Count")
+
+# create cols that describe where the 10:10 option was and what type the trial was excluding side #
+trialTotals <- trialTotals %>%
+  mutate(minus_ten = gsub(":10:10", "", Type)) %>%
+  mutate(minus_ten = gsub("10:10:", "", minus_ten)) %>%
+  mutate(ten_side = if_else(grepl("^10:10:", Type), "Left", "Right"))
+
+debTrials %>%
+  gather(key = "Side", value = "Value", L.self, R.self) %>%
+  ggplot(., aes(x = X, y = Value, color = Side)) +
+  geom_point() +
+  geom_line() + 
+  theme(panel.background = element_rect(fill = "white"))
+
+debTrials %>%
+  gather(key = "Side", value = "Value", L.other, R.other) %>%
+  ggplot(., aes(x = X, y = Value, color = Side)) +
+  geom_point() +
+  geom_line() + 
+  theme(panel.background = element_rect(fill = "white"))
+
+
+debTrials %>%
+  mutate(ten_side = if_else(L.self == 10 & L.other == 10, "Left", "Right")) %>%
+  ggplot(., aes(x = ten_side)) +
+  geom_bar() +
+  theme(panel.background = element_rect(fill = "white"))
+
+print(paste0("The differences in sums between the left and right self payouts is: ", sum(debTrials$L.self) - sum(debTrials$R.self)))
+
+print(paste0("The differences in sums between the left and right other payouts is: ", sum(debTrials$L.other) - sum(debTrials$R.other)))
+
+## needs computer choice ##
+
+older_version <- read.csv('../../../Dictator Game v1.4/data/payoffs_active_3.csv', header = T)
+
+final_version <- cbind(debTrials, older_version$ComputerChoice)
+
+colnames(final_version)[6] <- "ComputerChoice"
+
+write.csv(final_version, 'final_counterbalanced_trial_file.csv', row.names = F)
+
+
+
+```

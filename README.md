@@ -19,6 +19,8 @@ We identified an issue with counterbalancing (or lack thereof) in the intial set
 
 ## Regions
 
+Will we run eletrodes that are partly in the wm in their notes? What percentage cut-off should we use? Some subjects look like they were run on an old system and don't have the full brain atlas information, can we rerun them?
+
 ## Time binning (for Regressions)
 
 ## High Gamma Filtering
