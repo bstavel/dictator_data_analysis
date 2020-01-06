@@ -21,19 +21,24 @@ We identified an issue with counterbalancing (or lack thereof) in the intial set
 
 Will we run eletrodes that are partly in the wm in their notes? What percentage cut-off should we use? Some subjects look like they were run on an old system and don't have the full brain atlas information, can we rerun them?
 
+
 ## Referencing
 
 I thought we did pairwise referencing, not CAR? Ignacio's scripts seem to be using CAR.
 
-## Time binning (for Regressions)
+## High Gamma
+
+### Morelt Wavelets or the filter-Hilbert method?
+
+I&Z used the filter + the hilbert transform for their high frequency analysis. This is the the absolute value of the hilbert transform which is called the analytical amplitude. This is the value that is averaged in the moving time window.
+
+### Filtering
+
+Z&I look like they bandpassed at 70-200Hz/250Hz.
+
+## Time binning (for regressions and high gamma)
 
 Z & I were looking at the following bin sizes: `200, 160, 120, 80, 40` They all had overlaps of 25% regardless of size. It also looks like they were epoching based on trial start, presentation time, and choice time.
-
-## High Gamma Filtering
-
-Z&I look like they bandpassed at 70-200Hz/250Hz after subtracting the global average reference (separately from CARS?)
-
-Then they took the absolute value of the hilbert transform which is called the analytical amplitude. This is the value that is averaged in the moving time window.
 
 ## Regressions-- Modeling Choices
 
