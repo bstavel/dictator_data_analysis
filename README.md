@@ -24,6 +24,7 @@ Will we run eletrodes that are partly in the wm in their notes? What percentage 
 Here is the first pass numbers for ofc and insula across subjects:
 
 *OFC: ~ 42 electrodes to test*
+
 | subject 	| loc_meeting 	| AAL 	| AFNI 	| BrainWeb 	| Brainnetome 	| JuBrain 	| VTPM 	|
 |---------	|-------------	|-----	|------	|----------	|-------------	|---------	|------	|
 | IR9     	| 0           	| 10  	| 13   	| 0        	| 9           	| 3       	| 0    	|
@@ -39,6 +40,7 @@ Here is the first pass numbers for ofc and insula across subjects:
 
 
 *insula: ~64 electrodes to test*
+
 | subject 	| loc_meeting 	| AAL 	| AFNI 	| BrainWeb 	| Brainnetome 	| JuBrain 	| VTPM 	|
 |---------	|-------------	|-----	|------	|----------	|-------------	|---------	|------	|
 | IR9     	| 0           	| 10  	| 13   	| 0        	| 9           	| 3       	| 0    	|
