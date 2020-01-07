@@ -94,3 +94,15 @@ Z & I were looking at the following bin sizes: `200, 160, 120, 80, 40` They all 
 | RT | |
 
 ## Regressions-- Corrections, Significance Thresholds, CV, etc
+
+Looks like I&Z were using stepwise methods for their regressions. The scripts are easy to adapt for our purposes, but if we choose to deviate from his methods here are some other options:
+
+LASSO, Ridge, etc. The metric of interest would then be the beta weights, where "high" beta weights would indicate a relationship w/ HG. How we quantify "high" would require some null model/bootstrapping something since coef testing is inappropriate for these methods. It also would require some hold test to identify a high lambda and we would have to decide on a error metric (or just go with l2). But these methods are very robust to noise, it is very interpretable, and we would have a single model for each of our elctrodes. With ~200 datapoints we do probably have enough for train-test splits. There is some caution about using LASSO to identify "true models" rather than models with low prediction error. But this is so exploratory and we don't have a chance so for the true model, so I think it probably okay?
+
+Alternatively, we could have small models that we test in each model. We could group the variables by what we are invetisgating-- for inequality we might start with a model with the difference for self and the difference for other. Then, if we get a hit, we can parse down into the other ways of quanitfying inequality listed above. If we have real preferences/thoughts about what it is we are looking for that could be a good solution. But, since it is in the p-val framework, I do not know how we can apply corrections in particularly rigorous way. We would also probably want to lay out the hierarchy of tests in the beginning, but we do not have all that much to go on.
+
+
+
+
+
+
