@@ -1,7 +1,7 @@
 ---
 title: " prelim behavioral analyses - dictator task"
 author: "Brooke Staveland"
-date: "11/26/2019"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
 output: html_document
 ---
 

@@ -21,6 +21,37 @@ We identified an issue with counterbalancing (or lack thereof) in the intial set
 
 Will we run eletrodes that are partly in the wm in their notes? What percentage cut-off should we use? Some subjects look like they were run on an old system and don't have the full brain atlas information, can we rerun them?
 
+Here is the first pass numbers for ofc and insula across subjects:
+
+*OFC: ~ 42 electrodes to test*
+| subject 	| loc_meeting 	| AAL 	| AFNI 	| BrainWeb 	| Brainnetome 	| JuBrain 	| VTPM 	|
+|---------	|-------------	|-----	|------	|----------	|-------------	|---------	|------	|
+| IR9     	| 0           	| 10  	| 13   	| 0        	| 9           	| 3       	| 0    	|
+| IR57    	| 14          	| 14  	| 17   	| 0        	| 16          	| 5       	| 0    	|
+| IR39    	| 6           	| 4   	| 5    	| 0        	| 3           	| 1       	| 0    	|
+| IR35    	| 7           	| 7   	| 10   	| 0        	| 8           	| 4       	| 0    	|
+| IR28    	| 0           	| 0   	| 0    	| 0        	| 1           	| 0       	| 0    	|
+| IR26    	| 0           	| 0   	| 0    	| 0        	| 0           	| 0       	| 0    	|
+| IR19    	| 11          	| 0   	| 0    	| 0        	| 0           	| 0       	| 0    	|
+| IR16    	| 5           	| 0   	| 0    	| 0        	| 0           	| 0       	| 0    	|
+| IR10    	| 3           	| 5   	| 1    	| 0        	| 3           	| 0       	| 0    	|
+| ST40    	| 4           	| 0   	| 0    	| 0        	| 0           	| 0       	| 0    	|
+
+
+*insula: ~64 electrodes to test*
+| subject 	| loc_meeting 	| AAL 	| AFNI 	| BrainWeb 	| Brainnetome 	| JuBrain 	| VTPM 	|
+|---------	|-------------	|-----	|------	|----------	|-------------	|---------	|------	|
+| IR9     	| 0           	| 10  	| 13   	| 0        	| 9           	| 3       	| 0    	|
+| IR57    	| 14          	| 14  	| 17   	| 0        	| 16          	| 5       	| 0    	|
+| IR39    	| 6           	| 4   	| 5    	| 0        	| 3           	| 1       	| 0    	|
+| IR35    	| 7           	| 7   	| 10   	| 0        	| 8           	| 4       	| 0    	|
+| IR28    	| 0           	| 0   	| 0    	| 0        	| 1           	| 0       	| 0    	|
+| IR26    	| 0           	| 0   	| 0    	| 0        	| 0           	| 0       	| 0    	|
+| IR19    	| 11          	| 0   	| 0    	| 0        	| 0           	| 0       	| 0    	|
+| IR16    	| 5           	| 0   	| 0    	| 0        	| 0           	| 0       	| 0    	|
+| IR10    	| 3           	| 5   	| 1    	| 0        	| 3           	| 0       	| 0    	|
+| ST40    	| 4           	| 0   	| 0    	| 0        	| 0           	| 0       	| 0    	|
+
 
 ## Referencing
 
