@@ -92,6 +92,7 @@ Z & I were looking at the following bin sizes: `200, 160, 120, 80, 40` They all 
 | other_diff_ch_foregone | other payoff - other foregone (?) | |
 | side_chosen | side chosen | |
 | RT | reaction time | |
+
 _(?): couldn't find definition in the code so I took my best guess_
 
 Do we want to z score or baseline HG? 
