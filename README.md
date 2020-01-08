@@ -105,7 +105,7 @@ Use permuted nul distribution?
 
 ### Model selection
 
-Looks like I&Z were using stepwise methods for their regressions. The scripts are easy to adapt for our purposes, but if we choose to deviate from his methods here are some other options:
+Looks like I&Z were using stepwise methods for their regressions, but only as a confirmation that findings were not due to collinearity. The scripts are easy to adapt for our purposes, but if we choose to deviate from his methods here are some other options:
 
 LASSO, Ridge, etc. The metric of interest would then be the beta weights, where "high" beta weights would indicate a relationship w/ HG. How we quantify "high" would require some null model/bootstrapping something since coef testing is inappropriate for these methods. It also would require some hold test to identify a high lambda and we would have to decide on a error metric (or just go with l2). But these methods are very robust to noise, it is very interpretable, and we would have a single model for each of our elctrodes. With ~200 datapoints we do probably have enough for train-test splits. There is some caution about using LASSO to identify "true models" rather than models with low prediction error. But this is so exploratory and we don't have a chance so for the true model, so I think it probably okay?
 
