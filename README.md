@@ -61,7 +61,7 @@ I thought we did pairwise referencing, not CAR? Ignacio's scripts seem to be usi
 
 ## High Gamma
 
-### Morelt Wavelets or the filter-Hilbert method?
+### Morlet Wavelets or the filter-Hilbert method?
 
 I&Z used the filter + the hilbert transform for their high frequency analysis. This is the the absolute value of the hilbert transform which is called the analytical amplitude. This is the value that is averaged in the moving time window.
 
@@ -75,25 +75,26 @@ Z & I were looking at the following bin sizes: `200, 160, 120, 80, 40` They all 
 
 ## Regressions-- Modeling Choices
 
-| Possible Predictors | Priority? |
-| ------------------- | :-------: |
-| self_choice_payoff | |
-| other_choice_payoff | |
-| self_foregone | |
-| other_foregone | |
-| self_var_payoff | |
-| other_var_payoff | |
-| ineq_var_abs | |
-| ineq_choice_abs | |
-| ineq_foregone_abs | |
-| ineq_var_disadvant | |
-| ineq_var_advant | |
-| self_diff_ch_foregone | |
-| other_diff_ch_foregone | |
-| side_chosen | |
-| RT | |
+| Possible Predictors | Definition | Priority? |
+| ------------------- | :-------: | :-------: |
+| self_choice_payoff | self payoff | |
+| other_choice_payoff | other payoff | |
+| self_foregone | self foregone | |
+| other_foregone | other foregone  | |
+| self_var_payoff | self payoff + self foregone - 10 | |
+| other_var_payoff | other payoff + other foregone - 10  | |
+| ineq_var_abs | abs(self_var_payoff - other_var_payoff) | |
+| ineq_choice_abs | abs(self payoff - other payoff) | |
+| ineq_foregone_abs | abs(self foregone - other foregone) | |
+| ineq_var_disadvant |  (other_var_payoff > self_var_payoff) * (other_var_payoff - self_var_payoff) | |
+| ineq_var_advant | (other_var_payoff < self_var_payoff) * (other_var_payoff - self_var_payoff) | |
+| self_diff_ch_foregone | self payoff - self foregone (?) | |
+| other_diff_ch_foregone | other payoff - other foregone (?) | |
+| side_chosen | side chosen | |
+| RT | reaction time | |
+_(?): couldn't find definition in the code so I took my best guess_
 
-Z-scoring HG?
+Do we want to z score or baseline HG? 
 
 ## Regressions-- Corrections, Significance Thresholds, CV, etc
 
@@ -101,7 +102,7 @@ Z-scoring HG?
 
 Some cut off for number of epochs an electrode has to be active for it to count as an encoding electrode. In OFC-DM paper it was 5 epochs.
 
-Use permuted nul distribution?
+Use permuted null distribution?
 
 ### Model selection
 
