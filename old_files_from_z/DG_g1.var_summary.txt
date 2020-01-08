@@ -1,0 +1,29 @@
+Generalized linear mixed model fit by maximum likelihood (Laplace Approximation) ['glmerMod']
+ Family: binomial  ( logit )
+Formula: choose.var ~ self.var.payoff + other.var.payoff + (1 | SID)
+   Data: DATA
+
+     AIC      BIC   logLik deviance df.resid 
+  2443.0   2466.4  -1217.5   2435.0     2512 
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-5.1361 -0.5601 -0.1454  0.6078 15.3734 
+
+Random effects:
+ Groups Name        Variance Std.Dev.
+ SID    (Intercept) 1.476    1.215   
+Number of obs: 2516, groups:  SID, 12
+
+Fixed effects:
+                  Estimate Std. Error z value Pr(>|z|)    
+(Intercept)      -2.202854   0.388367  -5.672 1.41e-08 ***
+self.var.payoff   0.185939   0.008953  20.769  < 2e-16 ***
+other.var.payoff -0.049369   0.006455  -7.648 2.05e-14 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Correlation of Fixed Effects:
+            (Intr) slf.v.
+slf.vr.pyff -0.344       
+othr.vr.pyf -0.254  0.119
