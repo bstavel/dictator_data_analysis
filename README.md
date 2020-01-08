@@ -19,7 +19,7 @@ We identified an issue with counterbalancing (or lack thereof) in the intial set
 
 ## Regions
 
-Will we run eletrodes that are partly in the wm in their notes? What percentage cut-off should we use? Some subjects look like they were run on an old system and don't have the full brain atlas information, can we rerun them?
+Will we run eletrodes that are partly in the wm in their notes? What percentage cut-off should we use? Some subjects look like they were run on an old system and don't have the full brain atlas information, can we rerun them? Should I add the cingulate?
 
 Here is the first pass numbers for ofc and insula across subjects:
 
@@ -93,7 +93,17 @@ Z & I were looking at the following bin sizes: `200, 160, 120, 80, 40` They all 
 | side_chosen | |
 | RT | |
 
+Z-scoring HG?
+
 ## Regressions-- Corrections, Significance Thresholds, CV, etc
+
+### Individual regressions
+
+Some cut off for number of epochs an electrode has to be active for it to count as an encoding electrode. In OFC-DM paper it was 5 epochs.
+
+Use permuted nul distribution?
+
+### Model selection
 
 Looks like I&Z were using stepwise methods for their regressions. The scripts are easy to adapt for our purposes, but if we choose to deviate from his methods here are some other options:
 
