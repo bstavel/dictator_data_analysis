@@ -73,6 +73,8 @@ Z&I look like they bandpassed at 70-200Hz/250Hz.
 
 Z & I were looking at the following bin sizes: `200, 160, 120, 80, 40` They all had overlaps of 25% regardless of size. It also looks like they were epoching based on trial start, presentation time, and choice time.
 
+*We decided on two sets of analyses: 1) presentation locked continueing for 1 second and 2) choice locked with .5 before to 1 second after*
+
 ## Regressions-- Modeling Choices
 
 | Possible Predictors | Definition | Priority? |

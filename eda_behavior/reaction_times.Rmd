@@ -31,6 +31,7 @@ library(kableExtra)
 library(lme4)
 library(RColorBrewer)
 library(lme4)
+library(kableExtra)
 
 ## hand written functions ##
 
@@ -50,17 +51,17 @@ These scripts are to examines the reaction times across subjects in order to det
 ## load in data ##
 
 # load behav files #
-filenames <- dir("../dg_behave_formatted/","behav.csv")
+filenames <- dir("../../dg_behave_formatted/","behav.csv")
 DATA <- NULL
 
 for (i in 1:length(filenames)) {
-  temp <- cbind(SID=substr(filenames[i],1,6),read.csv(paste0("../dg_behave_formatted/", filenames[i]), header=TRUE))
+  temp <- cbind(SID=substr(filenames[i],1,6),read.csv(paste0("../../dg_behave_formatted/", filenames[i]), header=TRUE))
   temp$RT <- as.numeric(as.character(temp$RT))
   DATA <- rbind(DATA,temp)
 }
 
 # load task structure files #
-trialTypes <- read.csv('../../trial_type.csv', header = T)
+trialTypes <- read.csv('../../../trial_type.csv', header = T)
 
 # merge them #
 respDataRaw <- merge.data.frame(DATA, trialTypes, by.x = "round", by.y = "X")
@@ -73,7 +74,7 @@ respData <- respDataRaw %>%
 respFilter <- respDataRaw %>%
   select(SID, RT) %>%
   filter(!is.na(RT)) %>%
-  filter(RT < 250)
+  filter(RT < 250) 
 
 
 ```
@@ -98,7 +99,7 @@ respFilter %>%
 Since a reaction time was 257 seconds, I think this person paused-- there was a huge timing jump at round 102 in person DG_s07. I think it should be excluded.
 
 
-```{r rt-density-overall}
+```{r rt-density-by-subject}
 ggthemr("solarized")
 
 
@@ -118,19 +119,38 @@ respFilter %>%
 respFilter <- respFilter %>%
   group_by(SID) %>%
   mutate(min_rt = min(RT)) %>%
-  mutate(mean_rt = mean(RT))
+  mutate(mean_rt = mean(RT)) %>%
+  mutate(less_than_one = if_else(RT < 1, "Under 1s", "Above 1s")) %>%
+  mutate(less_than_75 = if_else(RT < .75, "Under .75s", "Above .75s")) %>%
+  mutate(less_than_5 = if_else(RT < .5, "Under .5s", "Above .5s"))
 
-respFilter %>%
-  ggplot(., aes (x = min_rt)) +
-  geom_density(fill = "blue", alpha = .7) + 
-  theme(panel.background = element_rect(fill = "white"))
 
-respFilter %>%
-  ggplot(., aes (x = mean_rt)) +
-  geom_histogram(binwidth = .01, fill = "blue", alpha = .7) + 
-  theme(panel.background = element_rect(fill = "white"))
+# respFilter %>%
+#   ggplot(., aes (x = min_rt)) +
+#   geom_density(fill = "blue", alpha = .7) + 
+#   theme(panel.background = element_rect(fill = "white"))
+# 
+# respFilter %>%
+#   ggplot(., aes (x = mean_rt)) +
+#   geom_histogram(binwidth = .01, fill = "blue", alpha = .7) + 
+#   theme(panel.background = element_rect(fill = "white"))
 
-time_matrix <- data.frame("time_zero" = unique(respFilter$min_rt))
-max(respFilter$min_rt)
+time_matrix <- respFilter %>%
+  filter(!duplicated(min_rt)) %>%
+  mutate(bins_200 = min_rt/.200) %>%
+  mutate(bins_100 = min_rt/.100) %>%
+  mutate(bins_50 = min_rt/.05) %>%
+  select(-RT, -less_than_one, -less_than_5, -less_than_75)
+
+kable(time_matrix) %>% kable_styling(position = "center") %>% add_header_above(c("Number of Bins pre-choice based on min RT" = 6))
+  
+
+kable(table(respFilter$SID, respFilter$less_than_one)) %>% kable_styling(position = "center")
+
+kable(table(respFilter$SID, respFilter$less_than_75)) %>% kable_styling(position = "center")
+
+kable(table(respFilter$SID, respFilter$less_than_5)) %>% kable_styling(position = "center")
+
 
 ```
+

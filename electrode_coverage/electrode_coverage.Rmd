@@ -1,15 +1,15 @@
 ---
 title: "brain coverage"
 author: "Brooke Staveland"
-date: "`r format(Sys.time(), '%B %d, %Y')`"
+date: "`r format(Sys.time(), "%B %d, %Y")`"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
-  echo = FALSE,  # don't print the code chunk
-  warning = FALSE,  # don't print warnings
-  message = FALSE,  # don't print messages
+  echo = FALSE,  # don"t print the code chunk
+  warning = FALSE,  # don"t print warnings
+  message = FALSE,  # don"t print messages
   fig.width = 12,  # set default width of figures
   fig.height = 6,  # set default height of figures
   fig.align = "center",  # always align figure in center
@@ -34,7 +34,7 @@ library(lme4)
 
 ## hand written functions ##
 
-source('~/Projects/nice_r_functions/ggpaired_pretty.R')
+source("~/Projects/nice_r_functions/ggpaired_pretty.R")
 
 ```
 
@@ -52,17 +52,18 @@ For now, I will loop through the subjects, except IR17, GP51,  and concactenate 
 
 ```{r read-data}
 
-subjects_irvine <- c("IR10", "IR16",  "IR19",  "IR26",  "IR28",  "IR35",  "IR39",  "IR57",  "IR9")
+subjects_irvine <- c("IR10", "IR16",  "IR19",  "IR26",
+                     "IR28",  "IR35",  "IR39",  "IR57",  "IR9")
 
-for(sub in subjects_irvine){
+for (sub in subjects_irvine) {
     # read in temp #
-    temp_notes <- readxl::read_xlsx(paste0('~/Projects/knight_server/remote/ecog/DATA_FOLDER/Irvine/', sub, '/Notes/', sub, '_Elec_Notes.xlsx'))
+    temp_notes <- readxl::read_xlsx(paste0("~/Projects/knight_server/remote/ecog/DATA_FOLDER/Irvine/", sub, "/Notes/", sub, "_Elec_Notes.xlsx"))
     temp_notes$subject <- sub
-    
+
     # rbind #
-    if(sub == "IR10"){
+    if (sub == "IR10") {
       elec_notes <- temp_notes
-    } else if(sub == "IR14" | sub == "IR16"){
+    } else if (sub == "IR14" | sub == "IR16") {
       colnames(temp_notes)[2] <- "Loc Meeting"
       temp_notes <- temp_notes[is.na(temp_notes$`Epileptic via Irvine`), ] # we want only blanks here, same as below
       temp_notes <- temp_notes[is.na(temp_notes$`status(old notes)`), ]
@@ -87,7 +88,7 @@ for(sub in subjects_irvine){
 }
 
 #  ST40 #
-st40_notes <- readxl::read_xlsx(paste0('~/Projects/knight_server/remote/ecog/DATA_FOLDER/Stanford/ST40/Notes/ST40_elecs_notes_Bob_meeting_2016_02_18.xlsx'))
+st40_notes <- readxl::read_xlsx(paste0("~/Projects/knight_server/remote/ecog/DATA_FOLDER/Stanford/ST40/Notes/ST40_elecs_notes_Bob_meeting_2016_02_18.xlsx"))
 st40_notes_pt1 <- st40_notes[, c(2, 4)]
 st40_notes_pt2 <- st40_notes[, c(6, 7)]
 colnames(st40_notes_pt1) <- c("Electrode", "Loc Meeting")
