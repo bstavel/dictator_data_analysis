@@ -31,10 +31,15 @@ library(kableExtra)
 library(lme4)
 library(RColorBrewer)
 library(lme4)
+library(here)
+library(fs)
 
 ## hand written functions ##
 
 source('~/Projects/nice_r_functions/ggpaired_pretty.R')
+
+## plotting helpers ##
+getPalette = colorRampPalette(brewer.pal(12, "Set1"))
 
 ```
 
@@ -52,17 +57,17 @@ This script determines which subjects/trials need to be excluded due to:
 ## load in data ##
 
 # load behav files #
-filenames <- dir("../dg_behave_formatted/","behav.csv")
+filenames <- dir(path(here(), "../dg_behave_formatted/"),"behav.csv")
 DATA <- NULL
 
 for (i in 1:length(filenames)) {
-  temp <- cbind(SID=substr(filenames[i],1,6),read.csv(paste0("../dg_behave_formatted/", filenames[i]), header=TRUE))
+  temp <- cbind(SID=substr(filenames[i],1,6),read.csv(path(here(), "../dg_behave_formatted/", filenames[i]), header=TRUE))
   temp$RT <- as.numeric(as.character(temp$RT))
   DATA <- rbind(DATA,temp)
 }
 
 # load task structure files #
-trialTypes <- read.csv('../../trial_type.csv', header = T)
+trialTypes <- read.csv(path(here(), '../../trial_type.csv'), header = T)
 
 # merge them #
 respData <- merge.data.frame(DATA, trialTypes, by.x = "round", by.y = "X")
@@ -153,4 +158,12 @@ checkTrials %>%
   scale_alpha_discrete(range = c(.7, 1))
 
 ```
-So person 5 should def go. but 
+So person 5 should def go. 
+
+
+11 and 10 seem like great starting subjects (w/ 11 slightly more messy)
+
+also: DG_s11 -> IR35
+      DG_s10 -> IR28
+      
+      

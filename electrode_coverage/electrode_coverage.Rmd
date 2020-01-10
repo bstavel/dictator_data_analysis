@@ -42,6 +42,8 @@ These are our subjects. Every subject except IR17 and GP51 has a sub_Elec_Notes 
 
 Subjects: IR10  IR14  IR16  IR19  IR26  IR28  IR35  IR39  IR57  IR9 ST40 GP51
 
+IR9: Only has loc meeting notes in orginal file.
+
 IR17: Only has IR17_Hippocampal_Subfields.xlsx IR17_Recording_Notes.pdf
 
 GP51: No notes file.
@@ -77,7 +79,14 @@ for (sub in subjects_irvine) {
       temp_notes$Discard <- 0
       temp_notes$`Out of Brain` <- 0
       temp_notes$Epileptic <- 0    
-      elec_notes <- bind_rows(temp_notes, elec_notes)
+    #   elec_notes <- bind_rows(temp_notes, elec_notes)
+    # } else if (sub == "IR28") {
+    #   colnames(temp_notes)[2] <- "Loc Meeting"
+    #   temp_notes <- temp_notes[is.na(temp_notes$status), ] # we want only blanks here, same as below
+    #   temp_notes$Discard <- 0
+    #   temp_notes$`Out of Brain` <- 0
+    #   temp_notes$Epileptic <- 0    
+    #   elec_notes <- bind_rows(temp_notes, elec_notes)      
     } else {  
       elec_notes <- bind_rows(temp_notes, elec_notes)
     }
@@ -117,8 +126,9 @@ elec_notes <- elec_notes %>% filter(is.na(Notes))
 elec_notes <- elec_notes %>% filter(Discard == 0 & `Out of Brain` == 0 & Epileptic == 0)
 
 # throw out white matter #
-elec_notes <- elec_notes %>% filter(is.na(Notes) | Notes == "WM")
+# elec_notes <- elec_notes %>% filter(`Loc Meeting` != "WM")
 
+# elec_notes %>% filter(subject == "IR28") %>% kable()
 
 
 ```
