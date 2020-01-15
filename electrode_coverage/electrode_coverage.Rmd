@@ -181,9 +181,10 @@ count_elecs_table %>%
 ```
 
 
+
 ```{r num-electrodes-insula}
 
-count_elecs <- elec_notes %>%
+count_elecs <- count_elecs %>%
   mutate(insula_loc_meeting = if_else(grepl("insula", `Loc Meeting`, ignore.case = T), 1, 
                                    if_else(grepl("insular", `Loc Meeting`, ignore.case = T), 1, 0))) %>% # insular will be caught by insula, but want to keep the 2nd option in case I need it
   mutate(insula_AFNI = if_else(grepl("insula", AFNI, ignore.case = T), 1, 
@@ -218,3 +219,27 @@ count_elecs_table %>%
   add_header_above(c("insula: ~64 electrodes to test" = 8)) %>%
   kable_styling(position = "center")
 ```
+
+
+```{r save_IR35_elecs}
+
+count_elecs <- count_elecs %>%
+  mutate(mfg_loc_meeting = if_else(grepl("mfg", `Loc Meeting`, ignore.case = T), 1, 
+                                   if_else(grepl("frontopolar", `Loc Meeting`, ignore.case = T), 1, 0))) %>%
+    mutate(mfg_loc_meeting = if_else(grepl("mfg", `Loc Meeting`, ignore.case = T), 1, 
+                                   if_else(grepl("frontopolar", `Loc Meeting`, ignore.case = T), 1, 0))) %>%
+    mutate(hinal_loc_meeting = if_else(grepl("entorhinal", `Loc Meeting`, ignore.case = T), 1, 
+                                   if_else(grepl("perirhinal", `Loc Meeting`, ignore.case = T), 1, 0))) %>%
+    mutate(sts_loc_meeting = if_else(grepl("sts", `Loc Meeting`, ignore.case = T), 1, 
+                                   if_else(grepl("superior temporal", `Loc Meeting`, ignore.case = T), 1, 0))) %>%
+    mutate(cingulate_loc_meeting = if_else(grepl("cingulate", `Loc Meeting`, ignore.case = T), 1, 0)) %>%
+    mutate(ca1_loc_meeting = if_else(grepl("ca1", `Loc Meeting`, ignore.case = T), 1, 0))
+
+
+roi_IR35 <- count_elecs %>%
+  filter(subject == "IR35") %>%
+  filter(ofc_loc_meeting == 1 | insula_loc_meeting == 1 | mfg_loc_meeting == 1 | hinal_loc_meeting == 1 | sts_loc_meeting == 1 | cingulate_loc_meeting == 1 | ca1_loc_meeting == 1 )
+
+write.csv(roi_IR35, path(here(), "munge", "IR35_elecs_of_interest.csv"))
+```
+

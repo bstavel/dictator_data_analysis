@@ -110,6 +110,15 @@ respFilter %>%
   theme(panel.background = element_rect(fill = "white")) +
   scale_fill_manual(values = getPalette(12)) +
   scale_color_manual(values = getPalette(12)) 
+
+
+respFilter %>%
+  filter(SID %in% c("DG_s11")) %>%
+  ggplot(., aes(x = RT, fill = SID, color = SID)) +
+  geom_density(alpha = .7) +
+  theme(panel.background = element_rect(fill = "white")) +
+  scale_fill_manual(values = getPalette(12)) +
+  scale_color_manual(values = getPalette(12)) 
   
 
 ```
