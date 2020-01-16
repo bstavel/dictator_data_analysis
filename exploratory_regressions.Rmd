@@ -40,6 +40,9 @@ source(path("R", "load_behave_data.R"))
 source(path("R", "prep_behave_data.R"))
 source(path("R", "stretch_start_end.R"))
 source(path("R", "load_high_gamma_data.R"))
+source(path("R", "rolling_window_and_baseline.R"))
+source(path("R", "run_permuted_regressions.R"))
+source(path("R", "run_filtered_anova.R"))
 source('~/Projects/nice_r_functions/ggpaired_pretty.R')
 source('~/Projects/nice_r_functions/mutate_cond.R')
 
@@ -102,9 +105,12 @@ elecs_to_use <- read.csv(file_path_to_elecs_of_interest)
 # filter to good electrodes #
 hg_data <- hg_data %>% filter(grepl(paste(elecs_to_use$Electrode, collapse = "|"), electrodes))
 
+# average and baseline #
+hg_clean <- rolling_window_and_baseline(hg_data, lWin = 100, lOver = 50)
+
 # create temp data for visualiztion #
 half_index <- sample(1:228, 114)
-hg_eda <- hg_data %>% filter(trial %in% half_index)
+hg_eda <- hg_clean %>% filter(trial %in% half_index)
 
 ```
 
@@ -112,7 +118,7 @@ hg_eda <- hg_data %>% filter(trial %in% half_index)
 
 ofc_elecs <- elecs_to_use %>% filter(ofc_loc_meeting == 1) %>% select(Electrode)
 insula_elecs <- elecs_to_use %>% filter(insula_loc_meeting == 1) %>% select(Electrode)
-mtg_elecs <- elecs_to_use %>% filter(mfg_loc_meeting == 1) %>% select(Electrode)
+mfg_elecs <- elecs_to_use %>% filter(mfg_loc_meeting == 1) %>% select(Electrode)
 sts_elecs <- elecs_to_use %>% filter(sts_loc_meeting == 1) %>% select(Electrode)
 hinal_elecs <- elecs_to_use %>% filter(hinal_loc_meeting == 1) %>% select(Electrode)
 ca1_elecs <- elecs_to_use %>% filter(ca1_loc_meeting == 1) %>% select(Electrode)
@@ -129,7 +135,7 @@ hg_eda_summary %>%
   ggplot(., aes(x = bin, y = gamma, color = electrodes, fill = electrodes)) +
   geom_point(alpha = .4) +
   geom_line(alpha = .4) + 
-  geom_vline(xintercept = 1.2613816 * 1000) +
+  # geom_vline(xintercept = 1.2613816 * 1000) +
   theme(panel.background = element_rect(fill = "white")) + 
   ggtitle("OFC")
 
@@ -138,7 +144,7 @@ hg_eda_summary %>%
   ggplot(., aes(x = bin, y = gamma, color = electrodes, fill = electrodes)) +
   geom_point(alpha = .4) +
   geom_line(alpha = .4) + 
-  geom_vline(xintercept = 1.2613816 * 1000) +
+  # geom_vline(xintercept = 1.2613816 * 1000) +
   theme(panel.background = element_rect(fill = "white")) + 
   scale_fill_manual(values = getPalette(9)) +
   scale_color_manual(values = getPalette(9)) +
@@ -149,18 +155,18 @@ hg_eda_summary %>%
   ggplot(., aes(x = bin, y = gamma, color = electrodes, fill = electrodes)) +
   geom_point(alpha = .4) +
   geom_line(alpha = .4) + 
-  geom_vline(xintercept = 1.2613816 * 1000) +
+  # geom_vline(xintercept = 1.2613816 * 1000) +
   theme(panel.background = element_rect(fill = "white")) + 
   scale_fill_manual(values = getPalette(25)) +
   scale_color_manual(values = getPalette(25)) +
-  ggtitle("MTG")
+  ggtitle("MFG")
 
 hg_eda_summary %>%
   filter(grepl(paste(sts_elecs$Electrode, collapse = "|"), electrodes)) %>%
   ggplot(., aes(x = bin, y = gamma, color = electrodes, fill = electrodes)) +
   geom_point(alpha = .4) +
   geom_line(alpha = .4) + 
-  geom_vline(xintercept = 1.2613816 * 1000) +
+  # geom_vline(xintercept = 1.2613816 * 100) +
   theme(panel.background = element_rect(fill = "white")) + 
   scale_fill_manual(values = getPalette(15)) +
   scale_color_manual(values = getPalette(15)) +
@@ -171,7 +177,7 @@ hg_eda_summary %>%
   ggplot(., aes(x = bin, y = gamma, color = electrodes, fill = electrodes)) +
   geom_point(alpha = .4) +
   geom_line(alpha = .4) + 
-  geom_vline(xintercept = 1.2613816 * 1000) +
+  # geom_vline(xintercept = 1.2613816 * 10) +
   theme(panel.background = element_rect(fill = "white")) + 
   scale_fill_manual(values = getPalette(9)) +
   scale_color_manual(values = getPalette(9)) +
@@ -182,7 +188,7 @@ hg_eda_summary %>%
   ggplot(., aes(x = bin, y = gamma, color = electrodes, fill = electrodes)) +
   geom_point(alpha = .4) +
   geom_line(alpha = .4) + 
-  geom_vline(xintercept = 1.2613816 * 1000) +
+  # geom_vline(xintercept = 1.2613816 * 100) +
   theme(panel.background = element_rect(fill = "white")) + 
   scale_fill_manual(values = getPalette(9)) +
   scale_color_manual(values = getPalette(9)) +
@@ -196,7 +202,7 @@ hg_behave_eda <- merge.data.frame(hg_eda, behave_data, by.x = "trial", by.y = "r
 
 hg_behave_eda <- hg_behave_eda %>%
   select(starts_with("bin_"), RT, electrodes, trial) %>%
-  mutate(rt_bin = RT * 1000) %>%
+  mutate(rt_bin = RT * 10) %>%
   gather(key = "bin", value = "gamma", -electrodes, -RT, -electrodes, -trial, -rt_bin) %>%
   mutate(bin = as.numeric(gsub("bin_", "", bin)))
   
@@ -210,7 +216,16 @@ hg_behave_eda_binned <- hg_behave_eda_filtered %>%
   ungroup() %>%
   group_by(trial, electrodes) %>%
   arrange(desc(bin)) %>%
-  mutate(reverse_bins = c(1:rt_bin))
+  mutate(reverse_bins = c(3:rt_bin)) # because we cut the first two bins
+
+
+hg_behave_eda_binned %>%
+  filter(grepl(paste(ofc_elecs$Electrode, collapse = "|"), electrodes)) %>%
+  ggplot(., aes(x = reverse_bins, y = gamma, color = trial, fill = trial)) +
+  geom_point(alpha = .4) +
+  theme(panel.background = element_rect(fill = "white")) + 
+  facet_wrap(~electrodes) +
+  ggtitle("OFC")
 
 
 hg_behave_eda_binned %>%
@@ -223,184 +238,73 @@ hg_behave_eda_binned %>%
 
 
 ```
+```{r help-with-choice-locked}
 
-
-```{r regressions}
-
-# save info needed for regressions #
-niter <- 1000
-nBins <- colnames(fake_df)
-electrodes <- elec_notes$Electrode[!is.na(elec_notes$Electrode)]
-electrodes <- electrodes[1:100]
-# brain_behave_data is a df with nrow <- trials * elecs
-
-# create results dfs #
-results_advantageous <- data.frame(matrix(nrow = length(electrodes)*length(nBins), ncol = 7))
-results_disadvantageous <- data.frame(matrix(nrow = length(electrodes)*length(nBins), ncol = 7))
-
-colnames(results_advantageous) <- c("electrode", "bin", "R2", "absBeta", "Fstat", "p", "perm_p")
-colnames(results_disadvantageous) <- c("electrode", "bin", "R2", "absBeta", "Fstat", "p", "perm_p")
-
-# fill results dfs with electrode & bin info #
-results_advantageous$electrode <- sort(rep(as.character(electrodes), length(nBins)))
-results_advantageous$bin <- rep(nBins, length(electrodes))
-
-results_disadvantageous$electrode <- sort(rep(as.character(electrodes), length(nBins)))
-results_disadvantageous$bin <- rep(nBins, length(electrodes))
-
-
-for (elec in electrodes) {
-  
-  # filter to single electrode #
-  brain_behave_data_elec <- brain_behave_data %>% filter(electrode == elec)
-  brain_behave_data_elec <- brain_behave_data_elec[complete.cases(brain_behave_data_elec), ]
-
-  # initialize temp vars #
-  r2_disadv <- NULL
-  fstat_disadv <- NULL
-  abs_beta_disadv <- NULL
-  lm_pval_disadv <- NULL
-  r2_adv <- NULL
-  fstat_adv <- NULL
-  abs_beta_adv <- NULL
-  lm_pval_adv <- NULL
-  
-  for (bin in nBins) {
-    # run models #
-    bin_vec <- brain_behave_data_elec[, bin]
-    model_disadvant <- summary(lm(bin_vec ~ ineq_disadvent, data = brain_behave_data_elec))
-    model_advant <- summary(lm(bin_vec ~ ineq_advent, data = brain_behave_data_elec))
-    
-    # store info from models #
-    r2_disadv[bin] <- model_disadvant$r.squared
-    fstat_disadv[bin] <- model_disadvant$fstatistic[1]
-    abs_beta_disadv[bin] <- abs(model_disadvant$coefficients[2, 1])
-    lm_pval_disadv[bin] <- model_disadvant$coefficients[2,4]
-    
-    r2_adv[bin] <- model_advant$r.squared
-    fstat_adv[bin] <- model_advant$fstatistic[1]
-    abs_beta_adv[bin] <- abs(model_advant$coefficients[2,1])
-    lm_pval_adv[bin] <- model_advant$coefficients[2,4]
-  }
-  
-  ## Find out the longest stretch in which pval < 0.05 and create sum-of-F-stats statistic ##
-  # disadventageous #
-  stretch <- lm_pval_disadv < 0.05
-  indices <- stretch_start_end(stretch)  # what does stretch_start_end do???
-  
-  # if there is no stretch, take the max beta and max f statistic #
-  if(is.na(indices[1])) {
-    beta_stretch_disadv <- max(abs_beta_disadv)
-    fstat_stretch_disadv <- max(fstat_disadv)
-  # if there is a stretch, sum the betas and the f statistics #
-  } else {
-    beta_stretch_disadv <- sum(abs_beta_disadv[indices[1]:indices[2]]) # Summary stat
-    fstat_stretch_disadv <- sum(fstat_disadv[indices[1]:indices[2]]) # Summary stat
-  }
-  
-  # adventageous #
-  stretch <- lm_pval_adv < 0.05
-  indices <- stretch_start_end(stretch)  # what does stretch_start_end do???
-  
-  # if there is no stretch, take the max beta and max f statistic #
-  if(is.na(indices[1])) {
-    beta_stretch_adv <- max(abs_beta_adv)
-    fstat_stretch_adv <- max(fstat_adv)
-  # if there is a stretch, sum the betas and the f statistics #
-  } else {
-    beta_stretch_adv <- sum(abs_beta_adv[indices[1]:indices[2]]) # Summary stat
-    fstat_stretch_adv <- sum(fstat_adv[indices[1]:indices[2]]) # Summary stat    
-  }
-  
-  # Create null distribution by shuffling labels #
-  null_beta_stretch_disadv <- NULL
-  null_fstat_stretch_disadv <- NULL
-  null_beta_stretch_adv <- NULL
-  null_fstat_stretch_adv <- NULL
-  for (h in 1:niter) {
-    # intialize vars #
-    null_fstat_disadv <- NULL
-    null_abs_beta_disadv <- NULL
-    null_lm_pval_disadv <- NULL
-    
-    null_fstat_adv <- NULL
-    null_abs_beta_adv <- NULL
-    null_lm_pval_adv <- NULL
-    for (bin in nBins) { # This is the slooooow step
-      
-      # if(remove_outliers) {
-      #   temp <- data.frame(peak=peak)
-      #   temp <- remove_outliers(temp,peak)
-      #   peak <- temp$peak
-      # }
-      
-      # run models #
-      bin_vec <- brain_behave_data_elec[, bin]
-      null_lm_disadv <-summary(lm(bin_vec ~ sample(ineq_disadvent), data = brain_behave_data_elec))
-      null_lm_adv <- summary(lm(bin_vec ~ sample(ineq_advent), data = brain_behave_data_elec))
-      
-      # save info from models #
-      null_fstat_disadv[bin] <- null_lm_disadv$fstatistic[1]
-      null_abs_beta_disadv[bin] <- abs(null_lm_disadv$coefficients[2,1])
-      null_lm_pval_disadv[bin] <- null_lm_disadv$coefficients[2,4]
-      
-      null_fstat_adv[bin] <- null_lm_adv$fstatistic[1]
-      null_abs_beta_adv[bin] <- abs(null_lm_adv$coefficients[2,1])
-      null_lm_pval_adv[bin] <- null_lm_adv$coefficients[2,4]      
-    }
-    
-    ## Find out the longest stretch in which pval < 0.05 and create sum-of-F-stats statistic ##
-    # disadvantageous #
-    stretch <- null_lm_pval_disadv < 0.05
-    indices <- stretch_start_end(stretch)
-    if(is.na(indices[1])) {
-      # if no stretch just take the max vals #
-      null_beta_stretch_disadv[h] <- max(null_abs_beta_disadv)
-      null_fstat_stretch_disadv[h] <- max(null_fstat_disadv)
-
-      } else {
-      # if a stretch take the sum of f stats #  
-      null_beta_stretch_disadv[h] <- sum(null_abs_beta_disadv[indices[1]:indices[2]]) # Summary stat
-      null_fstat_stretch_disadv[h] <- sum(null_fstat_disadv[indices[1]:indices[2]]) # Summary stat
-      }
-    
-    # advantageous #
-    stretch <- null_lm_pval_adv < 0.05
-    indices <- stretch_start_end(stretch)
-    if(is.na(indices[1])) {
-      # if no stretch just take the max vals #
-      null_beta_stretch_adv[h] <- max(null_abs_beta_adv)
-      null_fstat_stretch_adv[h] <- max(null_fstat_adv)
-
-      } else {
-      # if a stretch take the sum of f stats #  
-      null_beta_stretch_adv[h] <- sum(null_abs_beta_adv[indices[1]:indices[2]]) # Summary stat
-      null_fstat_stretch_adv[h] <- sum(null_fstat_adv[indices[1]:indices[2]]) # Summary stat
-
-    }    
-  }
-  
-  # our test statistic for the permutation test is the sum of f tests #
-  perm_pval_disadv <- sum(null_fstat_stretch_disadv > fstat_stretch_disadv)/niter
-  perm_pval_adv <- sum(null_fstat_stretch_adv > fstat_stretch_adv)/niter
-  
-  # save vals in results df #
-  results_advantageous <- results_advantageous %>% 
-    mutate_cond(electrode == elec, R2 = r2_adv, absBeta = abs_beta_adv, Fstat = fstat_adv, p = lm_pval_adv, perm_p = perm_pval_adv)
-    
-  results_disadvantageous <- results_disadvantageous %>% 
-    mutate_cond(electrode == elec, R2 = r2_disadv, absBeta = abs_beta_disadv, Fstat = fstat_disadv, p = lm_pval_disadv, perm_p = perm_pval_disadv)
-
-
-}
-
-# save results to results folder #
-# write.csv(results_disadvantageous, path(here(), "results", "results_disadvantageous.csv"))
-# write.csv(results_advantageous, path(here(), "results", "results_advantageous.csv"))
+# brain_behave_data <- brain_behave_data %>%
+#   mutate(rt_bin = (RT * 10) + 10) %>%
+#   gather(key = "bin", value = "gamma", starts_with("bin_")) %>%
+#   mutate(bin = as.numeric(gsub("bin_", "", bin))) %>%
+#   group_by(electrodes, trial, rt_bin) %>%
+#   mutate_cond(bin > rt_bin, gamma = 999999)
+# 
+# brain_behave_data_filtered <- brain_behave_data %>% 
+#   filter(gamma < 999999) %>%
+#   ungroup() %>%
+#   group_by(trial, electrodes) %>%
+#   arrange(desc(bin)) %>%
+#   mutate(reverse_bins = c(3:rt_bin)) %>% # because we cut the first two bins
+#   mutate(reverse_bins = paste0("bin_", reverse_bins)) %>%
+#   spread(key = reverse_bins, value = gamma)
 
 
 ```
 
+```{r regressions}
+
+# save info needed for regressions #
+nBins <- colnames(hg_clean %>% select(starts_with("bin_")))
+hg_behave <- merge.data.frame(hg_clean, behave_data, by.x = "trial", by.y = "round", all.x = T, all.y = F)
+
+
+# ofc #
+ofc_elecs <- elecs_to_use %>% filter(ofc_loc_meeting == 1) %>% select(Electrode)
+brain_behave_data <- hg_behave %>% 
+  filter(grepl(paste(ofc_elecs$Electrode, collapse = "|"), electrodes))
+ofc_electrodes <- unique(brain_behave_data$electrodes)
+
+run_permuted_regressions(brain_behave_data, electrodes = ofc_electrodes, nBins, region_name = "OFC", niter = 10000)
+
+# insula #
+insula_elecs <- elecs_to_use %>% filter(insula_loc_meeting == 1) %>% select(Electrode)
+brain_behave_data <- hg_behave %>% 
+  filter(grepl(paste(insula_elecs$Electrode, collapse = "|"), electrodes))
+insula_electrodes <- unique(brain_behave_data$electrodes)
+
+run_permuted_regressions(brain_behave_data, electrodes = insula_electrodes, nBins, region_name = "Insula", niter = 10000)
+
+# mfg #
+mfg_elecs <- elecs_to_use %>% filter(mfg_loc_meeting == 1) %>% select(Electrode)
+brain_behave_data <- hg_behave %>% 
+  filter(grepl(paste(mfg_elecs$Electrode, collapse = "|"), electrodes))
+mfg_electrodes <- unique(brain_behave_data$electrodes)
+
+run_permuted_regressions(brain_behave_data, electrodes = mfg_electrodes, nBins, region_name = "MFG", niter = 10000)
+
+# sts #
+sts_elecs <- elecs_to_use %>% filter(sts_loc_meeting == 1) %>% select(Electrode)
+brain_behave_data <- hg_behave %>% 
+  filter(grepl(paste(sts_elecs$Electrode, collapse = "|"), electrodes))
+sts_electrodes <- unique(brain_behave_data$electrodes)
+
+run_permuted_regressions(brain_behave_data, electrodes = sts_electrodes, nBins, region_name = "STS", niter = 10000)
+
+# run anovas #
+run_filtered_anova(brain_behave_data, region_name = "OFC")
+run_filtered_anova(brain_behave_data, region_name = "Insula")
+run_filtered_anova(brain_behave_data, region_name = "MFG")
+run_filtered_anova(brain_behave_data, region_name = "STS")
+
+```
 
 # Prediction HG -> choice
 

@@ -226,8 +226,6 @@ count_elecs_table %>%
 count_elecs <- count_elecs %>%
   mutate(mfg_loc_meeting = if_else(grepl("mfg", `Loc Meeting`, ignore.case = T), 1, 
                                    if_else(grepl("frontopolar", `Loc Meeting`, ignore.case = T), 1, 0))) %>%
-    mutate(mfg_loc_meeting = if_else(grepl("mfg", `Loc Meeting`, ignore.case = T), 1, 
-                                   if_else(grepl("frontopolar", `Loc Meeting`, ignore.case = T), 1, 0))) %>%
     mutate(hinal_loc_meeting = if_else(grepl("entorhinal", `Loc Meeting`, ignore.case = T), 1, 
                                    if_else(grepl("perirhinal", `Loc Meeting`, ignore.case = T), 1, 0))) %>%
     mutate(sts_loc_meeting = if_else(grepl("sts", `Loc Meeting`, ignore.case = T), 1, 
