@@ -1,5 +1,5 @@
 run_permuted_regressions_par <- function(brain_behave_data, electrodes, regressor, nBins, region_name, niter = 1000) {
-  
+  print(paste0("Beginning regressions for predictor: ", regressor))
   for(elec in electrodes) {
 
     # update #
