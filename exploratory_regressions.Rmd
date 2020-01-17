@@ -20,7 +20,7 @@ knitr::opts_chunk$set(
 library(tidyverse)
 library(ggplot2)
 library(magrittr)
-library(ggthemr)
+# library(ggthemr)
 library(grid)
 library(gtable)
 library(gridExtra)
@@ -31,6 +31,7 @@ library(kableExtra)
 library(lme4)
 library(RColorBrewer)
 library(doParallel)
+library(parallel)
 library(foreach)
 library(here)
 library(fs)
@@ -44,14 +45,14 @@ source(path("R", "load_high_gamma_data.R"))
 source(path("R", "rolling_window_and_baseline.R"))
 source(path("R", "run_permuted_regressions.R"))
 source(path("R", "run_filtered_anova.R"))
-source('~/Projects/nice_r_functions/ggpaired_pretty.R')
-source('~/Projects/nice_r_functions/mutate_cond.R')
+# source('~/Projects/nice_r_functions/ggpaired_pretty.R')
+source(path("R", 'mutate_cond.R'))
 
 ## plotting helpers ##
-ggthemr("solarized")
+# ggthemr("solarized")
 
 ## paralellization #
-nCores <- 
+nCores <- 10
 registerDoParallel(nCores)
 
 ```
@@ -272,6 +273,7 @@ hg_behave_eda_binned %>%
 # save info needed for regressions #
 nBins <- colnames(hg_clean %>% select(starts_with("bin_")))
 hg_behave <- merge.data.frame(hg_clean, behave_data, by.x = "trial", by.y = "round", all.x = T, all.y = F)
+write.csv(hg_behave, path(here(), "munge", "hg_behave.csv"), row.names = F)
 
 
 ## ofc #$

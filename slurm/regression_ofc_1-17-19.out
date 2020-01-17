@@ -1,0 +1,547 @@
+
+R version 3.6.1 (2019-07-05) -- "Action of the Toes"
+Copyright (C) 2019 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> #### batch script for regressions on scf cluster ###
+> 
+> ## libraries ##
+> library(tidyverse)
+── Attaching packages ─────────────────────────────────────── tidyverse 1.2.1 ──
+✔ ggplot2 3.2.1     ✔ purrr   0.3.2
+✔ tibble  2.1.3     ✔ dplyr   0.8.3
+✔ tidyr   0.8.3     ✔ stringr 1.4.0
+✔ readr   1.3.1     ✔ forcats 0.4.0
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+> library(ggplot2)
+> library(magrittr)
+
+Attaching package: ‘magrittr’
+
+The following object is masked from ‘package:purrr’:
+
+    set_names
+
+The following object is masked from ‘package:tidyr’:
+
+    extract
+
+> # library(ggthemr)
+> library(grid)
+> library(gtable)
+> library(gridExtra)
+
+Attaching package: ‘gridExtra’
+
+The following object is masked from ‘package:dplyr’:
+
+    combine
+
+> library(wesanderson)
+> library(ggsci)
+> library(zoo)
+
+Attaching package: ‘zoo’
+
+The following objects are masked from ‘package:base’:
+
+    as.Date, as.Date.numeric
+
+> library(kableExtra)
+
+Attaching package: ‘kableExtra’
+
+The following object is masked from ‘package:dplyr’:
+
+    group_rows
+
+> library(lme4)
+Loading required package: Matrix
+
+Attaching package: ‘Matrix’
+
+The following object is masked from ‘package:tidyr’:
+
+    expand
+
+> library(RColorBrewer)
+> library(doParallel)
+Loading required package: foreach
+
+Attaching package: ‘foreach’
+
+The following objects are masked from ‘package:purrr’:
+
+    accumulate, when
+
+Loading required package: iterators
+Loading required package: parallel
+> library(parallel)
+> library(foreach)
+> library(here)
+here() starts at /accounts/campus/bstavel/dictator_behavioral_data_analysis
+> library(fs)
+> library(ggcorrplot)
+> 
+> ## hand written functions ##
+> source(path(here(), "R", "load_behave_data.R"))
+> source(path(here(), "R", "prep_behave_data.R"))
+> source(path(here(), "R", "stretch_start_end.R"))
+> source(path(here(), "R", "load_high_gamma_data.R"))
+> source(path(here(), "R", "rolling_window_and_baseline.R"))
+> source(path(here(), "R", "run_permuted_regressions.R"))
+> source(path(here(), "R", "run_permuted_regressions_par.R"))
+> source(path(here(), "R", "run_permuted_regressions.R"))
+> source(path(here(), "R", "run_filtered_anova.R"))
+> # source('~/Projects/nice_r_functions/ggpaired_pretty.R')
+> source(path(here(), "R", 'mutate_cond.R'))
+> 
+> ## plotting helpers ##
+> # ggthemr("solarized")
+> 
+> ## paralellization ##
+> nCores <- 10
+> registerDoParallel(nCores)
+> 
+> 
+> ## read in data ##
+> file_path_to_elecs_of_interest <- path(here(), "munge", "IR35_elecs_of_interest.csv")
+> path_hg_clean <- path(here(), "munge", "hg_behave.csv")
+> hg_behave <-  read.csv(path_hg_clean)
+> elecs_to_use <- read.csv(file_path_to_elecs_of_interest)
+> 
+> ## regressions ##
+> # save info needed for regressions #
+> nBins <- colnames(hg_behave %>% select(starts_with("bin_")))
+> niter <- 10000 
+> 
+> ## ofc ##
+> # prep #
+> ofc_elecs <- elecs_to_use %>% filter(ofc_loc_meeting == 1) %>% select(Electrode)
+> brain_behave_data <- hg_behave %>% 
++   filter(grepl(paste(ofc_elecs$Electrode, collapse = "|"), electrodes))
+> ofc_electrodes <- unique(brain_behave_data$electrodes)
+> 
+> ## run regressions ##
+> # adv ineq #
+> run_permuted_regressions_par(brain_behave_data, electrodes = ofc_electrodes, regressor = "ineq_advent", nBins, region_name = "OFC", niter)
+[1] "Starting electrode 1 of 6"
+[1] "1% complete for electrode1 of 6"
+[1] "2% complete for electrode1 of 6"
+[1] "3% complete for electrode1 of 6"
+[1] "4% complete for electrode1 of 6"
+[1] "5% complete for electrode1 of 6"
+[1] "6% complete for electrode1 of 6"
+[1] "7% complete for electrode1 of 6"
+[1] "8% complete for electrode1 of 6"
+[1] "9% complete for electrode1 of 6"
+[1] "10% complete for electrode1 of 6"
+[1] "11% complete for electrode1 of 6"
+[1] "12% complete for electrode1 of 6"
+[1] "13% complete for electrode1 of 6"
+[1] "14% complete for electrode1 of 6"
+[1] "15% complete for electrode1 of 6"
+[1] "16% complete for electrode1 of 6"
+[1] "17% complete for electrode1 of 6"
+[1] "18% complete for electrode1 of 6"
+[1] "19% complete for electrode1 of 6"
+[1] "20% complete for electrode1 of 6"
+[1] "21% complete for electrode1 of 6"
+[1] "22% complete for electrode1 of 6"
+[1] "23% complete for electrode1 of 6"
+[1] "24% complete for electrode1 of 6"
+[1] "25% complete for electrode1 of 6"
+[1] "26% complete for electrode1 of 6"
+[1] "27% complete for electrode1 of 6"
+[1] "28% complete for electrode1 of 6"
+[1] "29% complete for electrode1 of 6"
+[1] "30% complete for electrode1 of 6"
+[1] "31% complete for electrode1 of 6"
+[1] "32% complete for electrode1 of 6"
+[1] "33% complete for electrode1 of 6"
+[1] "34% complete for electrode1 of 6"
+[1] "35% complete for electrode1 of 6"
+[1] "36% complete for electrode1 of 6"
+[1] "37% complete for electrode1 of 6"
+[1] "38% complete for electrode1 of 6"
+[1] "39% complete for electrode1 of 6"
+[1] "40% complete for electrode1 of 6"
+[1] "41% complete for electrode1 of 6"
+[1] "42% complete for electrode1 of 6"
+[1] "43% complete for electrode1 of 6"
+[1] "44% complete for electrode1 of 6"
+[1] "45% complete for electrode1 of 6"
+[1] "46% complete for electrode1 of 6"
+[1] "47% complete for electrode1 of 6"
+[1] "48% complete for electrode1 of 6"
+[1] "49% complete for electrode1 of 6"
+[1] "50% complete for electrode1 of 6"
+[1] "51% complete for electrode1 of 6"
+[1] "52% complete for electrode1 of 6"
+[1] "53% complete for electrode1 of 6"
+[1] "54% complete for electrode1 of 6"
+[1] "55% complete for electrode1 of 6"
+[1] "56% complete for electrode1 of 6"
+[1] "57% complete for electrode1 of 6"
+[1] "58% complete for electrode1 of 6"
+[1] "59% complete for electrode1 of 6"
+[1] "60% complete for electrode1 of 6"
+[1] "61% complete for electrode1 of 6"
+[1] "62% complete for electrode1 of 6"
+[1] "63% complete for electrode1 of 6"
+[1] "64% complete for electrode1 of 6"
+[1] "65% complete for electrode1 of 6"
+[1] "66% complete for electrode1 of 6"
+[1] "67% complete for electrode1 of 6"
+[1] "68% complete for electrode1 of 6"
+[1] "69% complete for electrode1 of 6"
+[1] "70% complete for electrode1 of 6"
+[1] "71% complete for electrode1 of 6"
+[1] "72% complete for electrode1 of 6"
+[1] "73% complete for electrode1 of 6"
+[1] "74% complete for electrode1 of 6"
+[1] "75% complete for electrode1 of 6"
+[1] "76% complete for electrode1 of 6"
+[1] "77% complete for electrode1 of 6"
+[1] "78% complete for electrode1 of 6"
+[1] "79% complete for electrode1 of 6"
+[1] "80% complete for electrode1 of 6"
+[1] "81% complete for electrode1 of 6"
+[1] "82% complete for electrode1 of 6"
+[1] "83% complete for electrode1 of 6"
+[1] "84% complete for electrode1 of 6"
+[1] "85% complete for electrode1 of 6"
+[1] "86% complete for electrode1 of 6"
+[1] "87% complete for electrode1 of 6"
+[1] "88% complete for electrode1 of 6"
+[1] "89% complete for electrode1 of 6"
+[1] "90% complete for electrode1 of 6"
+[1] "91% complete for electrode1 of 6"
+[1] "92% complete for electrode1 of 6"
+[1] "93% complete for electrode1 of 6"
+[1] "94% complete for electrode1 of 6"
+[1] "95% complete for electrode1 of 6"
+[1] "96% complete for electrode1 of 6"
+[1] "97% complete for electrode1 of 6"
+[1] "98% complete for electrode1 of 6"
+[1] "99% complete for electrode1 of 6"
+[1] "100% complete for electrode1 of 6"
+[1] "Starting electrode 1 of 6"
+[1] "1% complete for electrode1 of 6"
+[1] "2% complete for electrode1 of 6"
+[1] "3% complete for electrode1 of 6"
+[1] "4% complete for electrode1 of 6"
+[1] "5% complete for electrode1 of 6"
+[1] "6% complete for electrode1 of 6"
+[1] "7% complete for electrode1 of 6"
+[1] "8% complete for electrode1 of 6"
+[1] "9% complete for electrode1 of 6"
+[1] "10% complete for electrode1 of 6"
+[1] "11% complete for electrode1 of 6"
+[1] "12% complete for electrode1 of 6"
+[1] "13% complete for electrode1 of 6"
+[1] "14% complete for electrode1 of 6"
+[1] "15% complete for electrode1 of 6"
+[1] "16% complete for electrode1 of 6"
+[1] "17% complete for electrode1 of 6"
+[1] "18% complete for electrode1 of 6"
+[1] "19% complete for electrode1 of 6"
+[1] "20% complete for electrode1 of 6"
+[1] "21% complete for electrode1 of 6"
+[1] "22% complete for electrode1 of 6"
+[1] "23% complete for electrode1 of 6"
+[1] "24% complete for electrode1 of 6"
+[1] "25% complete for electrode1 of 6"
+[1] "26% complete for electrode1 of 6"
+[1] "27% complete for electrode1 of 6"
+[1] "28% complete for electrode1 of 6"
+[1] "29% complete for electrode1 of 6"
+[1] "30% complete for electrode1 of 6"
+[1] "31% complete for electrode1 of 6"
+[1] "32% complete for electrode1 of 6"
+[1] "33% complete for electrode1 of 6"
+[1] "34% complete for electrode1 of 6"
+[1] "35% complete for electrode1 of 6"
+[1] "36% complete for electrode1 of 6"
+[1] "37% complete for electrode1 of 6"
+[1] "38% complete for electrode1 of 6"
+[1] "39% complete for electrode1 of 6"
+[1] "40% complete for electrode1 of 6"
+[1] "41% complete for electrode1 of 6"
+[1] "42% complete for electrode1 of 6"
+[1] "43% complete for electrode1 of 6"
+[1] "44% complete for electrode1 of 6"
+[1] "45% complete for electrode1 of 6"
+[1] "46% complete for electrode1 of 6"
+[1] "47% complete for electrode1 of 6"
+[1] "48% complete for electrode1 of 6"
+[1] "49% complete for electrode1 of 6"
+[1] "50% complete for electrode1 of 6"
+[1] "51% complete for electrode1 of 6"
+[1] "52% complete for electrode1 of 6"
+[1] "53% complete for electrode1 of 6"
+[1] "54% complete for electrode1 of 6"
+[1] "55% complete for electrode1 of 6"
+[1] "56% complete for electrode1 of 6"
+[1] "57% complete for electrode1 of 6"
+[1] "58% complete for electrode1 of 6"
+[1] "59% complete for electrode1 of 6"
+[1] "60% complete for electrode1 of 6"
+[1] "61% complete for electrode1 of 6"
+[1] "62% complete for electrode1 of 6"
+[1] "63% complete for electrode1 of 6"
+[1] "64% complete for electrode1 of 6"
+[1] "65% complete for electrode1 of 6"
+[1] "66% complete for electrode1 of 6"
+[1] "67% complete for electrode1 of 6"
+[1] "68% complete for electrode1 of 6"
+[1] "69% complete for electrode1 of 6"
+[1] "70% complete for electrode1 of 6"
+[1] "71% complete for electrode1 of 6"
+[1] "72% complete for electrode1 of 6"
+[1] "73% complete for electrode1 of 6"
+[1] "74% complete for electrode1 of 6"
+[1] "75% complete for electrode1 of 6"
+[1] "76% complete for electrode1 of 6"
+[1] "77% complete for electrode1 of 6"
+[1] "78% complete for electrode1 of 6"
+[1] "79% complete for electrode1 of 6"
+[1] "80% complete for electrode1 of 6"
+[1] "81% complete for electrode1 of 6"
+[1] "82% complete for electrode1 of 6"
+[1] "83% complete for electrode1 of 6"
+[1] "84% complete for electrode1 of 6"
+[1] "85% complete for electrode1 of 6"
+[1] "86% complete for electrode1 of 6"
+[1] "87% complete for electrode1 of 6"
+[1] "88% complete for electrode1 of 6"
+[1] "89% complete for electrode1 of 6"
+[1] "90% complete for electrode1 of 6"
+[1] "91% complete for electrode1 of 6"
+[1] "92% complete for electrode1 of 6"
+[1] "93% complete for electrode1 of 6"
+[1] "94% complete for electrode1 of 6"
+[1] "95% complete for electrode1 of 6"
+[1] "96% complete for electrode1 of 6"
+[1] "97% complete for electrode1 of 6"
+[1] "98% complete for electrode1 of 6"
+[1] "99% complete for electrode1 of 6"
+[1] "100% complete for electrode1 of 6"
+[1] "Starting electrode 1 of 6"
+[1] "1% complete for electrode1 of 6"
+[1] "2% complete for electrode1 of 6"
+[1] "3% complete for electrode1 of 6"
+[1] "4% complete for electrode1 of 6"
+[1] "5% complete for electrode1 of 6"
+[1] "6% complete for electrode1 of 6"
+[1] "7% complete for electrode1 of 6"
+[1] "8% complete for electrode1 of 6"
+[1] "9% complete for electrode1 of 6"
+[1] "10% complete for electrode1 of 6"
+[1] "11% complete for electrode1 of 6"
+[1] "12% complete for electrode1 of 6"
+[1] "13% complete for electrode1 of 6"
+[1] "14% complete for electrode1 of 6"
+[1] "15% complete for electrode1 of 6"
+[1] "16% complete for electrode1 of 6"
+[1] "17% complete for electrode1 of 6"
+[1] "18% complete for electrode1 of 6"
+[1] "19% complete for electrode1 of 6"
+[1] "20% complete for electrode1 of 6"
+[1] "21% complete for electrode1 of 6"
+[1] "22% complete for electrode1 of 6"
+[1] "23% complete for electrode1 of 6"
+[1] "24% complete for electrode1 of 6"
+[1] "25% complete for electrode1 of 6"
+[1] "26% complete for electrode1 of 6"
+[1] "27% complete for electrode1 of 6"
+[1] "28% complete for electrode1 of 6"
+[1] "29% complete for electrode1 of 6"
+[1] "30% complete for electrode1 of 6"
+[1] "31% complete for electrode1 of 6"
+[1] "32% complete for electrode1 of 6"
+[1] "33% complete for electrode1 of 6"
+[1] "34% complete for electrode1 of 6"
+[1] "35% complete for electrode1 of 6"
+[1] "36% complete for electrode1 of 6"
+[1] "37% complete for electrode1 of 6"
+[1] "38% complete for electrode1 of 6"
+[1] "39% complete for electrode1 of 6"
+[1] "40% complete for electrode1 of 6"
+[1] "41% complete for electrode1 of 6"
+[1] "42% complete for electrode1 of 6"
+[1] "43% complete for electrode1 of 6"
+[1] "44% complete for electrode1 of 6"
+[1] "45% complete for electrode1 of 6"
+[1] "46% complete for electrode1 of 6"
+[1] "47% complete for electrode1 of 6"
+[1] "48% complete for electrode1 of 6"
+[1] "49% complete for electrode1 of 6"
+[1] "50% complete for electrode1 of 6"
+[1] "51% complete for electrode1 of 6"
+[1] "52% complete for electrode1 of 6"
+[1] "53% complete for electrode1 of 6"
+[1] "54% complete for electrode1 of 6"
+[1] "55% complete for electrode1 of 6"
+[1] "56% complete for electrode1 of 6"
+[1] "57% complete for electrode1 of 6"
+[1] "58% complete for electrode1 of 6"
+[1] "59% complete for electrode1 of 6"
+[1] "60% complete for electrode1 of 6"
+[1] "61% complete for electrode1 of 6"
+[1] "62% complete for electrode1 of 6"
+[1] "63% complete for electrode1 of 6"
+[1] "64% complete for electrode1 of 6"
+[1] "65% complete for electrode1 of 6"
+[1] "66% complete for electrode1 of 6"
+[1] "67% complete for electrode1 of 6"
+[1] "68% complete for electrode1 of 6"
+[1] "69% complete for electrode1 of 6"
+[1] "70% complete for electrode1 of 6"
+[1] "71% complete for electrode1 of 6"
+[1] "72% complete for electrode1 of 6"
+[1] "73% complete for electrode1 of 6"
+[1] "74% complete for electrode1 of 6"
+[1] "75% complete for electrode1 of 6"
+[1] "76% complete for electrode1 of 6"
+[1] "77% complete for electrode1 of 6"
+[1] "78% complete for electrode1 of 6"
+[1] "79% complete for electrode1 of 6"
+[1] "80% complete for electrode1 of 6"
+[1] "81% complete for electrode1 of 6"
+[1] "82% complete for electrode1 of 6"
+[1] "83% complete for electrode1 of 6"
+[1] "84% complete for electrode1 of 6"
+[1] "85% complete for electrode1 of 6"
+[1] "86% complete for electrode1 of 6"
+[1] "87% complete for electrode1 of 6"
+[1] "88% complete for electrode1 of 6"
+[1] "89% complete for electrode1 of 6"
+[1] "90% complete for electrode1 of 6"
+[1] "91% complete for electrode1 of 6"
+[1] "92% complete for electrode1 of 6"
+[1] "93% complete for electrode1 of 6"
+[1] "94% complete for electrode1 of 6"
+[1] "95% complete for electrode1 of 6"
+[1] "96% complete for electrode1 of 6"
+[1] "97% complete for electrode1 of 6"
+[1] "98% complete for electrode1 of 6"
+[1] "99% complete for electrode1 of 6"
+[1] "100% complete for electrode1 of 6"
+[1] "Starting electrode 1 of 6"
+[1] "1% complete for electrode1 of 6"
+[1] "2% complete for electrode1 of 6"
+[1] "3% complete for electrode1 of 6"
+[1] "4% complete for electrode1 of 6"
+[1] "5% complete for electrode1 of 6"
+[1] "6% complete for electrode1 of 6"
+[1] "7% complete for electrode1 of 6"
+[1] "8% complete for electrode1 of 6"
+[1] "9% complete for electrode1 of 6"
+[1] "10% complete for electrode1 of 6"
+[1] "11% complete for electrode1 of 6"
+[1] "12% complete for electrode1 of 6"
+[1] "13% complete for electrode1 of 6"
+[1] "14% complete for electrode1 of 6"
+[1] "15% complete for electrode1 of 6"
+[1] "16% complete for electrode1 of 6"
+[1] "17% complete for electrode1 of 6"
+[1] "18% complete for electrode1 of 6"
+[1] "19% complete for electrode1 of 6"
+[1] "20% complete for electrode1 of 6"
+[1] "21% complete for electrode1 of 6"
+[1] "22% complete for electrode1 of 6"
+[1] "23% complete for electrode1 of 6"
+[1] "24% complete for electrode1 of 6"
+[1] "25% complete for electrode1 of 6"
+[1] "26% complete for electrode1 of 6"
+[1] "27% complete for electrode1 of 6"
+[1] "28% complete for electrode1 of 6"
+[1] "29% complete for electrode1 of 6"
+[1] "30% complete for electrode1 of 6"
+[1] "31% complete for electrode1 of 6"
+[1] "32% complete for electrode1 of 6"
+[1] "33% complete for electrode1 of 6"
+[1] "34% complete for electrode1 of 6"
+[1] "35% complete for electrode1 of 6"
+[1] "36% complete for electrode1 of 6"
+[1] "37% complete for electrode1 of 6"
+[1] "38% complete for electrode1 of 6"
+[1] "39% complete for electrode1 of 6"
+[1] "40% complete for electrode1 of 6"
+[1] "41% complete for electrode1 of 6"
+[1] "42% complete for electrode1 of 6"
+[1] "43% complete for electrode1 of 6"
+[1] "44% complete for electrode1 of 6"
+[1] "45% complete for electrode1 of 6"
+[1] "46% complete for electrode1 of 6"
+[1] "47% complete for electrode1 of 6"
+[1] "48% complete for electrode1 of 6"
+[1] "49% complete for electrode1 of 6"
+[1] "50% complete for electrode1 of 6"
+[1] "51% complete for electrode1 of 6"
+[1] "52% complete for electrode1 of 6"
+[1] "53% complete for electrode1 of 6"
+[1] "54% complete for electrode1 of 6"
+[1] "55% complete for electrode1 of 6"
+[1] "56% complete for electrode1 of 6"
+[1] "57% complete for electrode1 of 6"
+[1] "58% complete for electrode1 of 6"
+[1] "59% complete for electrode1 of 6"
+[1] "60% complete for electrode1 of 6"
+[1] "61% complete for electrode1 of 6"
+[1] "62% complete for electrode1 of 6"
+[1] "63% complete for electrode1 of 6"
+[1] "64% complete for electrode1 of 6"
+[1] "65% complete for electrode1 of 6"
+[1] "66% complete for electrode1 of 6"
+[1] "67% complete for electrode1 of 6"
+[1] "68% complete for electrode1 of 6"
+[1] "69% complete for electrode1 of 6"
+[1] "70% complete for electrode1 of 6"
+[1] "71% complete for electrode1 of 6"
+[1] "72% complete for electrode1 of 6"
+[1] "73% complete for electrode1 of 6"
+[1] "74% complete for electrode1 of 6"
+[1] "75% complete for electrode1 of 6"
+[1] "76% complete for electrode1 of 6"
+[1] "77% complete for electrode1 of 6"
+[1] "78% complete for electrode1 of 6"
+[1] "79% complete for electrode1 of 6"
+[1] "80% complete for electrode1 of 6"
+[1] "81% complete for electrode1 of 6"
+[1] "82% complete for electrode1 of 6"
+[1] "83% complete for electrode1 of 6"
+[1] "84% complete for electrode1 of 6"
+[1] "85% complete for electrode1 of 6"
+[1] "86% complete for electrode1 of 6"
+[1] "87% complete for electrode1 of 6"
+[1] "88% complete for electrode1 of 6"
+[1] "89% complete for electrode1 of 6"
+[1] "90% complete for electrode1 of 6"
+[1] "91% complete for electrode1 of 6"
+[1] "92% complete for electrode1 of 6"
+[1] "93% complete for electrode1 of 6"
+[1] "94% complete for electrode1 of 6"
+[1] "95% complete for electrode1 of 6"
+[1] "96% complete for electrode1 of 6"
+[1] "97% complete for electrode1 of 6"
+[1] "98% complete for electrode1 of 6"
+[1] "99% complete for electrode1 of 6"
+[1] "100% complete for electrode1 of 6"
