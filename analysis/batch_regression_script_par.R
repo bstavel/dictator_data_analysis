@@ -82,22 +82,22 @@ insula_elecs <- elecs_to_use %>% filter(insula_loc_meeting == 1) %>% select(Elec
 brain_behave_data <- hg_behave %>%
   filter(grepl(paste(insula_elecs$Electrode, collapse = "|"), electrodes))
 insula_electrodes <- unique(brain_behave_data$electrodes)
-
-## run regressions ##
-# adv ineq #
-run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "ineq_advent", nBins, region_name = "Insula", niter)
-# disadv ineq #
-run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "ineq_disadvent", nBins, region_name = "Insula", niter)
-# self payoff #
-run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "self_payoff", nBins, region_name = "Insula", niter)
-# other payoff #
-run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "other_payoff", nBins, region_name = "Insula", niter)
-# self foregone #
-run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "self_foregone", nBins, region_name = "Insula", niter)
-# other foregone #
-run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "other_foregone", nBins, region_name = "Insula", niter)
-# anova #
-# run_filtered_anova(brain_behave_data, region_name = "Insula")
+# 
+# ## run regressions ##
+# # adv ineq #
+# run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "ineq_advent", nBins, region_name = "Insula", niter)
+# # disadv ineq #
+# run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "ineq_disadvent", nBins, region_name = "Insula", niter)
+# # self payoff #
+# run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "self_payoff", nBins, region_name = "Insula", niter)
+# # other payoff #
+# run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "other_payoff", nBins, region_name = "Insula", niter)
+# # self foregone #
+# run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "self_foregone", nBins, region_name = "Insula", niter)
+# # other foregone #
+# run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "other_foregone", nBins, region_name = "Insula", niter)
+# # anova #
+# # run_filtered_anova(brain_behave_data, region_name = "Insula")
 
 ## cingulate ##
 # prep #
@@ -108,7 +108,7 @@ cingulate_electrodes <- unique(brain_behave_data$electrodes)
 
 ## run regressions ##
 # adv ineq #
-run_permuted_regressions_par_(brain_behave_data, electrodes = cingulate_electrodes, regressor = "ineq_advent", nBins, region_name = "Cingulate", niter)
+run_permuted_regressions_par(brain_behave_data, electrodes = cingulate_electrodes, regressor = "ineq_advent", nBins, region_name = "Cingulate", niter)
 # disadv ineq #
 run_permuted_regressions_par(brain_behave_data, electrodes = cingulate_electrodes, regressor = "ineq_disadvent", nBins, region_name = "Cingulate", niter)
 # self payoff #
