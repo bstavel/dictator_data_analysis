@@ -122,6 +122,9 @@ hg_clean <- rolling_window_and_baseline(hg_data, lWin = 100, lOver = 50)
 half_index <- sample(1:228, 114)
 hg_eda <- hg_clean %>% filter(trial %in% half_index)
 
+# with behavior #
+hg_behave <- merge.data.frame(hg_clean, behave_data, by.x = "trial", by.y = "round", all.x = T, all.y = F)
+
 ```
 
 ```{r hg-eda-means}
@@ -301,30 +304,49 @@ regions_to_combine <- c("OFC", "Insula")
 
 regression_results <- compile_results(regions_to_combine)
 
+insula_results <- compile_results("Insula")
+
 ```
 
 
 ```{r anovas}
-run_filtered_anova(brain_behave_data, region_name = "OFC")
-run_filtered_anova(brain_behave_data, region_name = "Cingulate")
-run_filtered_anova(brain_behave_data, region_name = "Insula")
-run_filtered_anova(brain_behave_data, region_name = "MFG")
-run_filtered_anova(brain_behave_data, region_name = "STS")
+run_filtered_anova(ofc_results, hg_behave,  region_name = "OFC")
+run_filtered_anova(cingulate_results, hg_behave,  region_name = "Cingulate")
+run_filtered_anova(insula_results, hg_behave, region_name = "Insula")
+run_filtered_anova(mfg_results, hg_behave, region_name = "MFG")
+run_filtered_anova(sts_results, hg_behave,  region_name = "STS")
 
+## ofc ##
 ofc_results_dis <- read.csv(path(here(), "results", paste0(region_name, "_anova_results_disadvantageous.csv")))
-
 ofc_results_adv <- read.csv(path(here(), "results", paste0(region_name, "_anova_results_advantageous.csv")))
 
 ofc_results_dis %>%
   select (-X, -X.1) %>%
   kable() %>%
-  add_header_above(c("OFC: Disadvantageous Inequity" = 11)) %>%
+  add_header_above(c("Insula: Disadvantageous Inequity" = 11)) %>%
   kable_styling(position = "center")
 
 ofc_results_adv %>%
   select (-X, -X.1) %>%
   kable() %>%
   # add_header_above(c("OFC: Advantageous Inequity" = 8)) %>%
+  kable_styling(position = "center")
+
+## insula ##
+region_name <- "Insula"
+insula_results_dis <- read.csv(path(here(), "results", paste0(region_name, "_anova_results_disadvantageous.csv")))
+insula_results_adv <- read.csv(path(here(), "results", paste0(region_name, "_anova_results_advantageous.csv")))
+
+insula_results_dis %>%
+  select (-X, -X.1) %>%
+  kable() %>%
+  add_header_above(c("Insula: Disadvantageous Inequity" =9 )) %>%
+  kable_styling(position = "center")
+
+insula_results_adv %>%
+  select (-X, -X.1) %>%
+  kable() %>%
+  add_header_above(c("Insula: Advantageous Inequity" = 12)) %>%
   kable_styling(position = "center")
 
 ```
