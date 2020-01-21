@@ -141,7 +141,7 @@ sts_electrodes <- unique(brain_behave_data$electrodes)
 
 ## run regressions ##
 # adv ineq #
-run_permuted_regressions_par_par(brain_behave_data, electrodes = sts_electrodes, regressor = "ineq_advent", nBins, region_name = "STS", niter)
+run_permuted_regressions_par(brain_behave_data, electrodes = sts_electrodes, regressor = "ineq_advent", nBins, region_name = "STS", niter)
 # disadv ineq #
 run_permuted_regressions_par(brain_behave_data, electrodes = sts_electrodes, regressor = "ineq_disadvent", nBins, region_name = "STS", niter)
 # self payoff #
