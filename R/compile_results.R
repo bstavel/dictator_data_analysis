@@ -10,7 +10,9 @@ compile_results <- function(regions){
   for(file in files_to_combine){
     temp <- read.csv(fs::path(here(), "results", file))
     predictor <- gsub("^[^_]*_", "", gsub(".*-", "", gsub("_results.csv", "", file))) # because _someone_ didn't save the predictor in the damn df
+    region <- gsub("_.*", "", file)
     temp$predictor <- predictor
+    temp$region <- region
     combined_results <- rbind(combined_results, temp)
   }
   

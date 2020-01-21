@@ -1,4 +1,4 @@
-stepwise_anova_method <- function(regression_results, hg_behave){
+stepwise_anova_method_par <- function(regression_results, hg_behave, niter = 10000){
   
   # only active electrodes #
   active_results <- regression_results %>% filter(perm_p < (0.05)/length(regression_results$electrodes))
@@ -10,6 +10,9 @@ stepwise_anova_method <- function(regression_results, hg_behave){
   
   
   for(elec in electrodes){
+    # print status # 
+    print(paste0("Beginning stepped anova analysis for electrode ", which(electrodes %in% elec), " out of ", length(electrodes)))
+    
     # create empty df
     stepped_anova_results <- data.frame(matrix(NA, nrow = (length(predictors) -1), ncol = 5))
     colnames(stepped_anova_results) <- c("region", "electrode", "first_pred", "stepped_pred", "anova_perm_p")
@@ -129,8 +132,11 @@ stepwise_anova_method <- function(regression_results, hg_behave){
         }
         
       ## run null models ##
-      for(h in 1:niter){
+        fstat_stretch_shuffle <- foreach(h = 1:niter, .inorder=FALSE) %dopar% {
         f_anova_shuffle <- NULL
+        if(h %% 1000 == 0){
+          print(paste0( (h/niter) * 100, "% complete for electrode ", which(electrodes %in% elec), " of ", length(electrodes)))
+        }
         for(bin in bins){
           ## base model ##
           set.seed(h) # reproducability for anovas
@@ -166,6 +172,8 @@ stepwise_anova_method <- function(regression_results, hg_behave){
         } else {
           fstat_stretch_shuffle[pred, bin] <- sum(f_anova_shuffle[indices[1]:indices[2]]) # Summary stat
         }
+        
+        return(fstat_stretch_shuffle[pred, bin])
       } # end permutation
       
       # get permuted p value #

@@ -1,4 +1,4 @@
-run_permuted_regressions <- function(brain_behave_data, electrodes, nBins, region_name, niter = 1000) {
+run_permuted_regressions_fake <- function(brain_behave_data, electrodes, nBins, region_name, niter = 1000) {
   
   # create results dfs #
   results_advantageous <- data.frame(matrix(nrow = length(electrodes)*length(nBins), ncol = 8))
