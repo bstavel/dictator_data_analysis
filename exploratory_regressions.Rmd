@@ -301,7 +301,6 @@ fake_dis %>%
 ```{r concactenate-results}
 
 regions_to_combine <- c("OFC", "Insula", "Cingulate", "STS")
-
 regression_results <- compile_results(regions_to_combine)
 
 insula_results <- compile_results("Insula")
@@ -368,6 +367,145 @@ all_results_adv %>%
   kable_styling(position = "center")
 
 ```
+
+```{r reg-results}
+
+regression_results %>%
+  filter(electrode == "RTH6-RTH7")  %>%
+  kable() %>%
+  add_header_above(c("Advantageous Inequity" = length(regression_results))) %>%
+  kable_styling(position = "center")
+
+```
+
+```{r prep-filter-anova-viz}
+regions_to_combine <- c("OFC", "Insula", "Cingulate", "STS")
+regression_results <- compile_results(regions_to_combine)
+
+run_filtered_anova(regression_results, hg_behave,  region_name = "All", all_results = T)
+
+adv_results_for_plots <- read.csv(fs::path(here(), "results", paste0(region_name, "_anova_results_advantageous.csv")))
+dis_results_for_plots <- read.csv(fs::path(here(), "results", paste0(region_name, "_anova_results_disadvantageous.csv")))
+```
+
+```{r plot-filter-anovas}
+ggthemr::ggthemr("pale", layout = "plain")
+getPalette = colorRampPalette(brewer.pal(3, "Set1"))
+
+adv_results_for_plots %>%
+  mutate(sig = if_else(perm_p < 0.05 & p < 0.05 & anova_p < 0.05, "Significant", "Insignificant")) %>%
+  mutate_cond(sig == "Significant", sig = as.character(region)) %>%
+  ggplot(., aes( x = bin, y = diff_adj_r2, color = sig, fill = sig)) +
+  geom_col(alpha = .5) +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), panel.background = element_rect(fill = "white")) + 
+  scale_fill_manual(values = c("grey", getPalette(3))) +
+  scale_color_manual(values = c("grey", getPalette(3))) +
+  labs(y = "Difference in Adj. R Squared", x = "Bins", fill = "Region", color = "Region") +
+  facet_wrap(~electrode) + 
+  ggtitle("Advantageous Inequality Results")
+
+dis_results_for_plots %>%
+  mutate(sig = if_else(perm_p < 0.05 & p < 0.05 & anova_p < 0.05, "Significant", "Insignificant")) %>%
+  mutate_cond(sig == "Significant", sig = as.character(region)) %>%
+  ggplot(., aes( x = bin, y = diff_adj_r2, color = sig, fill = sig)) +
+  geom_col(alpha = .5) +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), panel.background = element_rect(fill = "white")) + 
+  scale_fill_manual(values = c("grey", getPalette(3)[2:3])) +
+  scale_color_manual(values = c("grey", getPalette(3)[2:3])) +
+  labs(y = "Difference in Adj. R Squared", x = "Bins", fill = "Region", color = "Region") +
+  facet_wrap(~electrode) + 
+  ggtitle("Disdvantageous Inequality Results")
+
+
+regression_results %>%
+  filter(predictor == "self_payoff") %>%
+  mutate(sig = if_else(perm_p < 0.05 & p < 0.05, "Significant", "Insignificant")) %>%
+  mutate_cond(sig == "Significant", sig = as.character(region)) %>%
+  mutate(sig = relevel(factor(sig), ref = "Insignificant")) %>%
+  ggplot(., aes( x = bin, y = R2, color = sig, fill = sig)) +
+  geom_col(alpha = .5) +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), panel.background = element_rect(fill = "white")) + 
+  scale_fill_manual(values = c("grey", getPalette(4))) +
+  scale_color_manual(values = c("grey", getPalette(4))) +
+  labs(y = "Difference in Adj. R Squared", x = "Bins", fill = "Region", color = "Region") +
+  facet_wrap(~electrode) + 
+  ggtitle("Self Payoff Results")
+
+regression_results %>%
+  filter(predictor == "self_foregone") %>%
+  mutate(sig = if_else(perm_p < 0.05 & p < 0.05, "Significant", "Insignificant")) %>%
+  mutate_cond(sig == "Significant", sig = as.character(region)) %>%
+  mutate(sig = relevel(factor(sig), ref = "Insignificant")) %>%
+  ggplot(., aes( x = bin, y = R2, color = sig, fill = sig)) +
+  geom_col(alpha = .5) +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), panel.background = element_rect(fill = "white")) + 
+  scale_fill_manual(values = c("grey", getPalette(4))) +
+  scale_color_manual(values = c("grey", getPalette(4))) +
+  labs(y = "Difference in Adj. R Squared", x = "Bins", fill = "Region", color = "Region") +
+  facet_wrap(~electrode) + 
+  ggtitle("Self Foregone Results")
+
+regression_results %>%
+  filter(predictor == "other_payoff") %>%
+  mutate(sig = if_else(perm_p < 0.05 & p < 0.05, "Significant", "Insignificant")) %>%
+  mutate_cond(sig == "Significant", sig = as.character(region)) %>%
+  mutate(sig = relevel(factor(sig), ref = "Insignificant")) %>%
+  ggplot(., aes( x = bin, y = R2, color = sig, fill = sig)) +
+  geom_col(alpha = .5) +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), panel.background = element_rect(fill = "white")) + 
+  scale_fill_manual(values = c("grey", getPalette(4))) +
+  scale_color_manual(values = c("grey", getPalette(4))) +
+  labs(y = "Difference in Adj. R Squared", x = "Bins", fill = "Region", color = "Region") +
+  facet_wrap(~electrode) + 
+  ggtitle("Other Payoff Results")
+
+regression_results %>%
+  filter(predictor == "other_foregone") %>%
+  mutate(sig = if_else(perm_p < 0.05 & p < 0.05, "Significant", "Insignificant")) %>%
+  mutate_cond(sig == "Significant", sig = as.character(region)) %>%
+  mutate(sig = relevel(factor(sig), ref = "Insignificant")) %>%
+  ggplot(., aes( x = bin, y = R2, color = sig, fill = sig)) +
+  geom_col(alpha = .5) +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), panel.background = element_rect(fill = "white")) + 
+  scale_fill_manual(values = c("grey", getPalette(4))) +
+  scale_color_manual(values = c("grey", getPalette(4))) +
+  labs(y = "Difference in Adj. R Squared", x = "Bins", fill = "Region", color = "Region") +
+  facet_wrap(~electrode) + 
+  ggtitle("Other Foregone Results")
+
+```
+
+```{r correct-filtered-anovas}
+
+adv_results_for_plots %>%
+  mutate_cond(perm_p < .05 & p < .05, anova_p = p.adjust(anova_p, "hochberg")) %>%
+  mutate(sig = if_else(perm_p < 0.05 & p < 0.05 & anova_p < 0.05, "Significant", "Insignificant")) %>%
+  mutate_cond(sig == "Significant", sig = as.character(region)) %>%
+  ggplot(., aes( x = bin, y = diff_adj_r2, color = sig, fill = sig)) +
+  geom_col(alpha = .5) +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), panel.background = element_rect(fill = "white")) + 
+  scale_fill_manual(values = c("grey", getPalette(3))) +
+  scale_color_manual(values = c("grey", getPalette(3))) +
+  labs(y = "Difference in Adj. R Squared", x = "Bins", fill = "Region", color = "Region") +
+  facet_wrap(~electrode) + 
+  ggtitle("Advantageous Inequality Results")
+
+dis_results_for_plots %>%
+  mutate(sig = if_else(perm_p < 0.05 & p < 0.05 & anova_p < 0.05, "Significant", "Insignificant")) %>%
+  mutate_cond(sig == "Significant", sig = as.character(region)) %>%
+  ggplot(., aes( x = bin, y = diff_adj_r2, color = sig, fill = sig)) +
+  geom_col(alpha = .5) +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), panel.background = element_rect(fill = "white")) + 
+  scale_fill_manual(values = c("grey", getPalette(3)[2:3])) +
+  scale_color_manual(values = c("grey", getPalette(3)[2:3])) +
+  labs(y = "Difference in Adj. R Squared", x = "Bins", fill = "Region", color = "Region") +
+  facet_wrap(~electrode) + 
+  ggtitle("Disdvantageous Inequality Results")
+
+
+
+```
+
 
 ```{r stepwise-anovas}
 

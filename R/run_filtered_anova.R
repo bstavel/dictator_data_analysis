@@ -1,8 +1,18 @@
-run_filtered_anova <- function(results, brain_behave_data, region_name) {
+run_filtered_anova <- function(results, brain_behave_data, region_name, all_results = FALSE) {
   
-  # get active electrodes #
-  filtered_disadvantageous <- results %>% filter(predictor == "ineq_disadvent") %>% filter(perm_p < 0.05 & p < 0.05)
-  filtered_advantageous <-  results %>% filter(predictor == "ineq_advent") %>% filter(perm_p < 0.05 & p < 0.05)
+  if(all_results == F){
+    # get active electrodes #
+    filtered_disadvantageous <- results %>% filter(predictor == "ineq_disadvent") %>% filter(perm_p < 0.05 & p < 0.05)
+    filtered_advantageous <-  results %>% filter(predictor == "ineq_advent") %>% filter(perm_p < 0.05 & p < 0.05)
+    dis_correction <- nrow(filtered_disadvantageous)
+    adv_correction <- nrow(filtered_advantageous)
+  } else  {
+    # get all electrodes #
+    filtered_disadvantageous <- results %>% filter(predictor == "ineq_disadvent")
+    filtered_advantageous <-  results %>% filter(predictor == "ineq_advent") 
+    dis_correction <- nrow(filtered_disadvantageous %>% filter(perm_p < 0.05 & p < 0.05))
+    adv_correction <- nrow(filtered_advantageous %>% filter(perm_p < 0.05 & p < 0.05))
+  }
   
   # initialize values #
   anova_dis_pval <- NULL
@@ -55,6 +65,8 @@ run_filtered_anova <- function(results, brain_behave_data, region_name) {
   filtered_advantageous$diff_adj_r2 <- diff_adj_r2_adv
   filtered_disadvantageous$perct_adj_r2 <- perct_adj_r2_dis
   filtered_advantageous$perct_adj_r2 <- perct_adj_r2_adv
+  filtered_disadvantageous$correction <- dis_correction
+  filtered_advantageous$correction <- adv_correction
   
   # save results to results folder #
   write.csv(filtered_disadvantageous, path(here(), "results", paste0(region_name, "_anova_results_disadvantageous.csv")))

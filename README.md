@@ -1,8 +1,10 @@
-# Dictator Behavioral Data Analysis
+# Dictator Data Analysis
 
-These scripts process the behavioral data for a modified Dictator Task in ECoG patients to investiagte neural implementations of decision making during presentations of advantageous and inadvenategous inequity.
+These scripts process the behavioral data and the raw High Gamma data for a modified Dictator Task in ECoG patients to investiagte neural implementations of decision making during presentations of advantageous and inadvenategous inequity. These scripts include the main analyses of interest, as well as parallelized version that were run to the SCF cluster in Winter/Spring of 2020.
 
 This document is designed to help us document tough choices that we made throughout the analysis stream.
+
+_*An earlier version of this readme was only for the behavioral analyses, but it has since expanded_
 
 ## Participant Exclusion
 
@@ -19,7 +21,21 @@ We identified an issue with counterbalancing (or lack thereof) in the intial set
 
 ## Regions
 
-Will we run eletrodes that are partly in the wm in their notes? What percentage cut-off should we use? Some subjects look like they were run on an old system and don't have the full brain atlas information, can we rerun them? Should I add the cingulate?
+Will we run eletrodes that are partly in the wm in their notes?
+
+*?*
+
+What percentage cut-off should we use?
+
+- While the parcellations are useful, at the end of the day we use expert judgement. This means using the loc meeting variable, where Bob & Co have determined the true location of the electrode.
+
+Some subjects look like they were run on an old system and don't have the full brain atlas information, can we rerun them?
+
+- These have since been run.
+
+Should I add the cingulate?
+
+- Yes, added the cingulate for perlim analysis with IR35.
 
 Here is the first pass numbers for ofc and insula across subjects:
 
@@ -55,9 +71,16 @@ Here is the first pass numbers for ofc and insula across subjects:
 | ST40    	| 4           	| 0   	| 0    	| 0        	| 0           	| 0       	| 0    	|
 
 
+The superior temporal sulcus is also very likely an important region given that includes the tempoparietal junction. Should create a table for this.
+
+
 ## Referencing
 
-I thought we did pairwise referencing, not CAR? Ignacio's scripts seem to be using CAR.
+I thought we did pairwise referencing, not CAR? Ignacio's scripts seem to be using CAR. 
+
+- This is likely because he was using grid electrodes.
+
+We are using pairwise referencing, so each electrode that we have as a dependent variable, is actually made up of two electrodes.
 
 ## High Gamma
 
@@ -65,9 +88,11 @@ I thought we did pairwise referencing, not CAR? Ignacio's scripts seem to be usi
 
 I&Z used the filter + the hilbert transform for their high frequency analysis. This is the the absolute value of the hilbert transform which is called the analytical amplitude. This is the value that is averaged in the moving time window.
 
+We have decided to use the hilbert method as well, but we also separate the filtering in a two-step process (see below). We run the hilbert transform in windows of ~12 seconds to avoid edge artifacts.
+
 ### Filtering
 
-Z&I look like they bandpassed at 70-200Hz/250Hz.
+Z&I look like they bandpassed at 70-200Hz/250Hz. We chose to do filtering in at least two parts within the high band, run the hilbert transformation, and then recombine to have better accuracy for the higher requencies.
 
 ## Time binning (for regressions and high gamma)
 
@@ -77,46 +102,62 @@ Z & I were looking at the following bin sizes: `200, 160, 120, 80, 40` They all 
 
 ## Regressions-- Modeling Choices
 
+### Predictors
+
 | Possible Predictors | Definition | Priority? |
 | ------------------- | :-------: | :-------: |
-| self_choice_payoff | self payoff | |
-| other_choice_payoff | other payoff | |
-| self_foregone | self foregone | |
-| other_foregone | other foregone  | |
+| self_choice_payoff | self payoff | *Yes* |
+| other_choice_payoff | other payoff | *Yes* |
+| self_foregone | self foregone | *Yes* |
+| other_foregone | other foregone  | *Yes* |
 | self_var_payoff | self payoff + self foregone - 10 | |
 | other_var_payoff | other payoff + other foregone - 10  | |
 | ineq_var_abs | abs(self_var_payoff - other_var_payoff) | |
 | ineq_choice_abs | abs(self payoff - other payoff) | |
 | ineq_foregone_abs | abs(self foregone - other foregone) | |
-| ineq_var_disadvant |  (other_var_payoff > self_var_payoff) * (other_var_payoff - self_var_payoff) | |
-| ineq_var_advant | (other_var_payoff < self_var_payoff) * (other_var_payoff - self_var_payoff) | |
+| ineq_var_disadvant |  (other_var_payoff > self_var_payoff) * (other_var_payoff - self_var_payoff) |  *Yes* |
+| ineq_var_advant | (other_var_payoff < self_var_payoff) * (other_var_payoff - self_var_payoff) |  *Yes* |
 | self_diff_ch_foregone | self payoff - self foregone (?) | |
 | other_diff_ch_foregone | other payoff - other foregone (?) | |
 | side_chosen | side chosen | |
 | RT | reaction time | |
 
+We are wary of the overlap and correlations between these variables. All the variables marked as a priority are being sued in the prelim analyses to establish our pipeline. The two pipelines are explained below. For `Pipeline 1` we are using only `ineq_var_advant` and `ineq_vardisadvant`. For `pipeline 2` we are using all variables marked as a priority.
+
 _(?): couldn't find definition in the code so I took my best guess_
 
-Do we want to z score or baseline HG? 
+### Dependent Variables
+
+We z score the high gamma (I think check on this). Then for the binning we as a first pass in subject IR35 are using bins with size 100ms and overalp of 50ms. In presentation locked analyses we take 200ms before presentation and 3 seconds afterwards (though will change them). The 200ms before presentation onset is used to baseline the data. This process results in ~60 bins, which corresponds to 60 dependent variables of interest.
 
 ## Regressions-- Corrections, Significance Thresholds, CV, etc
 
 ### Individual regressions
 
-Some cut off for number of epochs an electrode has to be active for it to count as an encoding electrode. In OFC-DM paper it was 5 epochs.
+The OFC-DM paper said there had to be a 5 bin stretch to count as an active electrode-- do we want to keep this scheme? Wasn't in the code.
 
 Use permuted null distribution?
 
 ### Model selection
 
-Looks like I&Z were using stepwise methods for their regressions, but only as a confirmation that findings were not due to collinearity. The scripts are easy to adapt for our purposes, but if we choose to deviate from his methods here are some other options:
+`Pipeline 1:` 
+[1] Run linear models for each bin for each electrode for each inequity measure
+[2] Find the longest stretch of significant bins for each inequite measure for each electrode
+[3] Sum the F-statistic for the longest stretch
+[4] Shuffle the predictor 10,000 times and repreat steps 1-3.
+[5] Calcualte the permutation p val for the sum of f statistics.
+[6] Mark all electrodes with the permuted p val under .05 as active electrodes (should we correct here?)
+[7] For all active electrodes and for all signigicant bins run an anova between two regressions where the base model is the consitituent parts of either advant. or disadvant. inequality and the second region is the base model with either apporpriate inequality mesure included as a predictor.
+[8] FDR correct these anovas.
 
-LASSO, Ridge, etc. The metric of interest would then be the beta weights, where "high" beta weights would indicate a relationship w/ HG. How we quantify "high" would require some null model/bootstrapping something since coef testing is inappropriate for these methods. It also would require some hold test to identify a high lambda and we would have to decide on a error metric (or just go with l2). But these methods are very robust to noise, it is very interpretable, and we would have a single model for each of our elctrodes. With ~200 datapoints we do probably have enough for train-test splits. There is some caution about using LASSO to identify "true models" rather than models with low prediction error. But this is so exploratory and we don't have a chance so for the true model, so I think it probably okay?
+We might want to alter how we do the anovas to leverage the time course component-- perhaps following a similar procedure as the summed f stat and permutation testing.
 
-Alternatively, we could have small models that we test in each model. We could group the variables by what we are invetisgating-- for inequality we might start with a model with the difference for self and the difference for other. Then, if we get a hit, we can parse down into the other ways of quanitfying inequality listed above. If we have real preferences/thoughts about what it is we are looking for that could be a good solution. But, since it is in the p-val framework, I do not know how we can apply corrections in particularly rigorous way. We would also probably want to lay out the hierarchy of tests in the beginning, but we do not have all that much to go on.
-
-
-
-
+`Pipeline 2` 
+_This follow exactly the anova procedure layed out in the OFC-DM paper_
+[1] Run linear models for each bin for each electrode for each inequity measure and each self_payoof, self_foregone, other_payoff, other_foregone.
+[2] Find the longest stretch of significant bins for each inequite measure for each electrode
+[3] Sum the F-statistic for the longest stretch
+[4] Shuffle the predictor 10,000 times and repreat steps 1-3.
+[5] Run ...
 
 
