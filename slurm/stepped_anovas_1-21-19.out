@@ -1,0 +1,128 @@
+
+R version 3.6.1 (2019-07-05) -- "Action of the Toes"
+Copyright (C) 2019 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> #### batch script for regressions on scf cluster ###
+> 
+> ## libraries ##
+> library(tidyverse)
+── Attaching packages ─────────────────────────────────────── tidyverse 1.2.1 ──
+✔ ggplot2 3.2.1     ✔ purrr   0.3.2
+✔ tibble  2.1.3     ✔ dplyr   0.8.3
+✔ tidyr   0.8.3     ✔ stringr 1.4.0
+✔ readr   1.3.1     ✔ forcats 0.4.0
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+> library(ggplot2)
+> library(magrittr)
+
+Attaching package: ‘magrittr’
+
+The following object is masked from ‘package:purrr’:
+
+    set_names
+
+The following object is masked from ‘package:tidyr’:
+
+    extract
+
+> library(grid)
+> library(gtable)
+> library(gridExtra)
+
+Attaching package: ‘gridExtra’
+
+The following object is masked from ‘package:dplyr’:
+
+    combine
+
+> library(wesanderson)
+> library(ggsci)
+> library(zoo)
+
+Attaching package: ‘zoo’
+
+The following objects are masked from ‘package:base’:
+
+    as.Date, as.Date.numeric
+
+> library(kableExtra)
+
+Attaching package: ‘kableExtra’
+
+The following object is masked from ‘package:dplyr’:
+
+    group_rows
+
+> library(lme4)
+Loading required package: Matrix
+
+Attaching package: ‘Matrix’
+
+The following object is masked from ‘package:tidyr’:
+
+    expand
+
+> library(RColorBrewer)
+> library(doParallel)
+Loading required package: foreach
+
+Attaching package: ‘foreach’
+
+The following objects are masked from ‘package:purrr’:
+
+    accumulate, when
+
+Loading required package: iterators
+Loading required package: parallel
+> library(parallel)
+> library(foreach)
+> library(here)
+here() starts at /accounts/campus/bstavel/dictator_behavioral_data_analysis
+> library(fs)
+> library(ggcorrplot)
+> 
+> ## hand written functions ##
+> source(path(here(), "R", "load_behave_data.R"))
+> source(path(here(), "R", "prep_behave_data.R"))
+> source(path(here(), "R", "stretch_start_end.R"))
+> source(path(here(), "R", "load_high_gamma_data.R"))
+> source(path(here(), "R", "rolling_window_and_baseline.R"))
+> source(path(here(), "R", "run_permuted_regressions_par.R"))
+> source(path(here(), "R", "compile_results.R"))
+> source(path(here(), "R", "step_wise_anova_method_par.R"))
+> source(path(here(), "R", "run_filtered_anova.R"))
+> source(path(here(), "R", 'mutate_cond.R'))
+> 
+> 
+> ## read in input data ##
+> path_hg_clean <- path(here(), "munge", "hg_behave.csv")
+> hg_behave <-  read.csv(path_hg_clean)
+> 
+> ## read in regressions results data ##
+> regions_to_combine <- c("OFC", "Insula", "Cingulate", "STS")
+> regression_results <- compile_results(regions_to_combine)
+> 
+> ## anovas ##
+> stepwise_anova_method_par(regression_results, hg_behave, niter = 1000)
+[1] "Beginning stepped anova analysis for electrode 1 out of 36"
+[1] "Beginning stepped anova analysis for electrode 2 out of 36"
+Error in { : task 1 failed - "ignoring SIGPIPE signal"
+Calls: stepwise_anova_method_par -> %dopar% -> <Anonymous>
+Execution halted
