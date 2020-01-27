@@ -38,7 +38,7 @@ stretch_start_end <- function(stretch) {
         if (max_streak == 0) {
           run_indices <- NA
         } else if (max_streak == streak_counter) {
-          run_indices <- c(beg_idx, idx)
+          run_indices <- c(beg_idx, (idx-1))
         }
         # reset streak counter #
         streak_counter <- 0

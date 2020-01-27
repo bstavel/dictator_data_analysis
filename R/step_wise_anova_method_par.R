@@ -134,7 +134,7 @@ stepwise_anova_method_par <- function(regression_results, hg_behave, niter = 100
           ## base model ##
           set.seed(h) # reproducability for anovas
           # create df of only chosen regressors and shuffle predictors
-          base_df <- hg_behave %>% select(bin, base_pred) %>% mutate_at(vars(base_pred), sample)
+          base_df <- hg_behave %>% select(bin, base_pred) #%>% mutate_at(vars(base_pred), sample)
           # change name so we don't have to paste0 #
           colnames(base_df)[grepl("bin", colnames(base_df))] <- "bin" # a bit neurotic but okay
           # run base model #
@@ -143,7 +143,7 @@ stepwise_anova_method_par <- function(regression_results, hg_behave, niter = 100
           ## stepped model ##
           set.seed(h) # reproducability for anovas
           # create df of only chosen regressors + pred
-          stepped_df <- hg_behave %>% select(bin, base_pred, pred) %>% mutate_at(vars(base_pred, pred), sample)
+          stepped_df <- hg_behave %>% select(bin, base_pred, pred) %>% mutate_at(vars(pred), sample)
           # change name so we don't have to paste0 #
           colnames(stepped_df)[grepl("bin", colnames(stepped_df))] <- "bin" # a bit neurotic but okay
           # run base model #
@@ -178,14 +178,18 @@ stepwise_anova_method_par <- function(regression_results, hg_behave, niter = 100
     } # end predictor loop
       
     # save results #
-    stepped_anova_results <- data.frame(matrix(NA, nrow = (length(chosen_predictors) - 1), ncol = 5))
-    colnames(stepped_anova_results) <- c("region", "electrode", "first_pred", "stepped_pred", "anova_perm_p")
+    stepped_anova_results <- data.frame(matrix(NA, nrow = (length(chosen_predictors) - 1), ncol = 6))
+    colnames(stepped_anova_results) <- c("region", "electrode", "first_pred", "stepped_pred", "f_stretch", "anova_perm_p")
     region_name <- unique(regression_results$region[regression_results$electrode == elec])
     stepped_anova_results$region <- region_name
     stepped_anova_results$electrode <- elec
     stepped_anova_results$first_pred <- chosen_predictors[1]
     stepped_anova_results$stepped_pred <- names(perm_p_anova)
     stepped_anova_results$anova_perm_p <- perm_p_anova
+    stepped_anova_results$f_stretch <- fstat_stretch
+    stepped_anova_results$f_null_max <- max(fstat_stretch_shuffle[pred, ], na.rm = T)
+    stepped_anova_results$f_null_sd <- sd(fstat_stretch_shuffle[pred, ], na.rm = T)
+    stepped_anova_results$f_null_mean <- mean(fstat_stretch_shuffle[pred, ], na.rm = T)
     write.csv(stepped_anova_results, path(here(), "results", paste0(region_name, "_", elec, "_stepped_anova_results.csv")))
     
     } # elec loop
