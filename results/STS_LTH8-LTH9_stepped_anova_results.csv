@@ -1,0 +1,5 @@
+"","region","electrode","first_pred","stepped_pred","anova_perm_p"
+"1","STS","LTH8-LTH9","self_foregone","other_payoff",0
+"2","STS","LTH8-LTH9","self_foregone","ineq_advent",0.003
+"3","STS","LTH8-LTH9","self_foregone","ineq_disadvent",0
+"4","STS","LTH8-LTH9","self_foregone","other_foregone",0.006

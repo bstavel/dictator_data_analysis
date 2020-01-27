@@ -13,13 +13,6 @@ stepwise_anova_method_par <- function(regression_results, hg_behave, niter = 100
     # print status # 
     print(paste0("Beginning stepped anova analysis for electrode ", which(electrodes %in% elec), " out of ", length(electrodes)))
     
-    # create empty df
-    stepped_anova_results <- data.frame(matrix(NA, nrow = (length(predictors) -1), ncol = 5))
-    colnames(stepped_anova_results) <- c("region", "electrode", "first_pred", "stepped_pred", "anova_perm_p")
-    region_name <- unique(regression_results$region[regression_results$electrode == elec])
-    stepped_anova_results$region <- region_name
-    stepped_anova_results$electrode <- elec
-    
     # subset to the regressions for given elec #
     elec_results <- active_results %>% filter(electrode == elec)
     hg_elec <- hg_behave %>%filter(as.character(electrodes) == as.character(elec))
@@ -91,11 +84,11 @@ stepwise_anova_method_par <- function(regression_results, hg_behave, niter = 100
     base_pred <- chosen_predictors[1]
     stepped_pred <- chosen_predictors[!chosen_predictors %in% base_pred]
     fstat_stretch <- NULL
-    fstat_stretch_shuffle <- matrix(NA, nrow = length(stepped_pred), ncol = length(bins))
-    rownames(f_anova) <- stepped_pred
-    colnames(f_anova) <- bins
+    fstat_stretch_shuffle <- matrix(NA, nrow = length(stepped_pred), ncol = niter)
+    rownames(fstat_stretch_shuffle) <- stepped_pred
+    colnames(fstat_stretch_shuffle) <- 1:niter
     perm_p_anova <- NULL
-    for(pred in stepped_pred){
+    for(pred in stepped_pred) {
       f_anova <- NULL
       for(bin in bins){
       ## base model ##
@@ -132,10 +125,10 @@ stepwise_anova_method_par <- function(regression_results, hg_behave, niter = 100
         }
         
       ## run null models ##
-        fstat_stretch_shuffle <- foreach(h = 1:niter, .inorder=FALSE) %dopar% {
+        fstat_stretch_shuffle[pred, ] <- foreach(h = 1:niter, .inorder=FALSE, .combine = 'c') %dopar% {
         f_anova_shuffle <- NULL
-        if(h %% 1000 == 0){
-          print(paste0( (h/niter) * 100, "% complete for electrode ", which(electrodes %in% elec), " of ", length(electrodes)))
+        if(h %% 1 == 0){
+          print(paste0( (h/niter) * 100, "% complete for predictor ", pred, ", on electrode ", which(electrodes %in% elec), " of ", length(electrodes)))
         }
         for(bin in bins){
           ## base model ##
@@ -168,22 +161,28 @@ stepwise_anova_method_par <- function(regression_results, hg_behave, niter = 100
         stretch <- f_anova > fstat_thr
         indices <- stretch_start_end(stretch)
         if(is.na(indices[1])) {
-          fstat_stretch_shuffle[pred, bin] <- max(f_anova_shuffle)
+          fstat_stretch_shuffle[h] <- max(f_anova_shuffle)
         } else {
-          fstat_stretch_shuffle[pred, bin] <- sum(f_anova_shuffle[indices[1]:indices[2]]) # Summary stat
+          fstat_stretch_shuffle[h] <- sum(f_anova_shuffle[indices[1]:indices[2]]) # Summary stat
         }
         
-        return(fstat_stretch_shuffle[pred, bin])
+        return(fstat_stretch_shuffle[h])
       } # end permutation
       
       # get permuted p value #
-      perm_p_anova[pred] <- sum(fstat_stretch[pred] < fstat_stretch_shuffle[pred])/niter
+      perm_p_anova[pred] <- sum(fstat_stretch[pred] < fstat_stretch_shuffle[pred, ])/niter
       
       # update base predictors #
       base_pred <- c(base_pred, pred)
+      
     } # end predictor loop
       
-    # Update results
+    # save results #
+    stepped_anova_results <- data.frame(matrix(NA, nrow = (length(chosen_predictors) - 1), ncol = 5))
+    colnames(stepped_anova_results) <- c("region", "electrode", "first_pred", "stepped_pred", "anova_perm_p")
+    region_name <- unique(regression_results$region[regression_results$electrode == elec])
+    stepped_anova_results$region <- region_name
+    stepped_anova_results$electrode <- elec
     stepped_anova_results$first_pred <- chosen_predictors[1]
     stepped_anova_results$stepped_pred <- names(perm_p_anova)
     stepped_anova_results$anova_perm_p <- perm_p_anova

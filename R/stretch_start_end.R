@@ -10,39 +10,45 @@ stretch_start_end <- function(stretch) {
   streak_counter <- 0
   max_streak <- 0
   
-  # loop over stretch
-  for(idx in 1:length(stretch)) {
-    # if stretch == 1 start counting run #
-    if (stretch[idx] == T) {
-      # if no current streak, grab index #
-      if (streak_counter == 0){
-        beg_idx <- idx
-      }
+  if(sum(is.na(stretch)) == length(stretch)){
+    run_indices <- NA
+  } else if(sum(is.na(stretch)) > 1) {
+    stretch <- stretch[!is.na(stretch)]
+  } else {
+    # loop over stretch
+    for(idx in 1:length(stretch)) {
+      # if stretch == 1 start counting run #
+      if (stretch[idx] == T) {
+        # if no current streak, grab index #
+        if (streak_counter == 0){
+          beg_idx <- idx
+        }
+        
+        # add to count #
+        streak_counter <- streak_counter + 1
+        
+        # if streak counter is length of stetch, set indicies #
+        if (streak_counter == length(stretch)) {
+        run_indices <- c(1, length(stretch))
+        }
+      # if stretch idx is 0, end previous streaks, if max streak finishes store indices #
+      } else if (stretch[idx] == F) {
+        max_streak <- max(max_streak, streak_counter)
+        
+        if (max_streak == 0) {
+          run_indices <- NA
+        } else if (max_streak == streak_counter) {
+          run_indices <- c(beg_idx, idx)
+        }
+        # reset streak counter #
+        streak_counter <- 0
       
-      # add to count #
-      streak_counter <- streak_counter + 1
-      
-      # if streak counter is length of stetch, set indicies #
-      if (streak_counter == length(stretch)) {
-      run_indices <- c(1, length(stretch))
+      # throw error if not 1 or 0 #
+      } else {
+        print("Ther")
       }
-    # if stretch idx is 0, end previous streaks, if max streak finishes store indices #
-    } else if (stretch[idx] == F) {
-      max_streak <- max(max_streak, streak_counter)
-      
-      if (max_streak == 0) {
-        run_indices <- NA
-      } else if (max_streak == streak_counter) {
-        run_indices <- c(beg_idx, idx)
-      }
-      # reset streak counter #
-      streak_counter <- 0
-    
-    # throw error if not 1 or 0 #
-    } else {
-      print("stretch should be a binary vec")
-    }
-    
+    }  
   }
+  
   return(run_indices)
 }

@@ -1,0 +1,6 @@
+"","region","electrode","first_pred","stepped_pred","anova_perm_p"
+"1","Insula","LIN3-LIN4","other_payoff","ineq_advent",0
+"2","Insula","LIN3-LIN4","other_payoff","ineq_disadvent",0
+"3","Insula","LIN3-LIN4","other_payoff","self_foregone",0
+"4","Insula","LIN3-LIN4","other_payoff","other_foregone",0
+"5","Insula","LIN3-LIN4","other_payoff","self_payoff",0.2

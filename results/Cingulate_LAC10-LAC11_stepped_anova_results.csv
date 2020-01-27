@@ -1,0 +1,6 @@
+"","region","electrode","first_pred","stepped_pred","anova_perm_p"
+"1","Cingulate","LAC10-LAC11","ineq_disadvent","other_payoff",0
+"2","Cingulate","LAC10-LAC11","ineq_disadvent","ineq_advent",0
+"3","Cingulate","LAC10-LAC11","ineq_disadvent","self_foregone",0.004
+"4","Cingulate","LAC10-LAC11","ineq_disadvent","other_foregone",0.006
+"5","Cingulate","LAC10-LAC11","ineq_disadvent","self_payoff",NA

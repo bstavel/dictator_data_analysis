@@ -33,8 +33,9 @@ source(path(here(), "R", "run_filtered_anova.R"))
 source(path(here(), "R", 'mutate_cond.R'))
 
 ## paralellization ##
-nCores <- 10
-registerDoParallel(nCores)
+nCores <- 20
+cl <- makeForkCluster(nCores)
+registerDoParallel(cl)
 
 ## read in input data ##
 path_hg_clean <- path(here(), "munge", "hg_behave.csv")
@@ -42,8 +43,7 @@ hg_behave <-  read.csv(path_hg_clean)
 
 ## read in regressions results data ##
 regions_to_combine <- c("OFC", "Insula", "Cingulate", "STS")
-regions_to_combine <- c("OFC")
 regression_results <- compile_results(regions_to_combine)
 
 ## anovas ##
-stepwise_anova_method_par(regression_results, hg_behave, niter = 10000)
+stepwise_anova_method_par(regression_results, hg_behave, niter = 1000)

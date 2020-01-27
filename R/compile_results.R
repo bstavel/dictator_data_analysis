@@ -4,6 +4,7 @@ compile_results <- function(regions){
   # search the results folder for results csvs #
   filenames <- dir(fs::path(here(), "results"))
   files_to_combine <- filenames[grepl(paste(paste0("^", regions, "_.*results.csv"), collapse = "|"), filenames, perl = F)]
+  files_to_combine <- files_to_combine[!grepl("anova", files_to_combine)] # HACK fix this later please
   
   # loop over and rbind #
   combined_results <- NULL
