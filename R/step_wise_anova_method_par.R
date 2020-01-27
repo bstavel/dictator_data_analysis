@@ -158,7 +158,7 @@ stepwise_anova_method_par <- function(regression_results, hg_behave, niter = 100
         # get sig level via df of model #
         fstat_thr = qf(0.95, df1=anova_temp$Df[2], df2=anova_temp$Res.Df[2])
         # get sum of f stat  #
-        stretch <- f_anova > fstat_thr
+        stretch <- f_anova_shuffle > fstat_thr
         indices <- stretch_start_end(stretch)
         if(is.na(indices[1])) {
           fstat_stretch_shuffle[h] <- max(f_anova_shuffle)
