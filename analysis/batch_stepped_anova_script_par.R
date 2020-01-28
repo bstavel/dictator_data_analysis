@@ -53,6 +53,9 @@ if(!require('ggcorrplot')){
   install.packages("ggcorrplot", lib = '~/R/x86_64-pc-linux-gnu-library/3.0', repos = 'https://cran.cnr.berkeley.edu/')
 }
 
+# set lib path #
+.libPaths('~/R/x86_64-pc-linux-gnu-library/3.0')
+
 library(tidyverse)
 library(ggplot2)
 library(magrittr)
