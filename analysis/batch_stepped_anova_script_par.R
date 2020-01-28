@@ -1,6 +1,58 @@
 #### batch script for regressions on scf cluster ###
 
 ## libraries ##
+if(!require('tidyverse')){
+  install.packages("tidyverse", lib = '~/R/x86_64-pc-linux-gnu-library/3.0', repos = 'https://cran.cnr.berkeley.edu/')
+}
+if(!require('ggplot2')){
+  install.packages("ggplot2", lib = '~/R/x86_64-pc-linux-gnu-library/3.0', repos = 'https://cran.cnr.berkeley.edu/')
+}
+if(!require('magrittr')){
+  install.packages("magrittr", lib = '~/R/x86_64-pc-linux-gnu-library/3.0', repos = 'https://cran.cnr.berkeley.edu/')
+}
+if(!require('grid')){
+  install.packages("grid", lib = '~/R/x86_64-pc-linux-gnu-library/3.0', repos = 'https://cran.cnr.berkeley.edu/')
+}
+if(!require('gtable')){
+  install.packages("gtable", lib = '~/R/x86_64-pc-linux-gnu-library/3.0', repos = 'https://cran.cnr.berkeley.edu/')
+}
+if(!require('gridExtra')){
+  install.packages("gridExtra", lib = '~/R/x86_64-pc-linux-gnu-library/3.0', repos = 'https://cran.cnr.berkeley.edu/')
+}
+if(!require('wesanderson')){
+  install.packages("wesanderson", lib = '~/R/x86_64-pc-linux-gnu-library/3.0', repos = 'https://cran.cnr.berkeley.edu/')
+}
+if(!require('zoo')){
+  install.packages("zoo", lib = '~/R/x86_64-pc-linux-gnu-library/3.0', repos = 'https://cran.cnr.berkeley.edu/')
+}
+if(!require('kableExtra')){
+  install.packages("kableExtra", lib = '~/R/x86_64-pc-linux-gnu-library/3.0', repos = 'https://cran.cnr.berkeley.edu/')
+}
+if(!require('lme4')){
+  install.packages("lme4", lib = '~/R/x86_64-pc-linux-gnu-library/3.0', repos = 'https://cran.cnr.berkeley.edu/')
+}
+if(!require('RColorBrewer')){
+  install.packages("RColorBrewer", lib = '~/R/x86_64-pc-linux-gnu-library/3.0', repos = 'https://cran.cnr.berkeley.edu/')
+}
+if(!require('doParallel')){
+  install.packages("doParallel", lib = '~/R/x86_64-pc-linux-gnu-library/3.0', repos = 'https://cran.cnr.berkeley.edu/')
+}
+if(!require('parallel')){
+  install.packages("parallel", lib = '~/R/x86_64-pc-linux-gnu-library/3.0', repos = 'https://cran.cnr.berkeley.edu/')
+}
+if(!require('foreach')){
+  install.packages("foreach", lib = '~/R/x86_64-pc-linux-gnu-library/3.0', repos = 'https://cran.cnr.berkeley.edu/')
+}
+if(!require('here')){
+  install.packages("here", lib = '~/R/x86_64-pc-linux-gnu-library/3.0', repos = 'https://cran.cnr.berkeley.edu/')
+}
+if(!require('fs')){
+  install.packages("fs", lib = '~/R/x86_64-pc-linux-gnu-library/3.0', repos = 'https://cran.cnr.berkeley.edu/')
+}
+if(!require('ggcorrplot')){
+  install.packages("ggcorrplot", lib = '~/R/x86_64-pc-linux-gnu-library/3.0', repos = 'https://cran.cnr.berkeley.edu/')
+}
+
 library(tidyverse)
 library(ggplot2)
 library(magrittr)
