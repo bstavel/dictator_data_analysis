@@ -1,6 +1,6 @@
-"","region","electrode","first_pred","stepped_pred","anova_perm_p"
-"1","Insula","RIN9-RIN10","self_payoff","other_payoff",0
-"2","Insula","RIN9-RIN10","self_payoff","ineq_disadvent",0
-"3","Insula","RIN9-RIN10","self_payoff","ineq_advent",0
-"4","Insula","RIN9-RIN10","self_payoff","other_foregone",0.024
-"5","Insula","RIN9-RIN10","self_payoff","self_foregone",NA
+"","region","electrode","first_pred","stepped_pred","f_stretch","anova_perm_p","f_null_max","f_null_sd","f_null_mean"
+"1","Insula","RIN9-RIN10","self_payoff","other_payoff",90.9443365936635,0.004,160.20191059385,9.41960497356853,8.64745344372724
+"2","Insula","RIN9-RIN10","self_payoff","ineq_disadvent",52.4344546107001,0.007,160.20191059385,9.41960497356853,8.64745344372724
+"3","Insula","RIN9-RIN10","self_payoff","ineq_advent",126.453105610522,0.002,160.20191059385,9.41960497356853,8.64745344372724
+"4","Insula","RIN9-RIN10","self_payoff","other_foregone",16.0830869535831,0.148,160.20191059385,9.41960497356853,8.64745344372724
+"5","Insula","RIN9-RIN10","self_payoff","self_foregone",NA,NA,160.20191059385,9.41960497356853,8.64745344372724
