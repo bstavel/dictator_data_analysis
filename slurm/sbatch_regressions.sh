@@ -8,4 +8,4 @@
 
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 
-R CMD BATCH --no-save ../analysis/batch_regression_script_par.R regression_ofc_1-17-19.out
+R CMD BATCH --no-save ../analysis/batch_regression_script_par.R regressions_all_choice_2-5-19.out
