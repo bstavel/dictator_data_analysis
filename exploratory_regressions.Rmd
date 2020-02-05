@@ -46,13 +46,14 @@ source(path("R", "rolling_window_and_baseline.R"))
 source(path("R", "run_permuted_regressions.R"))
 source(path("R", "compile_results.R"))
 source(path("R", "run_filtered_anova.R"))
+source(path("R", "merge_stepped_anova_results.R"))
 # source('~/Projects/nice_r_functions/ggpaired_pretty.R')
 source(path("R", 'mutate_cond.R'))
 
 ## plotting helpers ##
 # ggthemr("solarized")
 
-## paralellization #
+## paralellization ##
 nCores <- 10
 registerDoParallel(nCores)
 
@@ -104,8 +105,8 @@ I am wondering if it might make sense to start with the most derived var as the 
 ```{r load-hg-data}
 
 # necessary paths #
-file_path_to_electrode_names <- path(here(), "munge", "IR35_electrodes.csv")
-file_path_to_hg_data <- path(here(), "munge", "IR35_hg_munge.csv")
+file_path_to_electrode_names <- path(here(), "munge", "IR35_electrodes_choice_locked.csv")
+file_path_to_hg_data <- path(here(), "munge", "IR35_hg_munge_choice_locked.csv")
 file_path_to_elecs_of_interest <- path(here(), "munge", "IR35_elecs_of_interest.csv")
 
 # load data #
@@ -116,7 +117,8 @@ elecs_to_use <- read.csv(file_path_to_elecs_of_interest)
 hg_data <- hg_data %>% filter(grepl(paste(elecs_to_use$Electrode, collapse = "|"), electrodes))
 
 # average and baseline #
-hg_clean <- rolling_window_and_baseline(hg_data, lWin = 100, lOver = 50)
+hg_clean_tmp <- rolling_window_and_baseline(hg_data, lWin = 100, lOver = 50)
+hg_clean <- hg_clean_tmp %>% select(trial, electrodes, 28:62)
 
 # create temp data for visualiztion #
 half_index <- sample(1:228, 114)
@@ -124,8 +126,34 @@ hg_eda <- hg_clean %>% filter(trial %in% half_index)
 
 # with behavior #
 hg_behave <- merge.data.frame(hg_clean, behave_data, by.x = "trial", by.y = "round", all.x = T, all.y = F)
+write.csv(hg_behave, path(here(), "munge", "hg_behave_choice_locked.csv"))
 
 ```
+
+```{r test_num_of_bins_to_exclude}
+
+hg_test <- hg_clean %>% 
+  filter(electrodes == "RAM1-RAM2") %>% 
+  select(trial, electrodes, 23:62) %>%
+  gather(key = "bin", value = "hg", -electrodes, - trial) %>%
+  group_by(bin) %>%
+  mutate(na_num = sum(is.na(hg)))
+
+hg_test %>%
+  ggplot(., aes(x= bin, y = na_num)) +
+  geom_col() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+
+
+```
+
+
+I played a round quite a bit with the gamma visualization by trial depedning on where we cut off the reaction times. 1 seconds dramatically reduces the number of NAs, and looks pretty good visually. That said, it will be very different for different people.
+
+So looking back to the reaction time analysis the cut off to recover most trials is .5 seconds. Since we will do correction via cluster, I think this preserves tha majority of the data. This means findings the max reaction time for each person and cutting bins that are within 500ms of that time. 
+
+But that cuts soooo many bins. So I have chickened out and am gonna run it with .75s seconds before choice
+
 
 ```{r hg-eda-means}
 
@@ -139,24 +167,28 @@ ca1_elecs <- elecs_to_use %>% filter(ca1_loc_meeting == 1) %>% select(Electrode)
 hg_eda_summary <- hg_eda %>%
   group_by(electrodes) %>%
   select(-trial) %>%
-  summarise_all(mean) %>%
+  summarise_all(list(function(x) mean(x, na.rm = T), function(x) mean(x, na.rm = T) - sd(x, na.rm = T), function(x) mean(x, na.rm = T) + sd(x, na.rm = T))) %>%
   gather(key = "bin", value = "gamma", -electrodes) %>%
-  mutate(bin = as.numeric(gsub("bin_", "", bin)))
+  mutate(function_type = if_else(grepl("_fn1", bin), "mean", if_else(grepl("_fn2", bin), "min", "max"))) %>%
+  mutate(bin = gsub("pre_", "-", gsub("post_", "", bin))) %>%
+  mutate(bin = as.numeric(gsub("_.*", "", bin))) %>%
+  spread(key = function_type, value = gamma)
 
 hg_eda_summary %>%
   filter(grepl(paste(ofc_elecs$Electrode, collapse = "|"), electrodes)) %>%
-  ggplot(., aes(x = bin, y = gamma, color = electrodes, fill = electrodes)) +
+  ggplot(., aes(x = bin, y = mean, color = electrodes, fill = electrodes)) +
   geom_point(alpha = .4) +
   geom_line(alpha = .4) + 
+  # geom_ribbon(aes(ymin = min, ymax = max), alpha = .1) +
   # geom_vline(xintercept = 1.2613816 * 1000) +
   theme(panel.background = element_rect(fill = "white")) + 
   ggtitle("OFC")
 
 hg_eda_summary %>%
   filter(grepl(paste(insula_elecs$Electrode, collapse = "|"), electrodes)) %>%
-  ggplot(., aes(x = bin, y = gamma, color = electrodes, fill = electrodes)) +
+  ggplot(., aes(x = bin, y = mean, color = electrodes, fill = electrodes)) +
   geom_point(alpha = .4) +
-  geom_line(alpha = .4) + 
+  geom_line(alpha = .4) +
   # geom_vline(xintercept = 1.2613816 * 1000) +
   theme(panel.background = element_rect(fill = "white")) + 
   scale_fill_manual(values = getPalette(9)) +
@@ -165,7 +197,7 @@ hg_eda_summary %>%
 
 hg_eda_summary %>%
   filter(grepl(paste(mfg_elecs$Electrode, collapse = "|"), electrodes)) %>%
-  ggplot(., aes(x = bin, y = gamma, color = electrodes, fill = electrodes)) +
+  ggplot(., aes(x = bin, y = mean, color = electrodes, fill = electrodes)) +
   geom_point(alpha = .4) +
   geom_line(alpha = .4) + 
   # geom_vline(xintercept = 1.2613816 * 1000) +
@@ -176,7 +208,7 @@ hg_eda_summary %>%
 
 hg_eda_summary %>%
   filter(grepl(paste(sts_elecs$Electrode, collapse = "|"), electrodes)) %>%
-  ggplot(., aes(x = bin, y = gamma, color = electrodes, fill = electrodes)) +
+  ggplot(., aes(x = bin, y = mean, color = electrodes, fill = electrodes)) +
   geom_point(alpha = .4) +
   geom_line(alpha = .4) + 
   # geom_vline(xintercept = 1.2613816 * 100) +
@@ -187,7 +219,7 @@ hg_eda_summary %>%
 
 hg_eda_summary %>%
   filter(grepl(paste(hinal_elecs$Electrode, collapse = "|"), electrodes)) %>%
-  ggplot(., aes(x = bin, y = gamma, color = electrodes, fill = electrodes)) +
+  ggplot(., aes(x = bin, y = mean, color = electrodes, fill = electrodes)) +
   geom_point(alpha = .4) +
   geom_line(alpha = .4) + 
   # geom_vline(xintercept = 1.2613816 * 10) +
@@ -198,7 +230,7 @@ hg_eda_summary %>%
 
 hg_eda_summary %>%
   filter(grepl(paste(ca1_elecs$Electrode, collapse = "|"), electrodes)) %>%
-  ggplot(., aes(x = bin, y = gamma, color = electrodes, fill = electrodes)) +
+  ggplot(., aes(x = bin, y = mean, color = electrodes, fill = electrodes)) +
   geom_point(alpha = .4) +
   geom_line(alpha = .4) + 
   # geom_vline(xintercept = 1.2613816 * 100) +
@@ -209,68 +241,7 @@ hg_eda_summary %>%
 
 
 ```
-```{r hg-eda-bin}
 
-hg_behave_eda <- merge.data.frame(hg_eda, behave_data, by.x = "trial", by.y = "round", all.x = T, all.y = F)
-
-hg_behave_eda <- hg_behave_eda %>%
-  select(starts_with("bin_"), RT, electrodes, trial) %>%
-  mutate(rt_bin = RT * 10) %>%
-  gather(key = "bin", value = "gamma", -electrodes, -RT, -electrodes, -trial, -rt_bin) %>%
-  mutate(bin = as.numeric(gsub("bin_", "", bin)))
-  
-hg_behave_eda_filtered <- hg_behave_eda %>%
-  group_by(electrodes, trial, rt_bin) %>%
-  mutate_cond(bin > rt_bin, gamma = 999999)
-
-hg_behave_eda_filtered <- hg_behave_eda_filtered %>% filter(gamma < 999999)
-
-hg_behave_eda_binned <- hg_behave_eda_filtered %>%
-  ungroup() %>%
-  group_by(trial, electrodes) %>%
-  arrange(desc(bin)) %>%
-  mutate(reverse_bins = c(3:rt_bin)) # because we cut the first two bins
-
-
-hg_behave_eda_binned %>%
-  filter(grepl(paste(ofc_elecs$Electrode, collapse = "|"), electrodes)) %>%
-  ggplot(., aes(x = reverse_bins, y = gamma, color = trial, fill = trial)) +
-  geom_point(alpha = .1) +
-  theme(panel.background = element_rect(fill = "white")) + 
-  facet_wrap(~electrodes) +
-  ggtitle("OFC")
-
-
-hg_behave_eda_binned %>%
-  filter(grepl(paste(ofc_elecs$Electrode, collapse = "|"), electrodes)) %>%
-  ggplot(., aes(x = reverse_bins, y = gamma, color = trial, fill = trial)) +
-  geom_point(alpha = .1) +
-  theme(panel.background = element_rect(fill = "white")) + 
-  facet_wrap(~electrodes) +
-  ggtitle("OFC")
-
-
-```
-```{r help-with-choice-locked}
-
-# brain_behave_data <- brain_behave_data %>%
-#   mutate(rt_bin = (RT * 10) + 10) %>%
-#   gather(key = "bin", value = "gamma", starts_with("bin_")) %>%
-#   mutate(bin = as.numeric(gsub("bin_", "", bin))) %>%
-#   group_by(electrodes, trial, rt_bin) %>%
-#   mutate_cond(bin > rt_bin, gamma = 999999)
-# 
-# brain_behave_data_filtered <- brain_behave_data %>% 
-#   filter(gamma < 999999) %>%
-#   ungroup() %>%
-#   group_by(trial, electrodes) %>%
-#   arrange(desc(bin)) %>%
-#   mutate(reverse_bins = c(3:rt_bin)) %>% # because we cut the first two bins
-#   mutate(reverse_bins = paste0("bin_", reverse_bins)) %>%
-#   spread(key = reverse_bins, value = gamma)
-
-
-```
 
 ```{r regressions, eval=FALSE}
 
@@ -427,7 +398,7 @@ regression_results %>%
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), panel.background = element_rect(fill = "white")) + 
   scale_fill_manual(values = c("grey", getPalette(4))) +
   scale_color_manual(values = c("grey", getPalette(4))) +
-  labs(y = "Difference in Adj. R Squared", x = "Bins", fill = "Region", color = "Region") +
+  labs(y = "Adj. R Squared", x = "Bins", fill = "Region", color = "Region") +
   facet_wrap(~electrode) + 
   ggtitle("Self Payoff Results")
 
@@ -441,7 +412,7 @@ regression_results %>%
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), panel.background = element_rect(fill = "white")) + 
   scale_fill_manual(values = c("grey", getPalette(4))) +
   scale_color_manual(values = c("grey", getPalette(4))) +
-  labs(y = "Difference in Adj. R Squared", x = "Bins", fill = "Region", color = "Region") +
+  labs(y = "Adj. R Squared", x = "Bins", fill = "Region", color = "Region") +
   facet_wrap(~electrode) + 
   ggtitle("Self Foregone Results")
 
@@ -455,7 +426,7 @@ regression_results %>%
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), panel.background = element_rect(fill = "white")) + 
   scale_fill_manual(values = c("grey", getPalette(4))) +
   scale_color_manual(values = c("grey", getPalette(4))) +
-  labs(y = "Difference in Adj. R Squared", x = "Bins", fill = "Region", color = "Region") +
+  labs(y = "Adj. R Squared", x = "Bins", fill = "Region", color = "Region") +
   facet_wrap(~electrode) + 
   ggtitle("Other Payoff Results")
 
@@ -469,7 +440,7 @@ regression_results %>%
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), panel.background = element_rect(fill = "white")) + 
   scale_fill_manual(values = c("grey", getPalette(4))) +
   scale_color_manual(values = c("grey", getPalette(4))) +
-  labs(y = "Difference in Adj. R Squared", x = "Bins", fill = "Region", color = "Region") +
+  labs(y = "Adj. R Squared", x = "Bins", fill = "Region", color = "Region") +
   facet_wrap(~electrode) + 
   ggtitle("Other Foregone Results")
 
@@ -507,7 +478,108 @@ dis_results_for_plots %>%
 ```
 
 
-```{r stepwise-anovas}
+```{r stepwise-anovas-prep}
+
+# concatenate results #
+regions_to_combine <- c("OFC", "Insula", "Cingulate", "STS")
+anova_results <- merge_stepped_anova_results(regions_to_combine)
+
+anova_regression_results <- merge.data.frame(anova_results, regression_results, by.x = c("electrode", "region", "first_pred"), by.y = c("electrode", "region", "predictor"), all.x = T, all.y = F)
+
+```
+
+```{r stepwise-anova-viz}
+
+anova_regression_results %>%
+  filter(first_pred == "ineq_advent") %>%
+  mutate(sig = if_else(perm_p < 0.05 & p < 0.05 & anova_perm_p, "Significant", "Insignificant")) %>%
+  mutate_cond(sig == "Significant", sig = as.character(region)) %>%
+  mutate(sig = relevel(factor(sig), ref = "Insignificant")) %>%
+  ggplot(., aes( x = bin, y = R2, color = sig, fill = sig)) +
+  geom_col(alpha = .5) +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), panel.background = element_rect(fill = "white")) + 
+  scale_fill_manual(values = c("grey", getPalette(4))) +
+  # scale_color_grey() +
+  scale_color_manual(values = c("grey", getPalette(4))) +
+  labs(y = "Adj. R Squared", x = "Bins", fill = "Region", color = "Region") +
+  facet_wrap(~electrode) + 
+  ggtitle("Ineq Advent Stepped Anova Results: all sig except self foregone")
+
+
+anova_regression_results %>%
+  filter(first_pred == "ineq_disadvent" & complete.cases(anova_perm_p)) %>%
+  mutate(sig = if_else(perm_p < 0.05 & p < 0.05 & anova_perm_p, "Significant", "Insignificant")) %>%
+  mutate_cond(sig == "Significant", sig = as.character(region)) %>%
+  mutate(sig = relevel(factor(sig), ref = "Insignificant")) %>%
+  ggplot(., aes( x = bin, y = R2, color = sig, fill = sig)) +
+  geom_col(alpha = .5) +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), panel.background = element_rect(fill = "white")) + 
+  scale_fill_manual(values = c("grey", getPalette(4))) +
+  # scale_color_grey() +
+  scale_color_manual(values = c("grey", getPalette(4))) +
+  labs(y = "Adj. R Squared", x = "Bins", fill = "Region", color = "Region") +
+  facet_wrap(~electrode) + 
+  ggtitle("Ineq Disdvent Stepped Anova Results:  all sig ")
+
+anova_regression_results %>%
+  filter(first_pred == "self_payoff" & complete.cases(anova_perm_p)) %>%
+  mutate(sig = if_else(perm_p < 0.05 & p < 0.05 & anova_perm_p, "Significant", "Insignificant")) %>%
+  mutate_cond(sig == "Significant", sig = as.character(region)) %>%
+  mutate(sig = relevel(factor(sig), ref = "Insignificant")) %>%
+  ggplot(., aes( x = bin, y = R2, color = sig, fill = sig)) +
+  geom_col(alpha = .5) +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), panel.background = element_rect(fill = "white")) + 
+  scale_fill_manual(values = c("grey", getPalette(4))) +
+  # scale_color_grey() +
+  scale_color_manual(values = c("grey", getPalette(4))) +
+  labs(y = "Adj. R Squared", x = "Bins", fill = "Region", color = "Region") +
+  facet_wrap(~electrode) + 
+  ggtitle("Self Payoff Stepped Anova Results:  all sig ")
+
+anova_regression_results %>%
+  filter(first_pred == "other_payoff" & complete.cases(anova_perm_p)) %>%
+  mutate(sig = if_else(perm_p < 0.05 & p < 0.05 & anova_perm_p, "Significant", "Insignificant")) %>%
+  mutate_cond(sig == "Significant", sig = as.character(region)) %>%
+  mutate(sig = relevel(factor(sig), ref = "Insignificant")) %>%
+  ggplot(., aes( x = bin, y = R2, color = sig, fill = sig)) +
+  geom_col(alpha = .5) +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), panel.background = element_rect(fill = "white")) + 
+  scale_fill_manual(values = c("grey", getPalette(4))) +
+  # scale_color_grey() +
+  scale_color_manual(values = c("grey", getPalette(4))) +
+  labs(y = "Adj. R Squared", x = "Bins", fill = "Region", color = "Region") +
+  facet_wrap(~electrode) + 
+  ggtitle("Other Payoff Stepped Anova Results:  all sig except ineq disadvant")
+
+anova_regression_results %>%
+  filter(first_pred == "self_foregone" & complete.cases(anova_perm_p)) %>%
+  mutate(sig = if_else(perm_p < 0.05 & p < 0.05 & anova_perm_p, "Significant", "Insignificant")) %>%
+  mutate_cond(sig == "Significant", sig = as.character(region)) %>%
+  mutate(sig = relevel(factor(sig), ref = "Insignificant")) %>%
+  ggplot(., aes( x = bin, y = R2, color = sig, fill = sig)) +
+  geom_col(alpha = .5) +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), panel.background = element_rect(fill = "white")) + 
+  scale_fill_manual(values = c("grey", getPalette(4))) +
+  # scale_color_grey() +
+  scale_color_manual(values = c("grey", getPalette(4))) +
+  labs(y = "Adj. R Squared", x = "Bins", fill = "Region", color = "Region") +
+  facet_wrap(~electrode) + 
+  ggtitle("Self Foregone Stepped Anova Results:  all sig except ineq disadvant")
+
+anova_regression_results %>%
+  filter(first_pred == "other_foregone" & complete.cases(anova_perm_p)) %>%
+  mutate(sig = if_else(perm_p < 0.05 & p < 0.05 & anova_perm_p, "Significant", "Insignificant")) %>%
+  mutate_cond(sig == "Significant", sig = as.character(region)) %>%
+  mutate(sig = relevel(factor(sig), ref = "Insignificant")) %>%
+  ggplot(., aes( x = bin, y = R2, color = sig, fill = sig)) +
+  geom_col(alpha = .5) +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), panel.background = element_rect(fill = "white")) + 
+  scale_fill_manual(values = c("grey", getPalette(4))) +
+  # scale_color_grey() +
+  scale_color_manual(values = c("grey", getPalette(4))) +
+  labs(y = "Adj. R Squared", x = "Bins", fill = "Region", color = "Region") +
+  facet_wrap(~electrode) + 
+  ggtitle("Other Forgeone Stepped Anova Results: all sig except ineq disadvant")
 
 
 ```
