@@ -34,8 +34,8 @@ registerDoParallel(nCores)
 
 
 ## read in data ##
-file_path_to_elecs_of_interest <- path(here(), "munge", "IR35_elecs_of_interest.csv")
-path_hg_clean <- path(here(), "munge", "hg_behave_choice_locked.csv")
+file_path_to_elecs_of_interest <- path(here(), "munge", "IR35_elecs_of_interest_cut.csv")
+path_hg_clean <- path(here(), "munge", "hg_behave_choice_locked_cut.csv")
 hg_behave <-  read.csv(path_hg_clean)
 elecs_to_use <- read.csv(file_path_to_elecs_of_interest)
 

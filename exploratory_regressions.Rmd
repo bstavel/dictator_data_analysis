@@ -105,8 +105,8 @@ I am wondering if it might make sense to start with the most derived var as the 
 ```{r load-hg-data}
 
 # necessary paths #
-file_path_to_electrode_names <- path(here(), "munge", "IR35_electrodes_choice_locked.csv")
-file_path_to_hg_data <- path(here(), "munge", "IR35_hg_munge_choice_locked.csv")
+file_path_to_electrode_names <- path(here(), "munge", "IR35_electrodes_choice_locked_cut.csv")
+file_path_to_hg_data <- path(here(), "munge", "IR35_hg_munge_choice_locked_cut.csv")
 file_path_to_elecs_of_interest <- path(here(), "munge", "IR35_elecs_of_interest.csv")
 
 # load data #
@@ -126,7 +126,7 @@ hg_eda <- hg_clean %>% filter(trial %in% half_index)
 
 # with behavior #
 hg_behave <- merge.data.frame(hg_clean, behave_data, by.x = "trial", by.y = "round", all.x = T, all.y = F)
-write.csv(hg_behave, path(here(), "munge", "hg_behave_choice_locked.csv"))
+write.csv(hg_behave, path(here(), "munge", "hg_behave_choice_locked_cut.csv"))
 
 ```
 

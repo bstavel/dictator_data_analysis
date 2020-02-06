@@ -7,8 +7,8 @@ rolling_window_and_baseline <- function(df, lWin = 100, lOver = 50){
   hg_df <- df %>% select(starts_with("time"))
   
   # then separate out pre trial baseline #
-  baseline_df <- hg_df %>% select(1:199)
-  task_df <- hg_df %>% select(200:ncol(hg_df))
+  baseline_df <- read.csv(path(here(), "munge", "baseline_data.csv"))
+  baseline_df <- baseline_df %>% select(-X)
   
   # reorder nas #
   right_shift_na <- function(x) {
@@ -21,7 +21,7 @@ rolling_window_and_baseline <- function(df, lWin = 100, lOver = 50){
     }
     return(unlist(new_x))  # will error if it is not pass the if all test
   }
-  df_reorder <- apply(task_df, 1, right_shift_na)
+  df_reorder <- apply(hg_df, 1, right_shift_na)
   df_reorder <- data.frame(t(df_reorder))
 
   # calculate the rolling average, should this be left -- yes it is about the indexing anf the left side already has na vals so it is preferable to use that side
@@ -33,7 +33,7 @@ rolling_window_and_baseline <- function(df, lWin = 100, lOver = 50){
   baseline <- data.frame(t(baseline))
   
   # rename columns #
-  colnames(df_rollmean) <- c(rev(paste0("pre_", 1:40)),  paste0("post_", 1:20))
+  colnames(df_rollmean) <- c(rev(paste0("pre_", 1:13)),  paste0("post_", 1:20))
   
   # subtract the baseline (time around beginning of option presentation)
   df_rollmean_baseline <- apply(df_rollmean, 2, function(col) t(as.vector(col - baseline)))
