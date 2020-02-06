@@ -118,7 +118,7 @@ hg_data <- hg_data %>% filter(grepl(paste(elecs_to_use$Electrode, collapse = "|"
 
 # average and baseline #
 hg_clean_tmp <- rolling_window_and_baseline(hg_data, lWin = 100, lOver = 50)
-hg_clean <- hg_clean_tmp %>% select(trial, electrodes, 28:62)
+# hg_clean <- hg_clean_tmp %>% select(trial, electrodes, 28:62)
 
 # create temp data for visualiztion #
 half_index <- sample(1:228, 114)
