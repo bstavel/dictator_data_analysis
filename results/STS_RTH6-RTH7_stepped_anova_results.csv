@@ -1,6 +1,0 @@
-"","region","electrode","first_pred","stepped_pred","f_stretch","anova_perm_p","f_null_max","f_null_sd","f_null_mean"
-"1","STS","RTH6-RTH7","other_payoff","ineq_advent",27.0957043850494,0.038,99.2996270792813,9.82116505676654,8.91781573350782
-"2","STS","RTH6-RTH7","other_payoff","ineq_disadvent",101.461912943304,0,99.2996270792813,9.82116505676654,8.91781573350782
-"3","STS","RTH6-RTH7","other_payoff","self_foregone",42.5419733703557,0.009,99.2996270792813,9.82116505676654,8.91781573350782
-"4","STS","RTH6-RTH7","other_payoff","other_foregone",23.2169986842965,0.07,99.2996270792813,9.82116505676654,8.91781573350782
-"5","STS","RTH6-RTH7","other_payoff","self_payoff",NA,NA,99.2996270792813,9.82116505676654,8.91781573350782

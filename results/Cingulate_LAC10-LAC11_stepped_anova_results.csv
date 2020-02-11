@@ -1,6 +1,0 @@
-"","region","electrode","first_pred","stepped_pred","f_stretch","anova_perm_p","f_null_max","f_null_sd","f_null_mean"
-"1","Cingulate","LAC10-LAC11","ineq_disadvent","other_payoff",91.5142294757051,0.003,99.2996270792813,9.82116505676671,8.91781573350785
-"2","Cingulate","LAC10-LAC11","ineq_disadvent","ineq_advent",118.561226734556,0.002,99.2996270792813,9.82116505676671,8.91781573350785
-"3","Cingulate","LAC10-LAC11","ineq_disadvent","self_foregone",42.5419733703557,0.009,99.2996270792813,9.82116505676671,8.91781573350785
-"4","Cingulate","LAC10-LAC11","ineq_disadvent","other_foregone",23.2169986842988,0.07,99.2996270792813,9.82116505676671,8.91781573350785
-"5","Cingulate","LAC10-LAC11","ineq_disadvent","self_payoff",NA,NA,99.2996270792813,9.82116505676671,8.91781573350785

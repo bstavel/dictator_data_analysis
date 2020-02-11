@@ -53,7 +53,6 @@ run_permuted_regressions_par <- function(brain_behave_data, electrodes, regresso
     
     
     # Create null distribution by shuffling labels #
-    null_beta_stretch <- NULL
     null_fstat_stretch <- NULL
     null_fstat_stretch <- foreach(h = 1:niter, .inorder=FALSE) %dopar% {
       # print status #
@@ -68,12 +67,6 @@ run_permuted_regressions_par <- function(brain_behave_data, electrodes, regresso
       
      for (bin in nBins) { # This is the slooooow step
         
-        # if(remove_outliers) {
-        #   temp <- data.frame(peak=peak)
-        #   temp <- remove_outliers(temp,peak)
-        #   peak <- temp$peak
-        # }
-        
         # run models #
         bin_vec <- brain_behave_data_elec[, bin]
         reg_vec <- brain_behave_data_elec[, regressor]
@@ -81,7 +74,6 @@ run_permuted_regressions_par <- function(brain_behave_data, electrodes, regresso
         
         # save info from models #
         null_fstat[bin] <- null_lm$fstatistic[1]
-        null_abs_beta[bin] <- abs(null_lm$coefficients[2,1])
         null_lm_pval[bin] <- null_lm$coefficients[2,4]
         
       }

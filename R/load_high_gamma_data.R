@@ -1,10 +1,10 @@
-load_high_gamma_data <- function(file_path_to_hg_data, file_path_to_electrode_names) {
+load_high_gamma_data <- function(file_path_to_hg_data, file_path_to_electrode_names, index1, index2) {
   # load data #
   hg_data <- read.csv(file_path_to_hg_data, stringsAsFactors = F, header = F, comment.char="") # comment.char for fast loading
   # rename columns #
   hg_data <- hg_data %>%
-    rename(index = V1750) %>%
-    rename(trial = V1751)
+    rename(index = index1) %>%
+    rename(trial = index2)
   
   colnames(hg_data) <- gsub("^V", "time_", colnames(hg_data))
   

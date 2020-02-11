@@ -1,6 +1,0 @@
-"","region","electrode","first_pred","stepped_pred","anova_perm_p"
-"1","Cingulate","LPC1-LPC2","self_payoff","other_payoff",0
-"2","Cingulate","LPC1-LPC2","self_payoff","ineq_disadvent",0
-"3","Cingulate","LPC1-LPC2","self_payoff","ineq_advent",0.2
-"4","Cingulate","LPC1-LPC2","self_payoff","other_foregone",0
-"5","Cingulate","LPC1-LPC2","self_payoff","self_foregone",0

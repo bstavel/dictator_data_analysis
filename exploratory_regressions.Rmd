@@ -102,15 +102,15 @@ ggcorrplot(behavioral_cor,
 
 I am wondering if it might make sense to start with the most derived var as the spotlight, ie disaventageous versus adventageous inequality.
 
-```{r load-hg-data}
+```{r load-hg-data-presentation-locked}
 
 # necessary paths #
-file_path_to_electrode_names <- path(here(), "munge", "IR35_electrodes_choice_locked_cut.csv")
-file_path_to_hg_data <- path(here(), "munge", "IR35_hg_munge_choice_locked_cut.csv")
+file_path_to_electrode_names <- path(here(), "munge", "IR35_electrodes_presentation_locked.csv")
+file_path_to_hg_data <- path(here(), "munge", "IR35_hg_munge_presentation_locked.csv")
 file_path_to_elecs_of_interest <- path(here(), "munge", "IR35_elecs_of_interest.csv")
 
 # load data #
-hg_data <- load_high_gamma_data(file_path_to_hg_data, file_path_to_electrode_names)
+hg_data <- load_high_gamma_data(file_path_to_hg_data, file_path_to_electrode_names, "V751", "V752")
 elecs_to_use <- read.csv(file_path_to_elecs_of_interest)
 
 # filter to good electrodes #
@@ -118,7 +118,7 @@ hg_data <- hg_data %>% filter(grepl(paste(elecs_to_use$Electrode, collapse = "|"
 
 # average and baseline #
 hg_clean_tmp <- rolling_window_and_baseline(hg_data, lWin = 100, lOver = 50)
-# hg_clean <- hg_clean_tmp %>% select(trial, electrodes, 28:62)
+hg_clean <- hg_clean_tmp # %>% select(trial, electrodes, 28:62)
 
 # create temp data for visualiztion #
 half_index <- sample(1:228, 114)
@@ -239,6 +239,38 @@ hg_eda_summary %>%
   scale_color_manual(values = getPalette(9)) +
   ggtitle("CA1")
 
+```
+
+```{r hg_plots}
+
+hg_data_full <- load_high_gamma_data(file_path_to_hg_data, file_path_to_electrode_names, "V3201", "V3202")
+indicies <- hg_data_full %>% select(trial, electrodes)
+hg_data <- hg_data_full %>% select(starts_with("time"))
+
+baseline_df <- hg_data[, 1:200]
+baseline <- apply(baseline_df, 1, function(x) mean(x, na.rm = T))
+
+hg_data_tmp <- hg_data[, 201:ncol(hg_data)]
+hg_data_baselined <- apply(hg_data_tmp, 2, function(col) t(as.vector(col - baseline)))
+hg_data_baselined <- as.data.frame(hg_data_baselined)
+hg_data_baselined <- cbind(hg_data_baselined, indicies)
+
+hg_raw_plot <- merge.data.frame(hg_data_baselined, behave_data, by.x = "trial", by.y = "round", all.x = T, all.y = F)
+hg_raw_plot %>%
+  select(electrodes, RT, trial, starts_with("time")) %>%
+  filter(electrodes == "LOF1-LOF2") %>%
+  arrange(desc(RT)) %>%
+  mutate(trial = factor(trial, levels = trial)) %>%
+  gather(key = "time", value = "gamma", -electrodes, -trial, -RT) %>%
+  mutate(time = as.numeric(gsub("time_", "", time))) %>%
+  ggplot(., aes(x = time, y = trial, color = gamma, fill = gamma)) +
+  geom_tile() + 
+  geom_point(aes(y = trial, x = RT*1000), color = "white") + 
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank()) + 
+  scale_fill_viridis()   +
+  scale_color_viridis() +
+  ggtitle("LOF1-LOF2")
+  
 
 ```
 
@@ -271,23 +303,22 @@ fake_dis %>%
 
 ```{r concactenate-results}
 
-regions_to_combine <- c("OFC", "Insula", "Cingulate", "STS")
-regression_results <- compile_results(regions_to_combine)
-
-insula_results <- compile_results("Insula")
+regions_to_combine <- c("OFC", "Insula", "Cingulate", "STS", "MFG")
+all_results <- compile_results(regions_to_combine)
 
 ```
 
 
 ```{r anovas}
-run_filtered_anova(ofc_results, hg_behave,  region_name = "OFC")
+run_filtered_anova(ofc_results, hg_behave,  region_name = "OFC", all_results = T)
 run_filtered_anova(cingulate_results, hg_behave,  region_name = "Cingulate")
 run_filtered_anova(insula_results, hg_behave, region_name = "Insula")
 run_filtered_anova(mfg_results, hg_behave, region_name = "MFG")
 run_filtered_anova(sts_results, hg_behave,  region_name = "STS")
-run_filtered_anova(regression_results, hg_behave,  region_name = "All")
+run_filtered_anova(all_results, hg_behave,  region_name = "All")
 
 ## ofc ##
+region_name <- "OFC"
 ofc_results_dis <- read.csv(path(here(), "results", paste0(region_name, "_anova_results_disadvantageous.csv")))
 ofc_results_adv <- read.csv(path(here(), "results", paste0(region_name, "_anova_results_advantageous.csv")))
 
@@ -339,22 +370,13 @@ all_results_adv %>%
 
 ```
 
-```{r reg-results}
-
-regression_results %>%
-  filter(electrode == "RTH6-RTH7")  %>%
-  kable() %>%
-  add_header_above(c("Advantageous Inequity" = length(regression_results))) %>%
-  kable_styling(position = "center")
-
-```
-
 ```{r prep-filter-anova-viz}
 regions_to_combine <- c("OFC", "Insula", "Cingulate", "STS")
 regression_results <- compile_results(regions_to_combine)
 
 run_filtered_anova(regression_results, hg_behave,  region_name = "All", all_results = T)
 
+region_name <- "All"
 adv_results_for_plots <- read.csv(fs::path(here(), "results", paste0(region_name, "_anova_results_advantageous.csv")))
 dis_results_for_plots <- read.csv(fs::path(here(), "results", paste0(region_name, "_anova_results_disadvantageous.csv")))
 ```
@@ -366,8 +388,11 @@ getPalette = colorRampPalette(brewer.pal(3, "Set1"))
 adv_results_for_plots %>%
   mutate(sig = if_else(perm_p < 0.05 & p < 0.05 & anova_p < 0.05, "Significant", "Insignificant")) %>%
   mutate_cond(sig == "Significant", sig = as.character(region)) %>%
+  mutate(sig = relevel(factor(sig), ref = "Insignificant")) %>%
+  mutate(bin = factor(bin, levels = colnames(hg_data)[4:38])) %>%
   ggplot(., aes( x = bin, y = diff_adj_r2, color = sig, fill = sig)) +
   geom_col(alpha = .5) +
+  geom_vline(aes(xintercept = which(levels(bin) %in% "post_1"))) +
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), panel.background = element_rect(fill = "white")) + 
   scale_fill_manual(values = c("grey", getPalette(3))) +
   scale_color_manual(values = c("grey", getPalette(3))) +
@@ -378,11 +403,14 @@ adv_results_for_plots %>%
 dis_results_for_plots %>%
   mutate(sig = if_else(perm_p < 0.05 & p < 0.05 & anova_p < 0.05, "Significant", "Insignificant")) %>%
   mutate_cond(sig == "Significant", sig = as.character(region)) %>%
+  mutate(sig = relevel(factor(sig), ref = "Insignificant")) %>%
+  mutate(bin = factor(bin, levels = colnames(hg_data)[4:38])) %>%
   ggplot(., aes( x = bin, y = diff_adj_r2, color = sig, fill = sig)) +
   geom_col(alpha = .5) +
+  geom_vline(aes(xintercept = which(levels(bin) %in% "post_1"))) +
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), panel.background = element_rect(fill = "white")) + 
-  scale_fill_manual(values = c("grey", getPalette(3)[2:3])) +
-  scale_color_manual(values = c("grey", getPalette(3)[2:3])) +
+  scale_fill_manual(values = c("grey", getPalette(3)[2:4])) +
+  scale_color_manual(values = c("grey", getPalette(3)[2:4])) +
   labs(y = "Difference in Adj. R Squared", x = "Bins", fill = "Region", color = "Region") +
   facet_wrap(~electrode) + 
   ggtitle("Disdvantageous Inequality Results")
@@ -393,8 +421,10 @@ regression_results %>%
   mutate(sig = if_else(perm_p < 0.05 & p < 0.05, "Significant", "Insignificant")) %>%
   mutate_cond(sig == "Significant", sig = as.character(region)) %>%
   mutate(sig = relevel(factor(sig), ref = "Insignificant")) %>%
+  mutate(bin = factor(bin, levels = colnames(hg_data)[4:38])) %>%
   ggplot(., aes( x = bin, y = R2, color = sig, fill = sig)) +
   geom_col(alpha = .5) +
+  geom_vline(aes(xintercept = which(levels(bin) %in% "post_1"))) +
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), panel.background = element_rect(fill = "white")) + 
   scale_fill_manual(values = c("grey", getPalette(4))) +
   scale_color_manual(values = c("grey", getPalette(4))) +
@@ -407,8 +437,10 @@ regression_results %>%
   mutate(sig = if_else(perm_p < 0.05 & p < 0.05, "Significant", "Insignificant")) %>%
   mutate_cond(sig == "Significant", sig = as.character(region)) %>%
   mutate(sig = relevel(factor(sig), ref = "Insignificant")) %>%
+  mutate(bin = factor(bin, levels = colnames(hg_data)[4:38])) %>%
   ggplot(., aes( x = bin, y = R2, color = sig, fill = sig)) +
   geom_col(alpha = .5) +
+  geom_vline(aes(xintercept = which(levels(bin) %in% "post_1"))) +
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), panel.background = element_rect(fill = "white")) + 
   scale_fill_manual(values = c("grey", getPalette(4))) +
   scale_color_manual(values = c("grey", getPalette(4))) +
@@ -421,8 +453,10 @@ regression_results %>%
   mutate(sig = if_else(perm_p < 0.05 & p < 0.05, "Significant", "Insignificant")) %>%
   mutate_cond(sig == "Significant", sig = as.character(region)) %>%
   mutate(sig = relevel(factor(sig), ref = "Insignificant")) %>%
+  mutate(bin = factor(bin, levels = colnames(hg_data)[4:38])) %>%
   ggplot(., aes( x = bin, y = R2, color = sig, fill = sig)) +
   geom_col(alpha = .5) +
+  geom_vline(aes(xintercept = which(levels(bin) %in% "post_1"))) +
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), panel.background = element_rect(fill = "white")) + 
   scale_fill_manual(values = c("grey", getPalette(4))) +
   scale_color_manual(values = c("grey", getPalette(4))) +
@@ -435,8 +469,10 @@ regression_results %>%
   mutate(sig = if_else(perm_p < 0.05 & p < 0.05, "Significant", "Insignificant")) %>%
   mutate_cond(sig == "Significant", sig = as.character(region)) %>%
   mutate(sig = relevel(factor(sig), ref = "Insignificant")) %>%
+  mutate(bin = factor(bin, levels = colnames(hg_data)[4:38])) %>%
   ggplot(., aes( x = bin, y = R2, color = sig, fill = sig)) +
   geom_col(alpha = .5) +
+  geom_vline(aes(xintercept = which(levels(bin) %in% "post_1"))) +
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), panel.background = element_rect(fill = "white")) + 
   scale_fill_manual(values = c("grey", getPalette(4))) +
   scale_color_manual(values = c("grey", getPalette(4))) +
@@ -452,9 +488,11 @@ adv_results_for_plots %>%
   mutate_cond(perm_p < .05 & p < .05, anova_p = p.adjust(anova_p, "hochberg")) %>%
   mutate(sig = if_else(perm_p < 0.05 & p < 0.05 & anova_p < 0.05, "Significant", "Insignificant")) %>%
   mutate_cond(sig == "Significant", sig = as.character(region)) %>%
+  mutate(bin = factor(bin, levels = colnames(hg_data)[4:38])) %>%
   ggplot(., aes( x = bin, y = diff_adj_r2, color = sig, fill = sig)) +
   geom_col(alpha = .5) +
-  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), panel.background = element_rect(fill = "white")) + 
+  geom_vline(aes(xintercept = which(levels(bin) %in% "post_1"))) +
+  theme(panel.background = element_rect(fill = "white")) + 
   scale_fill_manual(values = c("grey", getPalette(3))) +
   scale_color_manual(values = c("grey", getPalette(3))) +
   labs(y = "Difference in Adj. R Squared", x = "Bins", fill = "Region", color = "Region") +
@@ -464,21 +502,23 @@ adv_results_for_plots %>%
 dis_results_for_plots %>%
   mutate(sig = if_else(perm_p < 0.05 & p < 0.05 & anova_p < 0.05, "Significant", "Insignificant")) %>%
   mutate_cond(sig == "Significant", sig = as.character(region)) %>%
+  mutate(bin = factor(bin, levels = colnames(hg_data)[4:38])) %>%
   ggplot(., aes( x = bin, y = diff_adj_r2, color = sig, fill = sig)) +
   geom_col(alpha = .5) +
-  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), panel.background = element_rect(fill = "white")) + 
-  scale_fill_manual(values = c("grey", getPalette(3)[2:3])) +
-  scale_color_manual(values = c("grey", getPalette(3)[2:3])) +
+  geom_vline(aes(xintercept = which(levels(bin) %in% "post_1"))) +
+  theme( panel.background = element_rect(fill = "white")) + 
+  scale_fill_manual(values = c("grey", getPalette(3)[2:4])) +
+  scale_color_manual(values = c("grey", getPalette(3)[2:4])) +
   labs(y = "Difference in Adj. R Squared", x = "Bins", fill = "Region", color = "Region") +
   facet_wrap(~electrode) + 
   ggtitle("Disdvantageous Inequality Results")
 
-
+dis_results_for_plots %>% filter(electrode == "LTH8-LTH9") %>% kable(.)
 
 ```
 
 
-```{r stepwise-anovas-prep}
+```{r stepwise-anovas-prep, eval =F}
 
 # concatenate results #
 regions_to_combine <- c("OFC", "Insula", "Cingulate", "STS")
@@ -488,7 +528,7 @@ anova_regression_results <- merge.data.frame(anova_results, regression_results, 
 
 ```
 
-```{r stepwise-anova-viz}
+```{r stepwise-anova-viz, eval = F}
 
 anova_regression_results %>%
   filter(first_pred == "ineq_advent") %>%
