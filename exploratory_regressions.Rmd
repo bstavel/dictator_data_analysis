@@ -110,25 +110,45 @@ file_path_to_hg_data <- path(here(), "munge", "IR35_hg_munge_presentation_locked
 file_path_to_elecs_of_interest <- path(here(), "munge", "IR35_elecs_of_interest.csv")
 
 # load data #
-hg_data <- load_high_gamma_data(file_path_to_hg_data, file_path_to_electrode_names, "V751", "V752")
+hg_data <- load_high_gamma_data(file_path_to_hg_data, file_path_to_electrode_names, "V952", "V953")
 elecs_to_use <- read.csv(file_path_to_elecs_of_interest)
 
 # filter to good electrodes #
 hg_data <- hg_data %>% filter(grepl(paste(elecs_to_use$Electrode, collapse = "|"), electrodes))
 
 # average and baseline #
-hg_clean_tmp <- rolling_window_and_baseline(hg_data, lWin = 100, lOver = 50)
-hg_clean <- hg_clean_tmp # %>% select(trial, electrodes, 28:62)
-
-# create temp data for visualiztion #
-half_index <- sample(1:228, 114)
-hg_eda <- hg_clean %>% filter(trial %in% half_index)
+hg_clean <- rolling_window_and_baseline(hg_data, lWin = 100, lOver = 50, choice_locked = F)
 
 # with behavior #
 hg_behave <- merge.data.frame(hg_clean, behave_data, by.x = "trial", by.y = "round", all.x = T, all.y = F)
-write.csv(hg_behave, path(here(), "munge", "hg_behave_choice_locked_cut.csv"))
+write.csv(hg_behave, path(here(), "munge", "hg_behave_presentation_locked.csv"))
 
 ```
+
+
+```{r load-hg-data-choice-locked}
+
+# necessary paths #
+file_path_to_electrode_names <- path(here(), "munge", "IR35_electrodes_choice_locked_cut_fixation.csv")
+file_path_to_hg_data <- path(here(), "munge", "IR35_hg_munge_choice_locked_cut_fixation.csv")
+file_path_to_elecs_of_interest <- path(here(), "munge", "IR35_elecs_of_interest.csv")
+
+# load data #
+hg_data <- load_high_gamma_data(file_path_to_hg_data, file_path_to_electrode_names, "V2351", "V2352")
+elecs_to_use <- read.csv(file_path_to_elecs_of_interest)
+
+# filter to good electrodes #
+hg_data <- hg_data %>% filter(grepl(paste(elecs_to_use$Electrode, collapse = "|"), electrodes))
+
+# average and baseline #
+hg_clean <- rolling_window_and_baseline(hg_data, lWin = 100, lOver = 50, choice_locked = T)
+
+# with behavior #
+hg_behave <- merge.data.frame(hg_clean, behave_data, by.x = "trial", by.y = "round", all.x = T, all.y = F)
+write.csv(hg_behave, path(here(), "munge", "hg_behave_choice_locked_cut_fixation.csv"))
+
+```
+
 
 ```{r test_num_of_bins_to_exclude}
 

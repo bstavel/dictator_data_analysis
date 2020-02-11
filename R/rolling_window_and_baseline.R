@@ -9,7 +9,7 @@ rolling_window_and_baseline <- function(df, lWin = 100, lOver = 50, choice_locke
   hg_df <- df %>% select(starts_with("time"))
   
   # then separate out pre trial baseline, taken from the presentation locked trials #
-  baseline_df <- read.csv(path(here(), "munge", "baseline_data.csv"))
+  baseline_df <- read.csv(path(here(), "munge", "baseline.csv"))
   baseline_df <- baseline_df %>% select(-X)
   
   # # reorder nas #
@@ -35,7 +35,7 @@ rolling_window_and_baseline <- function(df, lWin = 100, lOver = 50, choice_locke
   baseline <- data.frame(t(baseline))
   
   # rename columns #
-  colnames(df_rollmean) <- c(rev(paste0("pre_", 1:13)),  paste0("post_", 1:20))
+  colnames(df_rollmean) <- c(rev(paste0("pre_", 1:15)),  paste0("post_", 1:31))
   
   # subtract the baseline (time around beginning of option presentation)
   df_rollmean_baseline <- apply(df_rollmean, 2, function(col) t(as.vector(col - baseline)))
@@ -54,7 +54,7 @@ rolling_window_and_baseline <- function(df, lWin = 100, lOver = 50, choice_locke
     
     baseline_df <- hg_df %>% select(1:200)
     baseline <- apply(baseline_df, 1, function(x) mean(x, na.rm = T))
-    write.csv(baseline, path(here(), "munge", "baseline.csv"))
+    # write.csv(baseline, path(here(), "munge", "baseline.csv"))
 
     hg_df <- hg_df %>% select(201:ncol(hg_df))
     
