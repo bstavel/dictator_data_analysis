@@ -36,6 +36,7 @@ library(foreach)
 library(here)
 library(fs)
 library(ggcorrplot)
+library(lmtest)
 
 ## hand written functions ##
 source(path("R", "load_behave_data.R"))
@@ -54,7 +55,7 @@ source(path("R", 'mutate_cond.R'))
 # ggthemr("solarized")
 
 ## paralellization ##
-nCores <- 10
+nCores <- 2
 registerDoParallel(nCores)
 
 ```
@@ -62,7 +63,6 @@ registerDoParallel(nCores)
 
 
 This script is designed as the skeleton/testing ground for the regression scripts we will use in the main analyses, which will look for electrodes in which high gamma encodes different beavrioal measures from the dictator task. I will start by building some dummy data to play with.
-
 
 
 ```{r behave-prep}
@@ -143,6 +143,11 @@ hg_data <- hg_data %>% filter(grepl(paste(elecs_to_use$Electrode, collapse = "|"
 # average and baseline #
 hg_clean <- rolling_window_and_baseline(hg_data, lWin = 100, lOver = 50, choice_locked = T)
 
+# create temp data for visualiztion #
+half_index <- sample(1:228, 114)
+hg_eda <- hg_clean %>% filter(trial %in% half_index)
+
+
 # with behavior #
 hg_behave <- merge.data.frame(hg_clean, behave_data, by.x = "trial", by.y = "round", all.x = T, all.y = F)
 write.csv(hg_behave, path(here(), "munge", "hg_behave_choice_locked_cut_fixation.csv"))
@@ -150,7 +155,7 @@ write.csv(hg_behave, path(here(), "munge", "hg_behave_choice_locked_cut_fixation
 ```
 
 
-```{r test_num_of_bins_to_exclude}
+```{r test_num_of_bins_to_exclude, include=F}
 
 hg_test <- hg_clean %>% 
   filter(electrodes == "RAM1-RAM2") %>% 
@@ -184,35 +189,42 @@ sts_elecs <- elecs_to_use %>% filter(sts_loc_meeting == 1) %>% select(Electrode)
 hinal_elecs <- elecs_to_use %>% filter(hinal_loc_meeting == 1) %>% select(Electrode)
 ca1_elecs <- elecs_to_use %>% filter(ca1_loc_meeting == 1) %>% select(Electrode)
 
-hg_eda_summary <- hg_eda %>%
+hg_eda_behave <- merge.data.frame(hg_eda, behave_data, by.y = "round", by.x = "trial")
+
+hg_eda_summary <- hg_eda_behave %>%
   group_by(electrodes) %>%
-  select(-trial) %>%
-  summarise_all(list(function(x) mean(x, na.rm = T), function(x) mean(x, na.rm = T) - sd(x, na.rm = T), function(x) mean(x, na.rm = T) + sd(x, na.rm = T))) %>%
+  summarise_at(vars(starts_with("pre"), starts_with("post")), list(function(x) mean(x, na.rm = T), function(x) mean(x, na.rm = T) - sd(x, na.rm = T), function(x) mean(x, na.rm = T) + sd(x, na.rm = T))) %>%
   gather(key = "bin", value = "gamma", -electrodes) %>%
   mutate(function_type = if_else(grepl("_fn1", bin), "mean", if_else(grepl("_fn2", bin), "min", "max"))) %>%
   mutate(bin = gsub("pre_", "-", gsub("post_", "", bin))) %>%
   mutate(bin = as.numeric(gsub("_.*", "", bin))) %>%
   spread(key = function_type, value = gamma)
 
+
 hg_eda_summary %>%
   filter(grepl(paste(ofc_elecs$Electrode, collapse = "|"), electrodes)) %>%
+  mutate(advent = if_else(ineq_disadvent > 0, "Advantageous", "Disadvantageous")) %>%
   ggplot(., aes(x = bin, y = mean, color = electrodes, fill = electrodes)) +
   geom_point(alpha = .4) +
   geom_line(alpha = .4) + 
   # geom_ribbon(aes(ymin = min, ymax = max), alpha = .1) +
   # geom_vline(xintercept = 1.2613816 * 1000) +
   theme(panel.background = element_rect(fill = "white")) + 
+  facet_wrap(~advent) +
   ggtitle("OFC")
 
 hg_eda_summary %>%
   filter(grepl(paste(insula_elecs$Electrode, collapse = "|"), electrodes)) %>%
+  filter(electrodes == "RIN3-RIN4") %>%
   ggplot(., aes(x = bin, y = mean, color = electrodes, fill = electrodes)) +
   geom_point(alpha = .4) +
   geom_line(alpha = .4) +
   # geom_vline(xintercept = 1.2613816 * 1000) +
   theme(panel.background = element_rect(fill = "white")) + 
-  scale_fill_manual(values = getPalette(9)) +
-  scale_color_manual(values = getPalette(9)) +
+  scale_fill_manual(values = getPalette(9)[8]) +
+  scale_color_manual(values = getPalette(9)[8]) +
+  ylim(-0.05, .2) +
+  labs(y = "high gamma") +
   ggtitle("Insula")
 
 hg_eda_summary %>%
@@ -263,7 +275,15 @@ hg_eda_summary %>%
 
 ```{r hg_plots}
 
-hg_data_full <- load_high_gamma_data(file_path_to_hg_data, file_path_to_electrode_names, "V3201", "V3202")
+file_path_to_electrode_names <- path(here(), "munge", "IR35_electrodes_presentation_locked.csv")
+file_path_to_hg_data <- path(here(), "munge", "IR35_hg_munge_presentation_locked.csv")
+file_path_to_elecs_of_interest <- path(here(), "munge", "IR35_elecs_of_interest.csv")
+
+# load data #
+hg_data_full <- load_high_gamma_data(file_path_to_hg_data, file_path_to_electrode_names, "V952", "V953")
+elecs_to_use <- read.csv(file_path_to_elecs_of_interest)
+
+
 indicies <- hg_data_full %>% select(trial, electrodes)
 hg_data <- hg_data_full %>% select(starts_with("time"))
 
@@ -276,21 +296,110 @@ hg_data_baselined <- as.data.frame(hg_data_baselined)
 hg_data_baselined <- cbind(hg_data_baselined, indicies)
 
 hg_raw_plot <- merge.data.frame(hg_data_baselined, behave_data, by.x = "trial", by.y = "round", all.x = T, all.y = F)
-hg_raw_plot %>%
-  select(electrodes, RT, trial, starts_with("time")) %>%
-  filter(electrodes == "LOF1-LOF2") %>%
+
+elecs_of_interest <- c(as.character(ofc_elecs$Electrode), as.character(insula_elecs$Electrode), as.character(sts_elecs$Electrode))
+
+elec_names <- unique(hg_raw_plot$electrodes[grepl(paste(elecs_of_interest, collapse = "|"), hg_raw_plot$electrodes)])
+
+for(elec in elec_names) {
+
+  
+adv_plot <- hg_raw_plot %>%
+  mutate(advent = if_else(ineq_disadvent > 0, "Advantageous", "Inadvantageous")) %>%
+  filter(advent == "Advantageous") %>%
+  select(electrodes, RT, advent, trial, starts_with("time")) %>%
+  filter(electrodes == elec) %>%
   arrange(desc(RT)) %>%
   mutate(trial = factor(trial, levels = trial)) %>%
-  gather(key = "time", value = "gamma", -electrodes, -trial, -RT) %>%
+  gather(key = "time", value = "gamma", -electrodes, -trial, -RT, -advent) %>%
   mutate(time = as.numeric(gsub("time_", "", time))) %>%
   ggplot(., aes(x = time, y = trial, color = gamma, fill = gamma)) +
   geom_tile() + 
   geom_point(aes(y = trial, x = RT*1000), color = "white") + 
   theme(axis.text.y = element_blank(), axis.ticks.y = element_blank()) + 
-  scale_fill_viridis()   +
-  scale_color_viridis() +
-  ggtitle("LOF1-LOF2")
+  scale_fill_viridis(limits = c(-1, 3.5))   +
+  scale_color_viridis(limits = c(-1, 3.5)) +
+  ggtitle(paste0(elec, " -- Advantageous"))
+ 
+dis_plot <- hg_raw_plot %>%
+  mutate(advent = if_else(ineq_disadvent > 0, "Advantageous", "Disadvantageous")) %>%
+  filter(advent == "Disadvantageous") %>%
+  select(electrodes, RT, advent, trial, starts_with("time")) %>%
+  filter(electrodes == elec) %>%
+  arrange(desc(RT)) %>%
+  mutate(trial = factor(trial, levels = trial)) %>%
+  gather(key = "time", value = "gamma", -electrodes, -trial, -RT, -advent) %>%
+  mutate(time = as.numeric(gsub("time_", "", time))) %>%
+  ggplot(., aes(x = time, y = trial, color = gamma, fill = gamma)) +
+  geom_tile() + 
+  geom_point(aes(y = trial, x = RT*1000), color = "white") + 
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank()) + 
+  scale_fill_viridis(limits = c(-1, 3.5))   +
+  scale_color_viridis(limits = c(-1, 3.5)) +
+  ggtitle(paste0(elec, " -- Disadvantageous"))
+
+  ggsave(filename = paste0('./figures/', elec, "_adv.png"),
+     device = "png",
+     width = 10,
+     height = 10,
+     units = "cm",
+     dpi = 200,
+     plot =  print(plot(adv_plot)) ) 
   
+    ggsave(filename = paste0('./figures/', elec, "_dis.png"),
+     device = "png",
+     width = 10,
+     height = 10,
+     units = "cm",
+     dpi = 200,
+     plot =  print(plot(dis_plot)) ) 
+
+} 
+
+```
+
+```{r scatter-plots}
+
+
+scatter_prep <- hg_raw_plot %>%
+  select(electrodes, trial, ineq_var_abs, starts_with("time")) %>%
+  mutate(electrodes = as.character(electrodes)) %>%
+  filter(electrodes %in% as.character(elec_names)) %>%
+  gather(key = "time", value = "gamma", -electrodes, -trial, -ineq_var_abs) %>%
+  # mutate(time = as.numeric(gsub("time_", "", time))) %>%
+  group_by(trial, electrodes) %>%
+  mutate(median_gamma = median(gamma, na.rm = T)) %>%
+  mutate(upper_gamma = median(gamma[gamma > median_gamma], na.rm = T)) %>%
+  mutate(upper_quart = mean(gamma[gamma > upper_gamma], na.rm  = T)) %>%
+  select(-time, -gamma, -median_gamma, -upper_gamma) 
+
+scatter_prep %>% filter(!duplicated(upper_quart)) %>%
+    ggplot(., aes(x = ineq_var_abs, y = upper_quart)) +
+    geom_point() + 
+    facet_wrap(~electrodes) +
+    ggtitle(paste0("Absolute Inequality"))
+
+
+scatter_prep_ineq <- hg_raw_plot %>%
+  select(electrodes, trial, ineq_advent, ineq_disadvent, starts_with("time")) %>%
+  mutate(electrodes = as.character(electrodes)) %>%
+  filter(electrodes %in% as.character(elec_names)) %>%
+  gather(key = "time", value = "gamma", -electrodes, -trial, -ineq_advent, -ineq_disadvent) %>%
+  # mutate(time = as.numeric(gsub("time_", "", time))) %>%
+  group_by(trial, electrodes) %>%
+  mutate(median_gamma = median(gamma, na.rm = T)) %>%
+  mutate(upper_gamma = median(gamma[gamma > median_gamma], na.rm = T)) %>%
+  mutate(upper_quart = mean(gamma[gamma > upper_gamma], na.rm  = T)) %>%
+  select(-time, -gamma, -median_gamma, -upper_gamma) 
+
+scatter_prep_ineq %>% filter(!duplicated(upper_quart)) %>%
+    gather(key= "inequality", value = "quantity", -electrodes, -trial, -upper_quart) %>%
+    ggplot(., aes(x = quantity, y = upper_quart, color = inequality)) +
+    geom_point() + 
+    facet_wrap(~electrodes) +
+    ggtitle(paste0("Absolute Inequality"))
+
+
 
 ```
 
@@ -321,222 +430,190 @@ fake_dis %>%
 
 ```
 
-```{r concactenate-results}
 
-regions_to_combine <- c("OFC", "Insula", "Cingulate", "STS", "MFG")
-all_results <- compile_results(regions_to_combine)
+```{r concatenate-results-presentation}
 
-```
-
-
-```{r anovas}
-run_filtered_anova(ofc_results, hg_behave,  region_name = "OFC", all_results = T)
-run_filtered_anova(cingulate_results, hg_behave,  region_name = "Cingulate")
-run_filtered_anova(insula_results, hg_behave, region_name = "Insula")
-run_filtered_anova(mfg_results, hg_behave, region_name = "MFG")
-run_filtered_anova(sts_results, hg_behave,  region_name = "STS")
-run_filtered_anova(all_results, hg_behave,  region_name = "All")
-
-## ofc ##
-region_name <- "OFC"
-ofc_results_dis <- read.csv(path(here(), "results", paste0(region_name, "_anova_results_disadvantageous.csv")))
-ofc_results_adv <- read.csv(path(here(), "results", paste0(region_name, "_anova_results_advantageous.csv")))
-
-ofc_results_dis %>%
-  select (-X, -X.1) %>%
-  kable() %>%
-  add_header_above(c("Insula: Disadvantageous Inequity" = 11)) %>%
-  kable_styling(position = "center")
-
-ofc_results_adv %>%
-  select (-X, -X.1) %>%
-  kable() %>%
-  # add_header_above(c("OFC: Advantageous Inequity" = 8)) %>%
-  kable_styling(position = "center")
-
-## insula ##
-region_name <- "Insula"
-insula_results_dis <- read.csv(path(here(), "results", paste0(region_name, "_anova_results_disadvantageous.csv")))
-insula_results_adv <- read.csv(path(here(), "results", paste0(region_name, "_anova_results_advantageous.csv")))
-
-insula_results_dis %>%
-  select (-X, -X.1) %>%
-  kable() %>%
-  add_header_above(c("Insula: Disadvantageous Inequity" =9 )) %>%
-  kable_styling(position = "center")
-
-insula_results_adv %>%
-  select (-X, -X.1) %>%
-  kable() %>%
-  add_header_above(c("Insula: Advantageous Inequity" = 12)) %>%
-  kable_styling(position = "center")
-
-## All Results ##
-region_name <- "All"
-all_results_dis <- read.csv(path(here(), "results", paste0(region_name, "_anova_results_disadvantageous.csv")))
-all_results_adv <- read.csv(path(here(), "results", paste0(region_name, "_anova_results_advantageous.csv")))
-
-all_results_dis %>%
-  select (-X, -X.1) %>%
-  kable() %>%
-  add_header_above(c("All: Disadvantageous Inequity" = 13 )) %>%
-  kable_styling(position = "center")
-
-all_results_adv %>%
-  select (-X, -X.1) %>%
-  kable() %>%
-  add_header_above(c("All: Advantageous Inequity" = 13)) %>%
-  kable_styling(position = "center")
-
-```
-
-```{r prep-filter-anova-viz}
+# combine different csvs #
 regions_to_combine <- c("OFC", "Insula", "Cingulate", "STS")
-regression_results <- compile_results(regions_to_combine)
+presentation_results <- compile_results(regions_to_combine, type = "pres-locked")
 
-run_filtered_anova(regression_results, hg_behave,  region_name = "All", all_results = T)
+# runa anova for inequity results #
+path_hg_clean <- path(here(), "munge", "hg_behave_presentation_locked.csv")
+hg_behave <-  read.csv(path_hg_clean)
+run_filtered_anova(presentation_results, hg_behave,  region_name = "All", all_results = T, type = "pres-locked")
 
+# read back in the results #
 region_name <- "All"
-adv_results_for_plots <- read.csv(fs::path(here(), "results", paste0(region_name, "_anova_results_advantageous.csv")))
-dis_results_for_plots <- read.csv(fs::path(here(), "results", paste0(region_name, "_anova_results_disadvantageous.csv")))
+adv_pres_results_for_plots <- read.csv(fs::path(here(), "results", paste0(region_name, "_pres-locked_anova_results_advantageous.csv")))
+dis_pres_results_for_plots <- read.csv(fs::path(here(), "results", paste0(region_name, "_pres-locked_anova_results_disadvantageous.csv")))
 ```
 
-```{r plot-filter-anovas}
+
+```{r concatenate-results-choice}
+
+# combine different csvs #
+regions_to_combine <- c("OFC", "Insula", "Cingulate", "STS")
+choice_results <- compile_results(regions_to_combine, type = "choice-locked")
+
+# runa anova for inequity results #
+path_hg_clean <- path(here(), "munge", "hg_behave_choice_locked_cut_fixation.csv")
+hg_behave <-  read.csv(path_hg_clean)
+run_filtered_anova(choice_results, hg_behave,  region_name = "All", all_results = T, type = "choice-locked")
+
+# read back in the results #
+region_name <- "All"
+adv_choice_results_for_plots <- read.csv(fs::path(here(), "results", paste0(region_name, "_choice-locked_anova_results_advantageous.csv")))
+dis_choice_results_for_plots <- read.csv(fs::path(here(), "results", paste0(region_name, "_choice-locked_anova_results_disadvantageous.csv")))
+```
+
+```{r plot-filter-anovas-presentation}
 ggthemr::ggthemr("pale", layout = "plain")
 getPalette = colorRampPalette(brewer.pal(3, "Set1"))
 
-adv_results_for_plots %>%
-  mutate(sig = if_else(perm_p < 0.05 & p < 0.05 & anova_p < 0.05, "Significant", "Insignificant")) %>%
-  mutate_cond(sig == "Significant", sig = as.character(region)) %>%
-  mutate(sig = relevel(factor(sig), ref = "Insignificant")) %>%
-  mutate(bin = factor(bin, levels = colnames(hg_data)[4:38])) %>%
-  ggplot(., aes( x = bin, y = diff_adj_r2, color = sig, fill = sig)) +
-  geom_col(alpha = .5) +
-  geom_vline(aes(xintercept = which(levels(bin) %in% "post_1"))) +
-  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), panel.background = element_rect(fill = "white")) + 
-  scale_fill_manual(values = c("grey", getPalette(3))) +
-  scale_color_manual(values = c("grey", getPalette(3))) +
-  labs(y = "Difference in Adj. R Squared", x = "Bins", fill = "Region", color = "Region") +
-  facet_wrap(~electrode) + 
-  ggtitle("Advantageous Inequality Results")
 
-dis_results_for_plots %>%
-  mutate(sig = if_else(perm_p < 0.05 & p < 0.05 & anova_p < 0.05, "Significant", "Insignificant")) %>%
-  mutate_cond(sig == "Significant", sig = as.character(region)) %>%
-  mutate(sig = relevel(factor(sig), ref = "Insignificant")) %>%
-  mutate(bin = factor(bin, levels = colnames(hg_data)[4:38])) %>%
-  ggplot(., aes( x = bin, y = diff_adj_r2, color = sig, fill = sig)) +
-  geom_col(alpha = .5) +
-  geom_vline(aes(xintercept = which(levels(bin) %in% "post_1"))) +
-  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), panel.background = element_rect(fill = "white")) + 
-  scale_fill_manual(values = c("grey", getPalette(3)[2:4])) +
-  scale_color_manual(values = c("grey", getPalette(3)[2:4])) +
-  labs(y = "Difference in Adj. R Squared", x = "Bins", fill = "Region", color = "Region") +
-  facet_wrap(~electrode) + 
-  ggtitle("Disdvantageous Inequality Results")
+ineq_plots <- function(df, title) {
+# plots the bar plots of dif in R2 for inequity  
+df %>%
+    ungroup() %>%
+    mutate(sig = if_else(perm_p < 0.05 & p < 0.05 & anova_p < 0.05, "Significant", "Insignificant")) %>%
+    mutate_cond(sig == "Significant", sig = as.character(region)) %>%
+    mutate(sig = relevel(factor(sig), ref = "Insignificant")) %>%
+    # mutate(bin = factor(bin, levels = colnames(hg_data)[4:38])) %>%
+    ggplot(., aes( x = bin, y = diff_adj_r2, color = sig, fill = sig)) +
+    geom_col(alpha = .5) +
+    # geom_vline(aes(xintercept = which(levels(bin) %in% "post_1"))) +
+    theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), panel.background = element_rect(fill = "white")) + 
+    scale_fill_manual(values = c("grey", getPalette(3))) +
+    scale_color_manual(values = c("grey", getPalette(3))) +
+    labs(y = "Difference in Adj. R Squared", x = "Bins", fill = "Region", color = "Region") +
+    facet_wrap(~electrode) + 
+    ggtitle(title)
+  
+}
 
+active_elec_plots <- function(df, var, title) {
+  df %>%
+    filter(predictor == var) %>%
+    mutate(sig = if_else(perm_p < 0.05 & p < 0.05, "Significant", "Insignificant")) %>%
+    mutate_cond(sig == "Significant", sig = as.character(region)) %>%
+    mutate(sig = relevel(factor(sig), ref = "Insignificant")) %>%
+    # mutate(bin = factor(bin, levels = colnames(hg_data)[4:38])) %>%
+    ggplot(., aes( x = bin, y = R2, color = sig, fill = sig)) +
+    geom_col(alpha = .5) +
+    # geom_vline(aes(xintercept = which(levels(bin) %in% "post_1"))) +
+    theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), panel.background = element_rect(fill = "white")) + 
+    scale_fill_manual(values = c("grey", getPalette(4))) +
+    scale_color_manual(values = c("grey", getPalette(4))) +
+    labs(y = "Adj. R Squared", x = "Bins", fill = "Region", color = "Region") +
+    facet_wrap(~electrode) + 
+    ggtitle(title)
 
-regression_results %>%
-  filter(predictor == "self_payoff") %>%
-  mutate(sig = if_else(perm_p < 0.05 & p < 0.05, "Significant", "Insignificant")) %>%
-  mutate_cond(sig == "Significant", sig = as.character(region)) %>%
-  mutate(sig = relevel(factor(sig), ref = "Insignificant")) %>%
-  mutate(bin = factor(bin, levels = colnames(hg_data)[4:38])) %>%
-  ggplot(., aes( x = bin, y = R2, color = sig, fill = sig)) +
-  geom_col(alpha = .5) +
-  geom_vline(aes(xintercept = which(levels(bin) %in% "post_1"))) +
-  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), panel.background = element_rect(fill = "white")) + 
-  scale_fill_manual(values = c("grey", getPalette(4))) +
-  scale_color_manual(values = c("grey", getPalette(4))) +
-  labs(y = "Adj. R Squared", x = "Bins", fill = "Region", color = "Region") +
-  facet_wrap(~electrode) + 
-  ggtitle("Self Payoff Results")
+}
 
-regression_results %>%
-  filter(predictor == "self_foregone") %>%
-  mutate(sig = if_else(perm_p < 0.05 & p < 0.05, "Significant", "Insignificant")) %>%
-  mutate_cond(sig == "Significant", sig = as.character(region)) %>%
-  mutate(sig = relevel(factor(sig), ref = "Insignificant")) %>%
-  mutate(bin = factor(bin, levels = colnames(hg_data)[4:38])) %>%
-  ggplot(., aes( x = bin, y = R2, color = sig, fill = sig)) +
-  geom_col(alpha = .5) +
-  geom_vline(aes(xintercept = which(levels(bin) %in% "post_1"))) +
-  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), panel.background = element_rect(fill = "white")) + 
-  scale_fill_manual(values = c("grey", getPalette(4))) +
-  scale_color_manual(values = c("grey", getPalette(4))) +
-  labs(y = "Adj. R Squared", x = "Bins", fill = "Region", color = "Region") +
-  facet_wrap(~electrode) + 
-  ggtitle("Self Foregone Results")
+ineq_plots(adv_pres_results_for_plots, "Advantageous Inequality Results")
 
-regression_results %>%
-  filter(predictor == "other_payoff") %>%
-  mutate(sig = if_else(perm_p < 0.05 & p < 0.05, "Significant", "Insignificant")) %>%
-  mutate_cond(sig == "Significant", sig = as.character(region)) %>%
-  mutate(sig = relevel(factor(sig), ref = "Insignificant")) %>%
-  mutate(bin = factor(bin, levels = colnames(hg_data)[4:38])) %>%
-  ggplot(., aes( x = bin, y = R2, color = sig, fill = sig)) +
-  geom_col(alpha = .5) +
-  geom_vline(aes(xintercept = which(levels(bin) %in% "post_1"))) +
-  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), panel.background = element_rect(fill = "white")) + 
-  scale_fill_manual(values = c("grey", getPalette(4))) +
-  scale_color_manual(values = c("grey", getPalette(4))) +
-  labs(y = "Adj. R Squared", x = "Bins", fill = "Region", color = "Region") +
-  facet_wrap(~electrode) + 
-  ggtitle("Other Payoff Results")
+ineq_plots(dis_pres_results_for_plots, "Disdvantageous Inequality Results")
 
-regression_results %>%
-  filter(predictor == "other_foregone") %>%
-  mutate(sig = if_else(perm_p < 0.05 & p < 0.05, "Significant", "Insignificant")) %>%
-  mutate_cond(sig == "Significant", sig = as.character(region)) %>%
-  mutate(sig = relevel(factor(sig), ref = "Insignificant")) %>%
-  mutate(bin = factor(bin, levels = colnames(hg_data)[4:38])) %>%
-  ggplot(., aes( x = bin, y = R2, color = sig, fill = sig)) +
-  geom_col(alpha = .5) +
-  geom_vline(aes(xintercept = which(levels(bin) %in% "post_1"))) +
-  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), panel.background = element_rect(fill = "white")) + 
-  scale_fill_manual(values = c("grey", getPalette(4))) +
-  scale_color_manual(values = c("grey", getPalette(4))) +
-  labs(y = "Adj. R Squared", x = "Bins", fill = "Region", color = "Region") +
-  facet_wrap(~electrode) + 
-  ggtitle("Other Foregone Results")
+active_elec_plots(presentation_results, "ineq_advent", "Adv Ineq Results")
+
+active_elec_plots(presentation_results, "ineq_disadvent", "Dis Ineq Results")
+
+active_elec_plots(presentation_results, "self_payoff", "Self Payoff Results")
+
+active_elec_plots(presentation_results, "self_foregone", "Self Forgeone Results")
+
+active_elec_plots(presentation_results, "other_payoff", "Other Payoff Results")
+
+active_elec_plots(presentation_results, "other_foregone", "Other Forgeone Results")
 
 ```
 
-```{r correct-filtered-anovas}
+```{r correct-filtered-anovas-presentation}
 
-adv_results_for_plots %>%
+adv_pres_results_for_plots %>%
   mutate_cond(perm_p < .05 & p < .05, anova_p = p.adjust(anova_p, "hochberg")) %>%
-  mutate(sig = if_else(perm_p < 0.05 & p < 0.05 & anova_p < 0.05, "Significant", "Insignificant")) %>%
-  mutate_cond(sig == "Significant", sig = as.character(region)) %>%
-  mutate(bin = factor(bin, levels = colnames(hg_data)[4:38])) %>%
-  ggplot(., aes( x = bin, y = diff_adj_r2, color = sig, fill = sig)) +
-  geom_col(alpha = .5) +
-  geom_vline(aes(xintercept = which(levels(bin) %in% "post_1"))) +
-  theme(panel.background = element_rect(fill = "white")) + 
-  scale_fill_manual(values = c("grey", getPalette(3))) +
-  scale_color_manual(values = c("grey", getPalette(3))) +
-  labs(y = "Difference in Adj. R Squared", x = "Bins", fill = "Region", color = "Region") +
-  facet_wrap(~electrode) + 
-  ggtitle("Advantageous Inequality Results")
+  ineq_plots(., "Advantageous Inequality Results")
 
-dis_results_for_plots %>%
-  mutate(sig = if_else(perm_p < 0.05 & p < 0.05 & anova_p < 0.05, "Significant", "Insignificant")) %>%
-  mutate_cond(sig == "Significant", sig = as.character(region)) %>%
-  mutate(bin = factor(bin, levels = colnames(hg_data)[4:38])) %>%
-  ggplot(., aes( x = bin, y = diff_adj_r2, color = sig, fill = sig)) +
-  geom_col(alpha = .5) +
-  geom_vline(aes(xintercept = which(levels(bin) %in% "post_1"))) +
-  theme( panel.background = element_rect(fill = "white")) + 
-  scale_fill_manual(values = c("grey", getPalette(3)[2:4])) +
-  scale_color_manual(values = c("grey", getPalette(3)[2:4])) +
-  labs(y = "Difference in Adj. R Squared", x = "Bins", fill = "Region", color = "Region") +
-  facet_wrap(~electrode) + 
-  ggtitle("Disdvantageous Inequality Results")
+dis_pres_results_for_plots %>%
+  mutate_cond(perm_p < .05 & p < .05, anova_p = p.adjust(anova_p, "hochberg")) %>%
+  ineq_plots(., "Disdvantageous Inequality Results")
 
-dis_results_for_plots %>% filter(electrode == "LTH8-LTH9") %>% kable(.)
 
 ```
 
+```{r plot-filter-anovas-choice}
+
+ineq_plots <- function(df, title) {
+# plots the bar plots of dif in R2 for inequity  
+df %>%
+    mutate(sig = if_else(perm_p < 0.05 & p < 0.05 & anova_p < 0.05, "Significant", "Insignificant")) %>%
+    mutate_cond(sig == "Significant", sig = as.character(region)) %>%
+    mutate(sig = relevel(factor(sig), ref = "Insignificant")) %>%
+    mutate(bin = factor(bin, levels = colnames(hg_behave)[4:49])) %>%
+    ggplot(., aes( x = bin, y = diff_adj_r2, color = sig, fill = sig)) +
+    geom_col(alpha = .5) +
+    geom_vline(aes(xintercept = which(levels(bin) %in% "post_1")), color = "#081D58") +
+    geom_vline(aes(xintercept = which(levels(bin) %in% "post_20")), color = "#F2AD00") +
+    theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), panel.background = element_rect(fill = "white")) + 
+    scale_fill_manual(values = c("grey", getPalette(3))) +
+    scale_color_manual(values = c("grey", getPalette(3))) +
+    labs(y = "Difference in Adj. R Squared", x = "Bins", fill = "Region", color = "Region") +
+    facet_wrap(~electrode) + 
+    ggtitle(title)
+  
+}
+
+active_elec_plots <- function(df, var, title) {
+  df %>%
+    filter(predictor == var) %>%
+    mutate(sig = if_else(perm_p < 0.05 & p < 0.05, "Significant", "Insignificant")) %>%
+    mutate_cond(sig == "Significant", sig = as.character(region)) %>%
+    mutate(sig = relevel(factor(sig), ref = "Insignificant")) %>%
+    mutate(bin = factor(bin, levels = colnames(hg_behave)[4:49])) %>%
+    ggplot(., aes( x = bin, y = R2, color = sig, fill = sig)) +
+    geom_col(alpha = .5) +
+    geom_vline(aes(xintercept = which(levels(bin) %in% "post_1")), color = "#081D58") +
+    geom_vline(aes(xintercept = which(levels(bin) %in% "post_20")), color = "#F2AD00") +
+    theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), panel.background = element_rect(fill = "white")) + 
+    scale_fill_manual(values = c("grey", getPalette(4))) +
+    scale_color_manual(values = c("grey", getPalette(4))) +
+    labs(y = "Adj. R Squared", x = "Bins", fill = "Region", color = "Region") +
+    facet_wrap(~electrode) + 
+    ggtitle(title)
+
+}
+
+ineq_plots(adv_choice_results_for_plots, "Advantageous Inequality Results")
+
+ineq_plots(dis_choice_results_for_plots, "Disdvantageous Inequality Results")
+
+active_elec_plots(choice_results, "ineq_advent", "Adv Ineq Results")
+
+active_elec_plots(choice_results, "ineq_disadvent", "Dis Ineq Results")
+
+active_elec_plots(choice_results, "self_payoff", "Self Payoff Results")
+
+active_elec_plots(choice_results, "self_foregone", "Self Forgeone Results")
+
+active_elec_plots(choice_results, "other_payoff", "Other Payoff Results")
+
+active_elec_plots(choice_results, "other_foregone", "Other Forgeone Results")
+
+
+```
+
+```{r correct-filtered-anovas-choice}
+
+adv_choice_results_for_plots %>%
+  mutate_cond(perm_p < .05 & p < .05, anova_p = p.adjust(anova_p, "hochberg")) %>%
+  ineq_plots(., "Advantageous Inequality Results")
+
+dis_choice_results_for_plots %>%
+  mutate_cond(perm_p < .05 & p < .05, anova_p = p.adjust(anova_p, "hochberg")) %>%
+  ineq_plots(., "Disdvantageous Inequality Results")
+
+
+```
 
 ```{r stepwise-anovas-prep, eval =F}
 

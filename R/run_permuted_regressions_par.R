@@ -1,4 +1,4 @@
-run_permuted_regressions_par <- function(brain_behave_data, electrodes, regressor, nBins, region_name, niter = 1000, tag) {
+run_permuted_regressions_par <- function(brain_behave_data, electrodes, regressor, nBins, region_name, niter = 1000, sub, tag) {
   print(paste0("Beginning regressions for predictor: ", regressor))
   for(elec in electrodes) {
 
@@ -103,7 +103,7 @@ run_permuted_regressions_par <- function(brain_behave_data, electrodes, regresso
     
   
     # save results to results folder #
-    write.csv(results, path(here(), "results", paste0(region_name, "_", elec, "_", regressor, "_", tag, "_results.csv")))
+    write.csv(results, path(here(), "results", sub, paste0(region_name, "_", elec, "_", regressor, "_", tag, "_results.csv")))
   
   }
   

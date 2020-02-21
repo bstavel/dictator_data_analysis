@@ -14,6 +14,7 @@ run_filtered_anova_permuted <- function(results, brain_behave_data, region_name,
     adv_correction <- nrow(filtered_advantageous %>% filter(perm_p < 0.05 & p < 0.05))
   }
   
+ 
   # initialize values #
   anova_dis_pval <- NULL
   anova_adv_pval <- NULL
@@ -44,45 +45,6 @@ run_filtered_anova_permuted <- function(results, brain_behave_data, region_name,
       diff_adj_r2_dis[row] <- summary(ineq_model)$adj.r.squared - summary(base_model)$adj.r.squared
       perct_adj_r2_dis[row] <- (summary(ineq_model)$adj.r.squared - summary(base_model)$adj.r.squared)/summary(base_model)$adj.r.squared
       
-      # Create null distribution by shuffling labels #
-      null_chisq_stretch <- NULL
-      null_chisq <- NULL
-      null_anova_pval <- NULL
-      null_chisq_stretch <- foreach(h = 1:niter, .inorder=FALSE) %dopar% {
-        # print status #
-        if(h %% 100 == 0){
-          print(paste0( (h/niter) * 100, "% complete for electrode", which(electrodes %in% elec), " of ", length(electrodes)))
-        }
-        
-
-        # run models #
-        set.seed(h)
-        eval(parse(text = paste0("ineq_model <- lm(", bin, "~ sample(ineq_disadvent) + self_payoff + other_payoff, data = brain_behave_data[brain_behave_data$electrodes == '", elec, "', ])")))
-        eval(parse(text = paste0("base_model <- lm(", bin, "~ self_payoff + other_payoff, data = brain_behave_data[brain_behave_data$electrodes == '", elec, "', ])")))
-        null_anova_sum <- lrtest(base_model, ineq_model)
-
-        
-        # save info from models #
-        null_chisq[row] <- null_anova_sum$Chisq[2]
-        null_anova_pval[row] <- null_anova_sum$`Pr(>Chisq)`[2]
-
-        
-        ## Find out the longest stretch in which pval < 0.05 and create sum-of-F-stats statistic ##
-        # disadvantageous #
-        stretch <- null_anova_pval < 0.05
-        indices <- stretch_start_end(stretch)
-        if(is.na(indices[1])) {
-          # if no stretch just take the max vals #
-          null_chisq_stretch[h] <- max(null_chisq)
-          
-        } else {
-          # if a stretch take the sum of f stats #  
-          null_chisq_stretch[h] <- sum(null_chisq[indices[1]:indices[2]]) # Summary stat
-        }
-        
-        return(null_chisq_stretch[h])
-      }
-      
     }
   }
   
@@ -95,12 +57,71 @@ run_filtered_anova_permuted <- function(results, brain_behave_data, region_name,
       eval(parse(text = paste0("ineq_model <- lm(", bin, "~ ineq_advent + self_payoff + other_payoff, data = brain_behave_data[brain_behave_data$electrodes == '", elec, "', ])")))
       eval(parse(text = paste0("base_model <- lm(", bin, "~ self_payoff + other_payoff, data = brain_behave_data[brain_behave_data$electrodes == '", elec, "', ])")))
       
-      anova_sum <- anova(base_model, ineq_model, test = "Chisq")
+      anova_sum <- lrtest(base_model, ineq_model)
       anova_adv_pval[row] <- anova_sum$`Pr(>Chisq)`[2]
+      anova_chisq_adv[row] <- anova_sum$Chisq[2]
       diff_adj_r2_adv[row] <- summary(ineq_model)$adj.r.squared - summary(base_model)$adj.r.squared
       perct_adj_r2_adv[row] <- (summary(ineq_model)$adj.r.squared - summary(base_model)$adj.r.squared)/summary(base_model)$adj.r.squared
       
     }
+  }
+  
+  sum_chisq_bins <- function(indices, values) {
+    sum_temp <- values[indices[1]]
+    back_idx <- indices[1]
+    sum_vec <- rep(0, length(values))
+    for(idx in 1:length(indices)){
+      
+      if(is.na(indices[idx + 1])) {
+         if((indices[idx] - indices[idx-1] == 1) ) {
+            sum_vec[back_idx:indices[idx]] <- sum_temp
+          } else {
+            sum_vec[indices[idx]] <- values[indices[idx]]
+          }
+        
+      } else if(indices[idx + 1] - indices[idx] == 1) {
+        sum_temp <- sum_temp + values[indices[idx + 1]]
+        
+      } else if(idx != 1){
+        if(indices[idx] - indices[idx-1] == 1) {
+        sum_vec[back_idx:indices[idx]] <- sum_temp
+        back_idx <- indices[idx + 1]
+        sum_temp <- values[indices[idx + 1]]
+        } else {
+          sum_vec[indices[idx]] <- values[indices[idx]]
+        }
+      } else {
+        sum_vec[indices[idx]] <- values[indices[idx]]
+      }
+    }
+
+    return(sum_vec)
+  }
+  
+  ## Find out the longest stretch in which pval < 0.05 and create sum-of-F-stats statistic ##
+  # disadvantageous #
+  dis_chisq_stretch <- NULL
+  indices <- which(anova_dis_pval < 0.05)
+  
+  if(is.na(indices[1])) {
+    # if no stretch just take the max vals #
+    dis_chisq_stretch[indices] <- max(anova_chisq_dis)
+    
+  } else {
+    # if a stretch take the sum of f stats #  
+    dis_chisq_stretch <-  sum_chisq_bins(indices, anova_chisq_dis)
+  }
+  
+  # advantageous #
+  adv_chisq_stretch <- NULL
+  indices <- which(anova_adv_pval < 0.05)
+  if(is.na(indices[1])) {
+    # if no stretch just take the max vals #
+    adv_chisq_stretch[indices] <- max(anova_chisq_adv)
+    
+  } else {
+    # if a stretch take the sum of f stats #  
+    adv_chisq_stretch <-  sum_chisq_bins(indices, anova_chisq_adv) # Summary stat
   }
     
   filtered_disadvantageous$anova_p <- anova_dis_pval
@@ -109,11 +130,25 @@ run_filtered_anova_permuted <- function(results, brain_behave_data, region_name,
   filtered_advantageous$diff_adj_r2 <- diff_adj_r2_adv
   filtered_disadvantageous$perct_adj_r2 <- perct_adj_r2_dis
   filtered_advantageous$perct_adj_r2 <- perct_adj_r2_adv
-  filtered_disadvantageous$correction <- dis_correction
-  filtered_advantageous$correction <- adv_correction
+  filtered_disadvantageous$chisq_stretch <- dis_chisq_stretch
+  filtered_advantageous$chisq_stretch <- adv_chisq_stretch
   
+  filtered_advantageous <- filtered_advantageous %>%   mutate(anova_permuted = 0)
+  for(elec in unique(results$electrode)){  
+    filtered_advantageous <- filtered_advantageous %>%
+      group_by(chisq_stretch) %>%
+      mutate_cond(electrode == elec, anova_permuted = (sum(chisq_stretch < null_presentation_data_adv[elec, ]))/1000 )
+    
+  } 
+  filtered_disadvantageous <- filtered_disadvantageous %>%   mutate(anova_permuted = 0)
+  for(elec in unique(results$electrode)){  
+    filtered_disadvantageous <- filtered_disadvantageous %>%
+      group_by(chisq_stretch) %>%
+      mutate_cond(electrode == elec, anova_permuted = (sum(chisq_stretch < null_presentation_data_dis[elec, ]))/1000 )
+    
+  } 
   # save results to results folder #
-  write.csv(filtered_disadvantageous, path(here(), "results", paste0(region_name, "_anova_results_disadvantageous.csv")))
-  write.csv(filtered_advantageous, path(here(), "results", paste0(region_name, "_anova_results_advantageous.csv")))
+  write.csv(filtered_disadvantageous, path(here(), "results", paste0(region_name, "_", tag, "_anova_results_disadvantageous_permuted.csv")))
+  write.csv(filtered_advantageous, path(here(), "results", paste0(region_name, "_", tag, "_anova_results_advantageous_permuted.csv")))
   
 }

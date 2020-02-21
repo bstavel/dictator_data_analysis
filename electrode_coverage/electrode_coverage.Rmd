@@ -52,6 +52,10 @@ IR14: Weird file only a couple columns, but this is subject DG_s05, who we will 
 
 For now, I will loop through the subjects, except IR17, GP51,  and concactenate their notes.
 
+39 could work cuz of some STS but only r ofc
+28 has good ofc coverage
+
+
 ```{r read-data}
 
 subjects_irvine <- c("IR10", "IR16",  "IR19",  "IR26",
@@ -239,5 +243,31 @@ roi_IR35 <- count_elecs %>%
   filter(ofc_loc_meeting == 1 | insula_loc_meeting == 1 | mfg_loc_meeting == 1 | hinal_loc_meeting == 1 | sts_loc_meeting == 1 | cingulate_loc_meeting == 1 | ca1_loc_meeting == 1 )
 
 write.csv(roi_IR35, path(here(), "munge", "IR35_elecs_of_interest.csv"))
+```
+
+
+```{r save_IR39_elecs}
+
+count_elecs <- elec_notes %>%
+    mutate(ofc_loc_meeting = if_else(grepl("ofc", `Loc Meeting`, ignore.case = T), 1, 
+                                   if_else(grepl("frontopolar", `Loc Meeting`, ignore.case = T), 1,
+                                   if_else(grepl("orb", `Loc Meeting`, ignore.case = T), 1, 0)))) %>%
+    mutate(insula_loc_meeting = if_else(grepl("insula", `Loc Meeting`, ignore.case = T), 1, 
+                                   if_else(grepl("insular", `Loc Meeting`, ignore.case = T), 1, 0))) %>%
+    mutate(mfg_loc_meeting = if_else(grepl("mfg", `Loc Meeting`, ignore.case = T), 1, 
+                                   if_else(grepl("medial frontal", `Loc Meeting`, ignore.case = T), 1, 0))) %>%
+    mutate(hinal_loc_meeting = if_else(grepl("entorhinal", `Loc Meeting`, ignore.case = T), 1, 
+                                   if_else(grepl("perirhinal", `Loc Meeting`, ignore.case = T), 1, 0))) %>%
+    mutate(sts_loc_meeting = if_else(grepl("sts", `Loc Meeting`, ignore.case = T), 1, 
+                                   if_else(grepl("superior temporal", `Loc Meeting`, ignore.case = T), 1, 0))) %>%
+    mutate(cingulate_loc_meeting = if_else(grepl("cingulate", `Loc Meeting`, ignore.case = T), 1, 0)) %>%
+    mutate(ca1_loc_meeting = if_else(grepl("ca1", `Loc Meeting`, ignore.case = T), 1, 0))
+
+
+roi_IR39 <- count_elecs %>%
+  filter(subject == "IR39") %>%
+  filter(ofc_loc_meeting == 1 | insula_loc_meeting == 1 | mfg_loc_meeting == 1 | hinal_loc_meeting == 1 | sts_loc_meeting == 1 | cingulate_loc_meeting == 1 | ca1_loc_meeting == 1 )
+
+write.csv(roi_IR39, path(here(), "munge", "IR39_elecs_of_interest.csv"))
 ```
 
