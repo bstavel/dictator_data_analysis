@@ -1,4 +1,4 @@
-run_filtered_anova <- function(results, brain_behave_data, region_name, all_results = FALSE, type) {
+run_filtered_anova <- function(results, brain_behave_data, sub, region_name, all_results = FALSE, type) {
   
   if(all_results == F){
     # get active electrodes #
@@ -69,7 +69,7 @@ run_filtered_anova <- function(results, brain_behave_data, region_name, all_resu
   filtered_advantageous$correction <- adv_correction
   
   # save results to results folder #
-  write.csv(filtered_disadvantageous, path(here(), "results", paste0(region_name, "_", type, "_anova_results_disadvantageous.csv")))
-  write.csv(filtered_advantageous, path(here(), "results", paste0(region_name, "_", type, "_anova_results_advantageous.csv")))
+  write.csv(filtered_disadvantageous, path(here(), "results", sub, paste0(region_name, "_", type, "_anova_results_disadvantageous.csv")))
+  write.csv(filtered_advantageous, path(here(), "results", sub, paste0(region_name, "_", type, "_anova_results_advantageous.csv")))
   
 }

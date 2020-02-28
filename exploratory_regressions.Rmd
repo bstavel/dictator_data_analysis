@@ -36,6 +36,7 @@ library(foreach)
 library(here)
 library(fs)
 library(ggcorrplot)
+library(viridis)
 library(lmtest)
 
 ## hand written functions ##
@@ -105,9 +106,9 @@ I am wondering if it might make sense to start with the most derived var as the 
 ```{r load-hg-data-presentation-locked}
 
 # necessary paths #
-file_path_to_electrode_names <- path(here(), "munge", "IR35_electrodes_presentation_locked.csv")
-file_path_to_hg_data <- path(here(), "munge", "IR35_hg_munge_presentation_locked.csv")
-file_path_to_elecs_of_interest <- path(here(), "munge", "IR35_elecs_of_interest.csv")
+file_path_to_electrode_names <- path(here(), "munge", "IR39_electrodes_presentation_locked.csv")
+file_path_to_hg_data <- path(here(), "munge", "IR39_hg_munge_presentation_locked.csv")
+file_path_to_elecs_of_interest <- path(here(), "munge", "IR39_elecs_of_interest.csv")
 
 # load data #
 hg_data <- load_high_gamma_data(file_path_to_hg_data, file_path_to_electrode_names, "V952", "V953")
@@ -121,7 +122,7 @@ hg_clean <- rolling_window_and_baseline(hg_data, lWin = 100, lOver = 50, choice_
 
 # with behavior #
 hg_behave <- merge.data.frame(hg_clean, behave_data, by.x = "trial", by.y = "round", all.x = T, all.y = F)
-write.csv(hg_behave, path(here(), "munge", "hg_behave_presentation_locked.csv"))
+write.csv(hg_behave, path(here(), "munge", "IR39", "hg_behave_presentation_locked.csv"))
 
 ```
 
@@ -134,14 +135,14 @@ file_path_to_hg_data <- path(here(), "munge", "IR35_hg_munge_choice_locked_cut_f
 file_path_to_elecs_of_interest <- path(here(), "munge", "IR35_elecs_of_interest.csv")
 
 # load data #
-hg_data <- load_high_gamma_data(file_path_to_hg_data, file_path_to_electrode_names, "V2351", "V2352")
+hg_data <- load_high_gamma_data(file_path_to_hg_data, file_path_to_electrode_names)
 elecs_to_use <- read.csv(file_path_to_elecs_of_interest)
 
 # filter to good electrodes #
 hg_data <- hg_data %>% filter(grepl(paste(elecs_to_use$Electrode, collapse = "|"), electrodes))
 
 # average and baseline #
-hg_clean <- rolling_window_and_baseline(hg_data, lWin = 100, lOver = 50, choice_locked = T)
+hg_clean <- rolling_window_and_baseline(hg_data, baseline_csv = "baseline_IR35.csv", lWin = 200, lOver = 150, choice_locked = T)
 
 # create temp data for visualiztion #
 half_index <- sample(1:228, 114)
@@ -203,27 +204,25 @@ hg_eda_summary <- hg_eda_behave %>%
 
 hg_eda_summary %>%
   filter(grepl(paste(ofc_elecs$Electrode, collapse = "|"), electrodes)) %>%
-  mutate(advent = if_else(ineq_disadvent > 0, "Advantageous", "Disadvantageous")) %>%
+  # mutate(advent = if_else(ineq_disadvent > 0, "Advantageous", "Disadvantageous")) %>%
   ggplot(., aes(x = bin, y = mean, color = electrodes, fill = electrodes)) +
   geom_point(alpha = .4) +
   geom_line(alpha = .4) + 
   # geom_ribbon(aes(ymin = min, ymax = max), alpha = .1) +
   # geom_vline(xintercept = 1.2613816 * 1000) +
   theme(panel.background = element_rect(fill = "white")) + 
-  facet_wrap(~advent) +
+  # facet_wrap(~advent) +
   ggtitle("OFC")
 
 hg_eda_summary %>%
   filter(grepl(paste(insula_elecs$Electrode, collapse = "|"), electrodes)) %>%
-  filter(electrodes == "RIN3-RIN4") %>%
   ggplot(., aes(x = bin, y = mean, color = electrodes, fill = electrodes)) +
   geom_point(alpha = .4) +
   geom_line(alpha = .4) +
   # geom_vline(xintercept = 1.2613816 * 1000) +
   theme(panel.background = element_rect(fill = "white")) + 
-  scale_fill_manual(values = getPalette(9)[8]) +
-  scale_color_manual(values = getPalette(9)[8]) +
-  ylim(-0.05, .2) +
+  scale_fill_manual(values = getPalette(9)) +
+  scale_color_manual(values = getPalette(9)) +
   labs(y = "high gamma") +
   ggtitle("Insula")
 
@@ -275,14 +274,16 @@ hg_eda_summary %>%
 
 ```{r hg_plots}
 
-file_path_to_electrode_names <- path(here(), "munge", "IR35_electrodes_presentation_locked.csv")
-file_path_to_hg_data <- path(here(), "munge", "IR35_hg_munge_presentation_locked.csv")
+file_path_to_electrode_names <- path(here(), "munge", "IR35_electrodes_presentation_locked_extended.csv")
+file_path_to_hg_data <- path(here(), "munge", "IR35_hg_munge_presentation_locked_extended.csv")
 file_path_to_elecs_of_interest <- path(here(), "munge", "IR35_elecs_of_interest.csv")
 
 # load data #
-hg_data_full <- load_high_gamma_data(file_path_to_hg_data, file_path_to_electrode_names, "V952", "V953")
+# IR39
+# hg_data_full <- load_high_gamma_data(file_path_to_hg_data, file_path_to_electrode_names, "V2702", "V2703")
+# IR35
+hg_data_full <- load_high_gamma_data(file_path_to_hg_data, file_path_to_electrode_names)
 elecs_to_use <- read.csv(file_path_to_elecs_of_interest)
-
 
 indicies <- hg_data_full %>% select(trial, electrodes)
 hg_data <- hg_data_full %>% select(starts_with("time"))
@@ -290,55 +291,87 @@ hg_data <- hg_data_full %>% select(starts_with("time"))
 baseline_df <- hg_data[, 1:200]
 baseline <- apply(baseline_df, 1, function(x) mean(x, na.rm = T))
 
-hg_data_tmp <- hg_data[, 201:ncol(hg_data)]
+hg_data_tmp <- hg_data
 hg_data_baselined <- apply(hg_data_tmp, 2, function(col) t(as.vector(col - baseline)))
 hg_data_baselined <- as.data.frame(hg_data_baselined)
 hg_data_baselined <- cbind(hg_data_baselined, indicies)
 
 hg_raw_plot <- merge.data.frame(hg_data_baselined, behave_data, by.x = "trial", by.y = "round", all.x = T, all.y = F)
 
+ofc_elecs <- elecs_to_use %>% filter(ofc_loc_meeting == 1) %>% select(Electrode)
+insula_elecs <- elecs_to_use %>% filter(insula_loc_meeting == 1) %>% select(Electrode)
+mfg_elecs <- elecs_to_use %>% filter(mfg_loc_meeting == 1) %>% select(Electrode)
+sts_elecs <- elecs_to_use %>% filter(sts_loc_meeting == 1) %>% select(Electrode)
+hinal_elecs <- elecs_to_use %>% filter(hinal_loc_meeting == 1) %>% select(Electrode)
+ca1_elecs <- elecs_to_use %>% filter(ca1_loc_meeting == 1) %>% select(Electrode)
+
 elecs_of_interest <- c(as.character(ofc_elecs$Electrode), as.character(insula_elecs$Electrode), as.character(sts_elecs$Electrode))
 
 elec_names <- unique(hg_raw_plot$electrodes[grepl(paste(elecs_of_interest, collapse = "|"), hg_raw_plot$electrodes)])
 
-for(elec in elec_names) {
-
-  
-adv_plot <- hg_raw_plot %>%
+advent_plot_df <- hg_raw_plot %>%
   mutate(advent = if_else(ineq_disadvent > 0, "Advantageous", "Inadvantageous")) %>%
   filter(advent == "Advantageous") %>%
   select(electrodes, RT, advent, trial, starts_with("time")) %>%
-  filter(electrodes == elec) %>%
-  arrange(desc(RT)) %>%
-  mutate(trial = factor(trial, levels = trial)) %>%
-  gather(key = "time", value = "gamma", -electrodes, -trial, -RT, -advent) %>%
-  mutate(time = as.numeric(gsub("time_", "", time))) %>%
-  ggplot(., aes(x = time, y = trial, color = gamma, fill = gamma)) +
-  geom_tile() + 
-  geom_point(aes(y = trial, x = RT*1000), color = "white") + 
-  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank()) + 
-  scale_fill_viridis(limits = c(-1, 3.5))   +
-  scale_color_viridis(limits = c(-1, 3.5)) +
-  ggtitle(paste0(elec, " -- Advantageous"))
- 
-dis_plot <- hg_raw_plot %>%
+  arrange(desc(RT))
+
+disadvent_plot_df <- hg_raw_plot %>%
   mutate(advent = if_else(ineq_disadvent > 0, "Advantageous", "Disadvantageous")) %>%
   filter(advent == "Disadvantageous") %>%
   select(electrodes, RT, advent, trial, starts_with("time")) %>%
+  arrange(desc(RT)) 
+
+advent_choice_plot_df <- hg_raw_plot %>%
+  filter(chose_equality == "Advent") %>%
+  select(electrodes, RT, chose_equality, trial, starts_with("time")) %>%
+  arrange(desc(RT))
+
+ten_ten_plot_df <- hg_raw_plot %>%
+  filter(chose_equality == "10-10") %>%
+  select(electrodes, RT, chose_equality, trial, starts_with("time")) %>%
+  arrange(desc(RT)) 
+
+for(elec in elec_names) {
+
+  
+adv_plot <- advent_plot_df %>%
   filter(electrodes == elec) %>%
-  arrange(desc(RT)) %>%
   mutate(trial = factor(trial, levels = trial)) %>%
   gather(key = "time", value = "gamma", -electrodes, -trial, -RT, -advent) %>%
-  mutate(time = as.numeric(gsub("time_", "", time))) %>%
+  mutate(time = (as.numeric(gsub("time_", "", time))) -200 ) %>%
+  group_by(RT) %>%
+  mutate(time = time - RT*1000) %>%
+  mutate(time = time) %>%
   ggplot(., aes(x = time, y = trial, color = gamma, fill = gamma)) +
   geom_tile() + 
-  geom_point(aes(y = trial, x = RT*1000), color = "white") + 
+  geom_point(aes(y = trial, x = -RT*1000), color = "white", size = 1) +
+  # geom_point(aes(y = trial, x = RT*1000), color = "white", size = 1) +
+  geom_vline(xintercept = -200, color = "white") +
+  geom_vline(xintercept = -400, color = "white") +
+  geom_vline(xintercept = -600, color = "white") +
+  geom_vline(xintercept = -800, color = "white") +
   theme(axis.text.y = element_blank(), axis.ticks.y = element_blank()) + 
-  scale_fill_viridis(limits = c(-1, 3.5))   +
-  scale_color_viridis(limits = c(-1, 3.5)) +
-  ggtitle(paste0(elec, " -- Disadvantageous"))
+  scale_fill_viridis(limits = c(-1, 2), begin = 0, end = 1)   +
+  scale_color_viridis(limits = c(-1, 2), begin = 0, end = 1) +
+  ggtitle(paste0(elec, " -- Advantageous"))
+ 
+dis_plot  <- disadvent_plot_df %>%
+  filter(electrodes == elec) %>%
+  mutate(trial = factor(trial, levels = trial)) %>%
+  gather(key = "time", value = "gamma", -electrodes, -trial, -RT, -advent) %>%
+  mutate(time = (as.numeric(gsub("time_", "", time))) -200 ) %>%
+  group_by(RT) %>%
+  mutate(time = time - RT*1000) %>%
+  ggplot(., aes(x = time, y = trial, color = gamma, fill = gamma)) +
+  geom_tile() + 
+  geom_point(aes(y = trial, x = -RT*1000), color = "white", size = 1) +
+  geom_vline(xintercept = 0, color = "white") +
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank()) + 
+  scale_fill_viridis(limits = c(-1, 2), begin = 0, end = 1)   +
+  scale_color_viridis(limits = c(-1, 2), begin = 0, end = 1) +
+  ggtitle(paste0(elec, " -- Disadantageous"))
 
-  ggsave(filename = paste0('./figures/', elec, "_adv.png"),
+  ggsave(filename = paste0('./figures/IR35/choice_locked_adv-vs-dis/', elec, "_adv.png"),
      device = "png",
      width = 10,
      height = 10,
@@ -346,7 +379,7 @@ dis_plot <- hg_raw_plot %>%
      dpi = 200,
      plot =  print(plot(adv_plot)) ) 
   
-    ggsave(filename = paste0('./figures/', elec, "_dis.png"),
+    ggsave(filename = paste0('./figures/IR35/choice_locked_adv-vs-dis/', elec, "_dis.png"),
      device = "png",
      width = 10,
      height = 10,
@@ -355,6 +388,30 @@ dis_plot <- hg_raw_plot %>%
      plot =  print(plot(dis_plot)) ) 
 
 } 
+
+hg_behave_plot_100_bins <- hg_behave
+hg_behave_plot_200_bins <- hg_behave
+colnames(hg_behave_plot_200_bins) <- gsub("pre_", "_-", colnames(hg_behave_plot_200_bins))
+colnames(hg_behave_plot_200_bins) <- gsub("post", "", colnames(hg_behave_plot_200_bins))
+
+hg_behave_plot_200_bins %>%
+  mutate(advent = if_else(ineq_disadvent > 0, "Advantageous", "Inadvantageous")) %>%
+  filter(advent == "Inadvantageous") %>%
+  select(electrodes, RT, advent, trial, starts_with("_")) %>%
+  arrange(desc(RT)) %>%
+  filter(electrodes == elec) %>%
+  mutate(trial = factor(trial, levels = trial)) %>%
+  gather(key = "time", value = "gamma", -electrodes, -trial, -RT, -advent) %>%
+  mutate(time = (as.numeric(gsub("_", "", time))) *150 ) %>%
+  ggplot(., aes(x = time, y = trial, color = gamma, fill = gamma)) +
+  geom_tile() + 
+  # geom_point(aes(y = trial, x = -RT*150), color = "white", size = 1) +
+  geom_vline(xintercept = 0, color = "white") +
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank()) + 
+  scale_fill_viridis(limits = c(-1, 1.5), begin = 0, end = 1)   +
+  scale_color_viridis(limits = c(-1, 1.5), begin = 0, end = 1) +
+  ggtitle(paste0(elec, " -- Inadvantageous"))
+
 
 ```
 
@@ -435,17 +492,17 @@ fake_dis %>%
 
 # combine different csvs #
 regions_to_combine <- c("OFC", "Insula", "Cingulate", "STS")
-presentation_results <- compile_results(regions_to_combine, type = "pres-locked")
+presentation_results <- compile_results(regions_to_combine, type = "pres-locked", sub = "IR39")
 
 # runa anova for inequity results #
-path_hg_clean <- path(here(), "munge", "hg_behave_presentation_locked.csv")
+path_hg_clean <- path(here(), "munge", "IR39", "hg_behave_presentation_locked.csv")
 hg_behave <-  read.csv(path_hg_clean)
-run_filtered_anova(presentation_results, hg_behave,  region_name = "All", all_results = T, type = "pres-locked")
+run_filtered_anova(presentation_results, hg_behave, sub = "IR39", region_name = "All", all_results = T, type = "pres-locked")
 
 # read back in the results #
 region_name <- "All"
-adv_pres_results_for_plots <- read.csv(fs::path(here(), "results", paste0(region_name, "_pres-locked_anova_results_advantageous.csv")))
-dis_pres_results_for_plots <- read.csv(fs::path(here(), "results", paste0(region_name, "_pres-locked_anova_results_disadvantageous.csv")))
+adv_pres_results_for_plots <- read.csv(fs::path(here(), "results", "IR39", paste0(region_name, "_pres-locked_anova_results_advantageous.csv")))
+dis_pres_results_for_plots <- read.csv(fs::path(here(), "results", "IR39", paste0(region_name, "_pres-locked_anova_results_disadvantageous.csv")))
 ```
 
 
