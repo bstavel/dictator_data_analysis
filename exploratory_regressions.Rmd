@@ -106,23 +106,23 @@ I am wondering if it might make sense to start with the most derived var as the 
 ```{r load-hg-data-presentation-locked}
 
 # necessary paths #
-file_path_to_electrode_names <- path(here(), "munge", "IR39_electrodes_presentation_locked.csv")
-file_path_to_hg_data <- path(here(), "munge", "IR39_hg_munge_presentation_locked.csv")
-file_path_to_elecs_of_interest <- path(here(), "munge", "IR39_elecs_of_interest.csv")
+file_path_to_electrode_names <- path(here(), "munge", "IR35_electrodes_presentation_locked_extended.csv")
+file_path_to_hg_data <- path(here(), "munge", "IR35_hg_munge_presentation_locked_extended.csv")
+file_path_to_elecs_of_interest <- path(here(), "munge", "IR35_elecs_of_interest.csv")
 
 # load data #
-hg_data <- load_high_gamma_data(file_path_to_hg_data, file_path_to_electrode_names, "V952", "V953")
+hg_data <- load_high_gamma_data(file_path_to_hg_data, file_path_to_electrode_names)
 elecs_to_use <- read.csv(file_path_to_elecs_of_interest)
 
 # filter to good electrodes #
 hg_data <- hg_data %>% filter(grepl(paste(elecs_to_use$Electrode, collapse = "|"), electrodes))
 
 # average and baseline #
-hg_clean <- rolling_window_and_baseline(hg_data, lWin = 100, lOver = 50, choice_locked = F)
+hg_clean <- rolling_window_and_baseline(hg_data, lWin = 200, lOver = 150, choice_locked = F)
 
 # with behavior #
 hg_behave <- merge.data.frame(hg_clean, behave_data, by.x = "trial", by.y = "round", all.x = T, all.y = F)
-write.csv(hg_behave, path(here(), "munge", "IR39", "hg_behave_presentation_locked.csv"))
+write.csv(hg_behave, path(here(), "munge", "IR35", "hg_behave_presentation_locked_extended.csv"))
 
 ```
 
