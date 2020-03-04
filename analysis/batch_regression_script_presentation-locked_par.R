@@ -34,8 +34,8 @@ registerDoParallel(nCores)
 
 
 ## read in data ##
-file_path_to_elecs_of_interest <- path(here(), "munge", "IR39_elecs_of_interest.csv")
-path_hg_clean <- path(here(), "munge", "IR39", "hg_behave_presentation_locked_extended.csv")
+file_path_to_elecs_of_interest <- path(here(), "munge", "IR35_elecs_of_interest.csv")
+path_hg_clean <- path(here(), "munge", "IR35", "hg_behave_presentation_locked_extended.csv")
 hg_behave <-  read.csv(path_hg_clean)
 elecs_to_use <- read.csv(file_path_to_elecs_of_interest)
 
@@ -53,21 +53,21 @@ ofc_electrodes <- unique(brain_behave_data$electrodes)
 
 ## run regressions ##
 # adv ineq #
-run_permuted_regressions_par(brain_behave_data, electrodes = ofc_electrodes, regressor = "ineq_advent", nBins, region_name = "OFC", niter, sub = "IR39", tag = "pres-locked")
+run_permuted_regressions_par(brain_behave_data, electrodes = ofc_electrodes, regressor = "ineq_advent", nBins, region_name = "OFC", niter, sub = "IR35", tag = "pres-locked")
 # disadv ineq #
-run_permuted_regressions_par(brain_behave_data, electrodes = ofc_electrodes, regressor = "ineq_disadvent", nBins, region_name = "OFC",niter, sub = "IR39", tag = "pres-locked")
+run_permuted_regressions_par(brain_behave_data, electrodes = ofc_electrodes, regressor = "ineq_disadvent", nBins, region_name = "OFC",niter, sub = "IR35", tag = "pres-locked")
 # self payoff #
-run_permuted_regressions_par(brain_behave_data, electrodes = ofc_electrodes, regressor = "self_payoff", nBins, region_name = "OFC",niter, sub = "IR39", tag = "pres-locked")
+run_permuted_regressions_par(brain_behave_data, electrodes = ofc_electrodes, regressor = "self_payoff", nBins, region_name = "OFC",niter, sub = "IR35", tag = "pres-locked")
 # other payoff #
-run_permuted_regressions_par(brain_behave_data, electrodes = ofc_electrodes, regressor = "other_payoff", nBins, region_name = "OFC",niter, sub = "IR39", tag = "pres-locked")
+run_permuted_regressions_par(brain_behave_data, electrodes = ofc_electrodes, regressor = "other_payoff", nBins, region_name = "OFC",niter, sub = "IR35", tag = "pres-locked")
 # self foregone #
-run_permuted_regressions_par(brain_behave_data, electrodes = ofc_electrodes, regressor = "self_foregone", nBins, region_name = "OFC",niter, sub = "IR39", tag = "pres-locked")
+run_permuted_regressions_par(brain_behave_data, electrodes = ofc_electrodes, regressor = "self_foregone", nBins, region_name = "OFC",niter, sub = "IR35", tag = "pres-locked")
 # other foregone #
-run_permuted_regressions_par(brain_behave_data, electrodes = ofc_electrodes, regressor = "other_foregone", nBins, region_name = "OFC",niter, sub = "IR39", tag = "pres-locked")
+run_permuted_regressions_par(brain_behave_data, electrodes = ofc_electrodes, regressor = "other_foregone", nBins, region_name = "OFC",niter, sub = "IR35", tag = "pres-locked")
 # self var paroff #
-run_permuted_regressions_par(brain_behave_data, electrodes = ofc_electrodes, regressor = "self_var_payoff", nBins, region_name = "OFC", niter, sub = "IR39", tag = "pres-locked")
+run_permuted_regressions_par(brain_behave_data, electrodes = ofc_electrodes, regressor = "self_var_payoff", nBins, region_name = "OFC", niter, sub = "IR35", tag = "pres-locked")
 # other var payoff #
-run_permuted_regressions_par(brain_behave_data, electrodes = ofc_electrodes, regressor = "other_var_payoff", nBins, region_name = "OFC", niter, sub = "IR39", tag = "pres-locked")
+run_permuted_regressions_par(brain_behave_data, electrodes = ofc_electrodes, regressor = "other_var_payoff", nBins, region_name = "OFC", niter, sub = "IR35", tag = "pres-locked")
 
 # run anovas #
 # run_filtered_anova(brain_behave_data, region_name = "OFC")
@@ -81,21 +81,21 @@ insula_electrodes <- unique(brain_behave_data$electrodes)
 #
 ## run regressions ##
 # adv ineq #
-run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "ineq_advent", nBins, region_name = "Insula",niter, sub = "IR39", tag = "pres-locked")
+run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "ineq_advent", nBins, region_name = "Insula",niter, sub = "IR35", tag = "pres-locked")
 # disadv ineq #
-run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "ineq_disadvent", nBins, region_name = "Insula",niter, sub = "IR39", tag = "pres-locked")
+run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "ineq_disadvent", nBins, region_name = "Insula",niter, sub = "IR35", tag = "pres-locked")
 # self payoff #
-run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "self_payoff", nBins, region_name = "Insula",niter, sub = "IR39", tag = "pres-locked")
+run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "self_payoff", nBins, region_name = "Insula",niter, sub = "IR35", tag = "pres-locked")
 # other payoff #
-run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "other_payoff", nBins, region_name = "Insula",niter, sub = "IR39", tag = "pres-locked")
+run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "other_payoff", nBins, region_name = "Insula",niter, sub = "IR35", tag = "pres-locked")
 # self foregone #
-run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "self_foregone", nBins, region_name = "Insula",niter, sub = "IR39", tag = "pres-locked")
+run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "self_foregone", nBins, region_name = "Insula",niter, sub = "IR35", tag = "pres-locked")
 # other foregone #
-run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "other_foregone", nBins, region_name = "Insula",niter, sub = "IR39", tag = "pres-locked")
+run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "other_foregone", nBins, region_name = "Insula",niter, sub = "IR35", tag = "pres-locked")
 # self var paroff #
-run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "self_var_payoff", nBins, region_name = "Insula", niter, sub = "IR39", tag = "pres-locked")
+run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "self_var_payoff", nBins, region_name = "Insula", niter, sub = "IR35", tag = "pres-locked")
 # other var payoff #
-run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "other_var_payoff", nBins, region_name = "Insula", niter, sub = "IR39", tag = "pres-locked")
+run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "other_var_payoff", nBins, region_name = "Insula", niter, sub = "IR35", tag = "pres-locked")
 
 ## cingulate ##
 # prep #
@@ -106,21 +106,21 @@ cingulate_electrodes <- unique(brain_behave_data$electrodes)
 
 ## run regressions ##
 # adv ineq #
-run_permuted_regressions_par(brain_behave_data, electrodes = cingulate_electrodes, regressor = "ineq_advent", nBins, region_name = "Cingulate",niter, sub = "IR39", tag = "pres-locked")
+run_permuted_regressions_par(brain_behave_data, electrodes = cingulate_electrodes, regressor = "ineq_advent", nBins, region_name = "Cingulate",niter, sub = "IR35", tag = "pres-locked")
 # disadv ineq #
-run_permuted_regressions_par(brain_behave_data, electrodes = cingulate_electrodes, regressor = "ineq_disadvent", nBins, region_name = "Cingulate",niter, sub = "IR39", tag = "pres-locked")
+run_permuted_regressions_par(brain_behave_data, electrodes = cingulate_electrodes, regressor = "ineq_disadvent", nBins, region_name = "Cingulate",niter, sub = "IR35", tag = "pres-locked")
 # self payoff #
-run_permuted_regressions_par(brain_behave_data, electrodes = cingulate_electrodes, regressor = "self_payoff", nBins, region_name = "Cingulate",niter, sub = "IR39", tag = "pres-locked")
+run_permuted_regressions_par(brain_behave_data, electrodes = cingulate_electrodes, regressor = "self_payoff", nBins, region_name = "Cingulate",niter, sub = "IR35", tag = "pres-locked")
 # other payoff #
-run_permuted_regressions_par(brain_behave_data, electrodes = cingulate_electrodes, regressor = "other_payoff", nBins, region_name = "Cingulate",niter, sub = "IR39", tag = "pres-locked")
+run_permuted_regressions_par(brain_behave_data, electrodes = cingulate_electrodes, regressor = "other_payoff", nBins, region_name = "Cingulate",niter, sub = "IR35", tag = "pres-locked")
 # self foregone #
-run_permuted_regressions_par(brain_behave_data, electrodes = cingulate_electrodes, regressor = "self_foregone", nBins, region_name = "Cingulate",niter, sub = "IR39", tag = "pres-locked")
+run_permuted_regressions_par(brain_behave_data, electrodes = cingulate_electrodes, regressor = "self_foregone", nBins, region_name = "Cingulate",niter, sub = "IR35", tag = "pres-locked")
 # other foregone #
-run_permuted_regressions_par(brain_behave_data, electrodes = cingulate_electrodes, regressor = "other_foregone", nBins, region_name = "Cingulate",niter, sub = "IR39", tag = "pres-locked")
+run_permuted_regressions_par(brain_behave_data, electrodes = cingulate_electrodes, regressor = "other_foregone", nBins, region_name = "Cingulate",niter, sub = "IR35", tag = "pres-locked")
 # self var paroff #
-run_permuted_regressions_par(brain_behave_data, electrodes = cingulate_electrodes, regressor = "self_var_payoff", nBins, region_name = "Cingulate", niter, sub = "IR39", tag = "pres-locked")
+run_permuted_regressions_par(brain_behave_data, electrodes = cingulate_electrodes, regressor = "self_var_payoff", nBins, region_name = "Cingulate", niter, sub = "IR35", tag = "pres-locked")
 # other var payoff #
-run_permuted_regressions_par(brain_behave_data, electrodes = cingulate_electrodes, regressor = "other_var_payoff", nBins, region_name = "Cingulate", niter, sub = "IR39", tag = "pres-locked")
+run_permuted_regressions_par(brain_behave_data, electrodes = cingulate_electrodes, regressor = "other_var_payoff", nBins, region_name = "Cingulate", niter, sub = "IR35", tag = "pres-locked")
 
 # 
 # 
@@ -131,17 +131,17 @@ run_permuted_regressions_par(brain_behave_data, electrodes = cingulate_electrode
 # mfg_electrodes <- unique(brain_behave_data$electrodes)
 # ## run regressions ##
 # # adv ineq #
-# run_permuted_regressions_par(brain_behave_data, electrodes = mfg_electrodes, regressor = "ineq_advent", nBins, region_name = "MFG",niter, sub = "IR39", tag = "pres-locked")
+# run_permuted_regressions_par(brain_behave_data, electrodes = mfg_electrodes, regressor = "ineq_advent", nBins, region_name = "MFG",niter, sub = "IR35", tag = "pres-locked")
 # # disadv ineq #
-# run_permuted_regressions_par(brain_behave_data, electrodes = mfg_electrodes, regressor = "ineq_disadvent", nBins, region_name = "MFG",niter, sub = "IR39", tag = "pres-locked")
+# run_permuted_regressions_par(brain_behave_data, electrodes = mfg_electrodes, regressor = "ineq_disadvent", nBins, region_name = "MFG",niter, sub = "IR35", tag = "pres-locked")
 # # self payoff #
-# run_permuted_regressions_par(brain_behave_data, electrodes = mfg_electrodes, regressor = "self_payoff", nBins, region_name = "MFG",niter, sub = "IR39", tag = "pres-locked")
+# run_permuted_regressions_par(brain_behave_data, electrodes = mfg_electrodes, regressor = "self_payoff", nBins, region_name = "MFG",niter, sub = "IR35", tag = "pres-locked")
 # # other payoff #
-# run_permuted_regressions_par(brain_behave_data, electrodes = mfg_electrodes, regressor = "other_payoff", nBins, region_name = "MFG",niter, sub = "IR39", tag = "pres-locked")
+# run_permuted_regressions_par(brain_behave_data, electrodes = mfg_electrodes, regressor = "other_payoff", nBins, region_name = "MFG",niter, sub = "IR35", tag = "pres-locked")
 # # self foregone #
-# run_permuted_regressions_par(brain_behave_data, electrodes = mfg_electrodes, regressor = "self_foregone", nBins, region_name = "MFG",niter, sub = "IR39", tag = "pres-locked")
+# run_permuted_regressions_par(brain_behave_data, electrodes = mfg_electrodes, regressor = "self_foregone", nBins, region_name = "MFG",niter, sub = "IR35", tag = "pres-locked")
 # # other foregone #
-# run_permuted_regressions_par(brain_behave_data, electrodes = mfg_electrodes, regressor = "other_foregone", nBins, region_name = "MFG",niter, sub = "IR39", tag = "pres-locked")
+# run_permuted_regressions_par(brain_behave_data, electrodes = mfg_electrodes, regressor = "other_foregone", nBins, region_name = "MFG",niter, sub = "IR35", tag = "pres-locked")
 # # anova #
 # run_filtered_anova(brain_behave_data, region_name = "STS")
 
@@ -155,19 +155,19 @@ sts_electrodes <- unique(brain_behave_data$electrodes)
 
 ## run regressions ##
 # adv ineq #
-run_permuted_regressions_par(brain_behave_data, electrodes = sts_electrodes, regressor = "ineq_advent", nBins, region_name = "STS",niter, sub = "IR39", tag = "pres-locked")
+run_permuted_regressions_par(brain_behave_data, electrodes = sts_electrodes, regressor = "ineq_advent", nBins, region_name = "STS",niter, sub = "IR35", tag = "pres-locked")
 # disadv ineq #
-run_permuted_regressions_par(brain_behave_data, electrodes = sts_electrodes, regressor = "ineq_disadvent", nBins, region_name = "STS",niter, sub = "IR39", tag = "pres-locked")
+run_permuted_regressions_par(brain_behave_data, electrodes = sts_electrodes, regressor = "ineq_disadvent", nBins, region_name = "STS",niter, sub = "IR35", tag = "pres-locked")
 # self payoff #
-run_permuted_regressions_par(brain_behave_data, electrodes = sts_electrodes, regressor = "self_payoff", nBins, region_name = "STS",niter, sub = "IR39", tag = "pres-locked")
+run_permuted_regressions_par(brain_behave_data, electrodes = sts_electrodes, regressor = "self_payoff", nBins, region_name = "STS",niter, sub = "IR35", tag = "pres-locked")
 # other payoff #
-run_permuted_regressions_par(brain_behave_data, electrodes = sts_electrodes, regressor = "other_payoff", nBins, region_name = "STS",niter, sub = "IR39", tag = "pres-locked")
+run_permuted_regressions_par(brain_behave_data, electrodes = sts_electrodes, regressor = "other_payoff", nBins, region_name = "STS",niter, sub = "IR35", tag = "pres-locked")
 # self foregone #
-run_permuted_regressions_par(brain_behave_data, electrodes = sts_electrodes, regressor = "self_foregone", nBins, region_name = "STS",niter, sub = "IR39", tag = "pres-locked")
+run_permuted_regressions_par(brain_behave_data, electrodes = sts_electrodes, regressor = "self_foregone", nBins, region_name = "STS",niter, sub = "IR35", tag = "pres-locked")
 # other foregone #
-run_permuted_regressions_par(brain_behave_data, electrodes = sts_electrodes, regressor = "other_foregone", nBins, region_name = "STS",niter, sub = "IR39", tag = "pres-locked")
+run_permuted_regressions_par(brain_behave_data, electrodes = sts_electrodes, regressor = "other_foregone", nBins, region_name = "STS",niter, sub = "IR35", tag = "pres-locked")
 # self var paroff #
-run_permuted_regressions_par(brain_behave_data, electrodes = sts_electrodes, regressor = "self_var_payoff", nBins, region_name = "STS",niter, sub = "IR39", tag = "pres-locked")
+run_permuted_regressions_par(brain_behave_data, electrodes = sts_electrodes, regressor = "self_var_payoff", nBins, region_name = "STS",niter, sub = "IR35", tag = "pres-locked")
 # other var payoff #
-run_permuted_regressions_par(brain_behave_data, electrodes = sts_electrodes, regressor = "other_var_payoff", nBins, region_name = "STS",niter, sub = "IR39", tag = "pres-locked")
+run_permuted_regressions_par(brain_behave_data, electrodes = sts_electrodes, regressor = "other_var_payoff", nBins, region_name = "STS",niter, sub = "IR35", tag = "pres-locked")
 

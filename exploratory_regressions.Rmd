@@ -118,7 +118,7 @@ elecs_to_use <- read.csv(file_path_to_elecs_of_interest)
 hg_data <- hg_data %>% filter(grepl(paste(elecs_to_use$Electrode, collapse = "|"), electrodes))
 
 # average and baseline #
-hg_clean <- rolling_window_and_baseline(hg_data, lWin = 200, lOver = 150, choice_locked = F)
+hg_clean <- rolling_window_and_baseline(hg_data, lWin = 100, lOver = 50, choice_locked = F)
 
 # with behavior #
 hg_behave <- merge.data.frame(hg_clean, behave_data, by.x = "trial", by.y = "round", all.x = T, all.y = F)
@@ -495,7 +495,7 @@ regions_to_combine <- c("OFC", "Insula", "Cingulate", "STS")
 presentation_results <- compile_results(regions_to_combine, type = "pres-locked", sub = "IR39")
 
 # runa anova for inequity results #
-path_hg_clean <- path(here(), "munge", "IR39", "hg_behave_presentation_locked.csv")
+path_hg_clean <- path(here(), "munge", "IR39", "hg_behave_presentation_locked_extended.csv")
 hg_behave <-  read.csv(path_hg_clean)
 run_filtered_anova(presentation_results, hg_behave, sub = "IR39", region_name = "All", all_results = T, type = "pres-locked")
 
@@ -503,6 +503,7 @@ run_filtered_anova(presentation_results, hg_behave, sub = "IR39", region_name = 
 region_name <- "All"
 adv_pres_results_for_plots <- read.csv(fs::path(here(), "results", "IR39", paste0(region_name, "_pres-locked_anova_results_advantageous.csv")))
 dis_pres_results_for_plots <- read.csv(fs::path(here(), "results", "IR39", paste0(region_name, "_pres-locked_anova_results_disadvantageous.csv")))
+
 ```
 
 
@@ -582,6 +583,10 @@ active_elec_plots(presentation_results, "self_foregone", "Self Forgeone Results"
 active_elec_plots(presentation_results, "other_payoff", "Other Payoff Results")
 
 active_elec_plots(presentation_results, "other_foregone", "Other Forgeone Results")
+
+active_elec_plots(presentation_results, "self_var_payoff", "Self Options Results")
+
+active_elec_plots(presentation_results, "other_var_payoff", "Other Options Results")
 
 ```
 
