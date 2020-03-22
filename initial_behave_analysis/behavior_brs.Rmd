@@ -672,6 +672,8 @@ se <- sqrt(diag(vcov(sides.lm)))
 exp(tab <- cbind(Est = fixef(sides.lm), LL = fixef(sides.lm) - 1.96 * se, UL = fixef(sides.lm) + 1.96 *
     se))
 
+
+
 ```
 
 

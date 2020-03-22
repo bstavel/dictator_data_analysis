@@ -3,40 +3,27 @@ rolling_window_and_baseline <- function(df, baseline_csv, lWin = 100, lOver = 50
   #### then subtract the baseline, which is the first window. ###
   
   if(choice_locked == TRUE) {
+    
+  # order electrodes and trials to ensure good match with baseline #
+  df <- df %>% arrange(electrodes, trial)
   
-  # First separate out indices #
+  # Separate out indices #
   indices <- df %>% select(-starts_with("time"))
   hg_df <- df %>% select(starts_with("time"))
   
   # then separate out pre trial baseline, taken from the presentation locked trials #
-  baseline_df <- read.csv(path(here(), "munge", baseline_csv))
-  baseline_df <- baseline_df %>% select(-X)
-  
-  # # reorder nas #
-  # right_shift_na <- function(x) {
-  #   na_indices <- which(is.na(x))
-  #   not_na <-  which(!is.na(x))
-  #   if(all(min(na_indices) > not_na)){ # all of the na indicies should be greater than the non na indices
-  #     new_x <- c(x[na_indices], x[not_na])
-  #   } else {
-  #     print(x[1])
-  #   }
-  #   return(unlist(new_x))  # will error if it is not pass the if all test
-  # }
-  # df_reorder <- apply(hg_df, 1, right_shift_na)
-  # df_reorder <- data.frame(t(df_reorder))
+  baseline_df <- read.csv(baseline_csv)
+  baseline_df <- baseline_df %>% arrange(hg_data.electrodes, hg_data.trial)
+  baseline_mean <- baseline_df %>% select(starts_with("time")) %>% apply(., 1, function(x) mean(x))
+  baseline <- data.frame(t(baseline_mean))
 
   # calculate the rolling average, should this be left -- yes it is about the indexing anf the left side already has na vals so it is preferable to use that side
   df_rollmean <- apply(hg_df, 1, function(x) rollapply(x, lWin, function(x) mean(x, na.rm = T), by = lOver, align = "left", partial = F, by.column = T))
   df_rollmean <- data.frame(t(df_rollmean))
 
-  # calculate rolling average for baseline 
-  baseline <- apply(baseline_df, 1, function(x) mean(x, na.rm = T))
-  baseline <- data.frame(t(baseline))
-  
   # rename columns #
-  # colnames(df_rollmean) <- c(rev(paste0("pre_", 1:15)),  paste0("post_", 1:31))
-  colnames(df_rollmean) <- c(rev(paste0("pre_", 1:5)),  paste0("post_", 1:10))
+  colnames(df_rollmean) <- c(rev(paste0("pre_", 1:13)),  paste0("post_", 1:(ncol(df_rollmean)-13)))
+  # colnames(df_rollmean) <- c(rev(paste0("pre_", 1:5)),  paste0("post_", 1:10))
   
   # subtract the baseline (time around beginning of option presentation)
   df_rollmean_baseline <- apply(df_rollmean, 2, function(col) t(as.vector(col - baseline)))

@@ -8,8 +8,8 @@ prep_behave_data = function(path_to_behave_munge){
     select(-X, -side_chosen_numeric, -side.chosen, -ineq)
   # change names #
   colnames(new_df) <- gsub("\\.", "_", colnames(new_df))
-  # create derived vars based on github readme vars#
   new_df <- new_df %>%
+    # create derived vars based on github readme vars#
     mutate(self_var_payoff = self_payoff + self_foregone - 10) %>%
     mutate(other_var_payoff = other_payoff + other_foregone - 10) %>%
     mutate(ineq_var_abs = abs(self_var_payoff - other_var_payoff)) %>%
@@ -20,7 +20,12 @@ prep_behave_data = function(path_to_behave_munge){
     mutate(ineq_choice = self_var_payoff - other_var_payoff) %>%
     mutate(chose_equality = if_else(self_payoff == 10 & other_payoff == 10, "10-10", if_else(self_payoff > other_payoff, "Advent", if_else(other_payoff > self_payoff, "Disadvent", "Equal")))) %>%
     mutate(self_diff = self_payoff - self_foregone) %>%
-    mutate(other_diff = other_payoff - other_foregone)
+    mutate(other_diff = other_payoff - other_foregone) %>%
+    # trial design variables
+    mutate(L_self = if_else(side_chosen == "Left", self_payoff, self_foregone)) %>%
+    mutate(R_self = if_else(side_chosen == "Right", self_payoff, self_foregone)) %>%
+    mutate(L_other = if_else(side_chosen == "Left", other_payoff, other_foregone)) %>%
+    mutate(R_other = if_else(side_chosen == "Right", other_payoff, other_foregone))
   # write csv to munge #
   write.csv(new_df, fs::path(here(), "munge", "clean_behavioral_data.csv"))
     

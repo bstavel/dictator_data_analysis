@@ -35,8 +35,8 @@ library(here)
 library(fs)
 
 ## hand written functions ##
-
-source('~/Projects/nice_r_functions/ggpaired_pretty.R')
+source(path(here(), "R", "load_behave_data.R"))
+source(path(here(), "R", "prep_behave_data.R"))
 
 ## plotting helpers ##
 getPalette = colorRampPalette(brewer.pal(12, "Set1"))
@@ -56,21 +56,19 @@ This script determines which subjects/trials need to be excluded due to:
 ```{r load-data}
 ## load in data ##
 
-# load behav files #
-filenames <- dir(path(here(), "../dg_behave_formatted/"),"behav.csv")
-DATA <- NULL
+# path to beahvioral files #
+path_to_raw_behave <- fs::path(here(), "../dg_behave_formatted")
+path_to_behave_munge <- fs::path(here(), "munge", "combined_behavioral_data.csv")
+path_to_behave_clean <- fs::path(here(), "munge", "clean_behavioral_data.csv")
 
-for (i in 1:length(filenames)) {
-  temp <- cbind(SID=substr(filenames[i],1,6),read.csv(path(here(), "../dg_behave_formatted/", filenames[i]), header=TRUE))
-  temp$RT <- as.numeric(as.character(temp$RT))
-  DATA <- rbind(DATA,temp)
-}
+# concactenate behavioral data #
+load_behave_data(path_to_raw_behave)
 
-# load task structure files #
-trialTypes <- read.csv(path(here(), '../../trial_type.csv'), header = T)
+# prep behavioral data #
+prep_behave_data(path_to_behave_munge)
 
-# merge them #
-respData <- merge.data.frame(DATA, trialTypes, by.x = "round", by.y = "X")
+# load clean data #
+behave_data <- read.csv(path_to_behave_clean)
 
 ```
 
@@ -78,11 +76,11 @@ respData <- merge.data.frame(DATA, trialTypes, by.x = "round", by.y = "X")
 ## exclude subjects based on missingness ##
 
 # look at different na maetrics to make sure they are the same #
-numNAS <- respData %>%
-  select(SID, round, RT, buttonpress.time, side.chosen) %>%
+numNAS <- behave_data %>%
+  select(SID, round, RT, buttonpress_time, side_chosen) %>%
   mutate(rt_na = if_else(is.na(RT), 1, 0)) %>%
-  mutate(rt_button = if_else(is.na(buttonpress.time), 1, 0)) %>%
-  mutate(rt_side = if_else(is.na(side.chosen), 1, 0)) %>%
+  mutate(rt_button = if_else(is.na(buttonpress_time), 1, 0)) %>%
+  mutate(rt_side = if_else(is.na(side_chosen), 1, 0)) %>%
   mutate(na_equiv = rt_na + rt_button + rt_side)
 
 # should be either 0 or 3, but there is a 1 column :( #
@@ -92,41 +90,41 @@ table(numNAS$na_equiv)
 discrepantNA <- numNAS %>% filter(na_equiv == 1)
 
 # ugh why is rt a NA when it has a button press time? #
-respData %>%
+behave_data %>%
   filter(SID == "DG_s09" & round > 112) %>%
   head(.)
 
-rtCheck <- respData %>%
-  mutate(manual_rt = buttonpress.time - choice.time) %>%
+rtCheck <- behave_data %>%
+  mutate(manual_rt = buttonpress_time - choice_time) %>%
   mutate(rt_error = manual_rt - RT)
 
 # error between them is rounding error low, so I will go with this to recover the one NA
 max(rtCheck$rt_error, na.rm = T)
 
-# modify respData #
-respData <- respData %>%
-  mutate(RT = buttonpress.time - choice.time) %>%
+# modify behave_data #
+behave_data <- behave_data %>%
+  mutate(RT = buttonpress_time - choice_time) %>%
   mutate(rt_na = if_else(is.na(RT), 1, 0))
   
 
 # now plot NAs By subject #
-respData %>%
+behave_data %>%
   ggplot(., aes(x = SID, y = rt_na, fill = SID)) +
   geom_col() +
   theme(panel.background = element_rect(fill = "white")) +
   scale_fill_manual(values = getPalette(12)) +
   ylim(0, 40)
 ```
-How many missing datapoints do we feel comfortable with?
+How many missing datapoints do we feel comfortable with? I want to exclude DG_s05 for this.
 
 
 ```{r speedy-rts}
 ## which subjects/trials had rts < 20ms? ##
 
-respData <- respData %>%
+behave_data <- behave_data %>%
   mutate(speedy_responses = if_else(RT < .20, 1, 0))
 
-respData %>%
+behave_data %>%
   ggplot(., aes(x = SID, y = speedy_responses, fill = SID)) +
   geom_col() +
   theme(panel.background = element_rect(fill = "white")) +
@@ -140,15 +138,14 @@ Nothing, yay!
 
 ## how many subjects missed trials where the better option for both self and other were better than 10? ##
 
-respData <- respData %>%
-    mutate(sanity_trials = if_else((L.self > 10 & L.other > 10) | (R.self > 10 & R.other > 10), 1, 0)) 
+behave_data <- behave_data %>%
+    mutate(sanity_trials = if_else((L_self > 10 & L_other > 10 & L_self == L_other) | (R_self > 10 & R_other > 10 & R_self == R_other), 1, 0)) 
 
-checkTrials <- respData %>%
-    filter(sanity_trials == 1 & !is.na(side.chosen)) %>%
-    mutate(side_chosen = if_else(side.chosen == 76, "Left", if_else(side.chosen == 82, "Right", "Other"))) %>%
-    mutate(best_side = if_else((L.self > 10 & L.other > 10), "Left", "Right")) %>%
+checkTrials <- behave_data %>%
+    filter(sanity_trials == 1 & !is.na(side_chosen)) %>%
+    mutate(best_side = if_else((L_self > 10 & L_other > 10), "Left", "Right")) %>%
     mutate(chose_better_side = if_else(best_side == side_chosen, "yes", "no")) %>%
-    select(SID, round, L.self, L.other, R.self, R.other, side_chosen, best_side, chose_better_side) 
+    select(SID, round, L_self, L_other, R_self, R_other, side_chosen, best_side, chose_better_side) 
 
 checkTrials %>%
   ggplot(., aes(x = SID, fill = SID, alpha = chose_better_side)) +

@@ -17,8 +17,8 @@ nTrials =  size(hg_raw.dataAvg2.trialinfo, 1)
 
 % concactenate and cut hg %
 for idx = 1:nTrials
-   % get indices between second -.2 and 1 where 0 is choice time %
-   indices_of_interest = find(hg_raw.dataAvg2.time{idx} < 1.6 & hg_raw.dataAvg2.time{idx} > -.75) ;
+   % get indices between second -.75 and 1.5 where 0 is choice time %
+   indices_of_interest = find(hg_raw.dataAvg2.time{idx} < 1.5 & hg_raw.dataAvg2.time{idx} > -.75) ;
    % cut the extrad padding on each trial window %
    temp_hg =  hg_raw.dataAvg2.trial{idx}(1:num_elecs, indices_of_interest) ;
    % sanity check to save elecs order %

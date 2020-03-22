@@ -38,28 +38,38 @@ source("~/Projects/nice_r_functions/ggpaired_pretty.R")
 
 ```
 
-These are our subjects. Every subject except IR17 and GP51 has a sub_Elec_Notes excel file, though some subjects have two with one denoted old.
+# Updated notes on subjects for the dictator
 
-Subjects: IR10  IR14  IR16  IR19  IR26  IR28  IR35  IR39  IR57  IR9 ST40 GP51
+Subjects: IR9  IR10  IR14  IR16  IR17  IR19  IR26  IR28  IR35  IR39  IR57 ST40 GP51 CP34 DA7
 
-IR9: Only has loc meeting notes in orginal file.
+# Using and have Recons
+* IR9: Only has loc meeting notes in orginal file-- look at both and fix with Bob
+* IR10
+* IR16
+* IR19
+* IR26
+* IR28
+* IR35
+* IR39
+* IR57 -- missing behavior
+* ST40
 
-IR17: Only has IR17_Hippocampal_Subfields.xlsx IR17_Recording_Notes.pdf
+# Waiting List
 
-GP51: No notes file.
+* GP51 -- missing behavioral and scans?
+* CP34 -- waiting on scans
+* DA7  -- waiting on scans
 
-IR14: Weird file only a couple columns, but this is subject DG_s05, who we will likely exclude, so excluding for now.
+# Exlude list
 
-For now, I will loop through the subjects, except IR17, GP51,  and concactenate their notes.
-
-39 could work cuz of some STS but only r ofc
-28 has good ofc coverage
+* IR14/DG_s05 -- confusing behavior, and low IQ
+* IR17 -- doesn't seem to be any insula electrodes
 
 
 ```{r read-data}
 
-subjects_irvine <- c("IR10", "IR16",  "IR19",  "IR26",
-                     "IR28",  "IR35",  "IR39",  "IR57",  "IR9")
+subjects_irvine <- c("IR9", "IR10", "IR16", "IR19",  "IR26",
+                     "IR28",  "IR35",  "IR39",  "IR57")
 
 for (sub in subjects_irvine) {
     # read in temp #
@@ -67,9 +77,14 @@ for (sub in subjects_irvine) {
     temp_notes$subject <- sub
 
     # rbind #
-    if (sub == "IR10") {
+    if (sub == "IR9") {
+      original <- readxl::read_xlsx(paste0("~/Projects/knight_server/remote/ecog/DATA_FOLDER/Irvine/",
+                                           sub, "/Notes/", sub, "_Elec_Notes_original.xlsx"))
+      colnames(original)[5] <- "Loc Meeting"
+      temp_notes <- merge.data.frame(temp_notes, original, by.x = "Electrode", by.y = "contact")
+      temp_notes <- temp_notes %>% select(-`Loc Meeting.x`) %>% rename(`Loc Meeting` = `Loc Meeting.y`)
       elec_notes <- temp_notes
-    } else if (sub == "IR14" | sub == "IR16") {
+    } else if (sub == "IR14") {
       colnames(temp_notes)[2] <- "Loc Meeting"
       temp_notes <- temp_notes[is.na(temp_notes$`Epileptic via Irvine`), ] # we want only blanks here, same as below
       temp_notes <- temp_notes[is.na(temp_notes$`status(old notes)`), ]
@@ -77,20 +92,21 @@ for (sub in subjects_irvine) {
       temp_notes$`Out of Brain` <- 0
       temp_notes$Epileptic <- 0
       elec_notes <- bind_rows(temp_notes, elec_notes)
-    } else if (sub == "IR19") {
-      colnames(temp_notes)[2] <- "Loc Meeting"
+    } else if (sub == "IR16") {
+      original <- readxl::read_xlsx(paste0("~/Projects/knight_server/remote/ecog/DATA_FOLDER/Irvine/",
+                                           sub, "/Notes/", sub, "_Elec_Notes_old.xlsx"))
+      colnames(original)[2] <- "Loc Meeting"
+      temp_notes <- merge.data.frame(temp_notes, original, by.x = "Electrode", by.y = "contact")
+      temp_notes <- temp_notes %>% select(-`Loc Meeting.x`) %>% rename(`Loc Meeting` = `Loc Meeting.y`)
       temp_notes <- temp_notes[is.na(temp_notes$`Epileptic via Irvine`), ] # we want only blanks here, same as below
+      temp_notes <- temp_notes[is.na(temp_notes$`status(old notes)`), ]
       temp_notes$Discard <- 0
       temp_notes$`Out of Brain` <- 0
-      temp_notes$Epileptic <- 0    
-    #   elec_notes <- bind_rows(temp_notes, elec_notes)
-    # } else if (sub == "IR28") {
-    #   colnames(temp_notes)[2] <- "Loc Meeting"
-    #   temp_notes <- temp_notes[is.na(temp_notes$status), ] # we want only blanks here, same as below
-    #   temp_notes$Discard <- 0
-    #   temp_notes$`Out of Brain` <- 0
-    #   temp_notes$Epileptic <- 0    
-    #   elec_notes <- bind_rows(temp_notes, elec_notes)      
+      temp_notes$Epileptic <- 0
+      elec_notes <- bind_rows(temp_notes, elec_notes)
+    } else if (sub == "IR19") {
+      temp_notes <- temp_notes[!is.na(temp_notes$`Loc Meeting`), ] # missing some localization data, Richard to fix, but for now exclude
+      elec_notes <- bind_rows(temp_notes, elec_notes)
     } else {  
       elec_notes <- bind_rows(temp_notes, elec_notes)
     }
@@ -119,139 +135,36 @@ st40_notes$subject <- "ST40"
 # merge other data centers #
 elec_notes <- bind_rows(elec_notes, st40_notes)
 
-write.csv(elec_notes, "./combined_electrode_info.csv")
+# save to munge file #
+write.csv(elec_notes, path(here(), "munge", "combined_electrode_info.csv"))
+
 ```
+
+## clean Bad electrodes
 
 ```{r remove-bad-electrodes}
 
-# notes columns marked lesions and epilepsy, should always be NA #
-elec_notes <- elec_notes %>% filter(is.na(Notes))
+# notes columns marked lesions and epilepsy, should always be NA, verified on March 17 #
+elec_notes_clean <- elec_notes %>% filter(is.na(Notes))
 # throw out discards and out of brains and epileptics
-elec_notes <- elec_notes %>% filter(Discard == 0 & `Out of Brain` == 0 & Epileptic == 0)
-
-# throw out white matter #
-# elec_notes <- elec_notes %>% filter(`Loc Meeting` != "WM")
-
-# elec_notes %>% filter(subject == "IR28") %>% kable()
-
+elec_notes_clean <- elec_notes_clean %>% filter(Discard == 0 & `Out of Brain` == 0 & Epileptic == 0)
+# throw out white matter and out of the brain from loc meeting #
+elec_notes_clean <- elec_notes_clean %>% 
+  filter(`Loc Meeting` != "WM" & `Loc Meeting` != "wm" & `Loc Meeting` != "out" & `Loc Meeting` != "out of brain" & `Loc Meeting` != "ventricle")
+# save clean data #
+write.csv(elec_notes_clean, path(here(), "munge", "combined_electrode_info_cleaned.csv"))
 
 ```
 
-```{r get-list}
 
-unique_regions <- unique(elec_notes$`Loc Meeting`[!is.na(elec_notes$`Loc Meeting`)])
-
-# write.csv(unique_regions, "./unique_regions.csv") 
-```
-
-### Electrodes of interest by subject
-
-```{r num-electrodes-ofc}
-
-count_elecs <- elec_notes %>%
-  mutate(ofc_loc_meeting = if_else(grepl("ofc", `Loc Meeting`, ignore.case = T), 1, 
-                                   if_else(grepl("orb", `Loc Meeting`, ignore.case = T), 1, 0))) %>%
-  mutate(ofc_AFNI = if_else(grepl("ofc", AFNI, ignore.case = T), 1, 
-                                   if_else(grepl("orb", AFNI, ignore.case = T), 1, 0))) %>%
-  mutate(ofc_AAL = if_else(grepl("ofc", AAL, ignore.case = T), 1, 
-                                   if_else(grepl("orb", AAL, ignore.case = T), 1, 0))) %>%
-  mutate(ofc_BrainWeb = if_else(grepl("ofc", BrainWeb, ignore.case = T), 1, 
-                                   if_else(grepl("orb", BrainWeb, ignore.case = T), 1, 0))) %>%
-  mutate(ofc_JuBrain = if_else(grepl("ofc", JuBrain, ignore.case = T), 1, 
-                                   if_else(grepl("orb", JuBrain, ignore.case = T), 1, 0))) %>%
-  mutate(ofc_VTPM = if_else(grepl("ofc", VTPM, ignore.case = T), 1, 
-                                   if_else(grepl("orb", VTPM, ignore.case = T), 1, 0))) %>%
-  mutate(ofc_Brainnetome = if_else(grepl("ofc", Brainnetome, ignore.case = T), 1, 
-                                   if_else(grepl("orb", Brainnetome, ignore.case = T), 1, 0))) %>%
-  group_by(subject) %>%
-  mutate(sum_ofc_loc_meeting = sum(ofc_loc_meeting)) %>%
-  mutate(sum_ofc_AFNI = sum(ofc_AFNI)) %>%
-  mutate(sum_ofc_AAL = sum(ofc_AAL)) %>%
-  mutate(sum_ofc_BrainWeb = sum(ofc_BrainWeb)) %>%
-  mutate(sum_ofc_JuBrain = sum(ofc_JuBrain)) %>%
-  mutate(sum_ofc_VTPM = sum(ofc_VTPM)) %>%
-  mutate(sum_ofc_Brainnetome = sum(ofc_Brainnetome))
-  
-count_elecs_table <- count_elecs %>%
-  filter(!duplicated(subject)) %>%
-  select(subject, sum_ofc_loc_meeting, sum_ofc_AAL, sum_ofc_AFNI, sum_ofc_BrainWeb, sum_ofc_Brainnetome, sum_ofc_JuBrain, sum_ofc_VTPM) 
-
-colnames(count_elecs_table) <- gsub("sum_ofc_", "", colnames(count_elecs_table))
-
-count_elecs_table %>%
-  kable() %>%
-  add_header_above(c("OFC: ~ 42 electrodes to test" = 8)) %>%
-  kable_styling(position = "center")
-```
+## Tabulate ROI
 
 
+```{r count-roi}
 
-```{r num-electrodes-insula}
-
-count_elecs <- count_elecs %>%
-  mutate(insula_loc_meeting = if_else(grepl("insula", `Loc Meeting`, ignore.case = T), 1, 
-                                   if_else(grepl("insular", `Loc Meeting`, ignore.case = T), 1, 0))) %>% # insular will be caught by insula, but want to keep the 2nd option in case I need it
-  mutate(insula_AFNI = if_else(grepl("insula", AFNI, ignore.case = T), 1, 
-                                   if_else(grepl("insular", AFNI, ignore.case = T), 1, 0))) %>%
-  mutate(insula_AAL = if_else(grepl("insula", AAL, ignore.case = T), 1, 
-                                   if_else(grepl("insular", AAL, ignore.case = T), 1, 0))) %>%
-  mutate(insula_BrainWeb = if_else(grepl("insula", BrainWeb, ignore.case = T), 1, 
-                                   if_else(grepl("insular", BrainWeb, ignore.case = T), 1, 0))) %>%
-  mutate(insula_JuBrain = if_else(grepl("insula", JuBrain, ignore.case = T), 1, 
-                                   if_else(grepl("insular", JuBrain, ignore.case = T), 1, 0))) %>%
-  mutate(insula_VTPM = if_else(grepl("insula", VTPM, ignore.case = T), 1, 
-                                   if_else(grepl("insular", VTPM, ignore.case = T), 1, 0))) %>%
-  mutate(insula_Brainnetome = if_else(grepl("insula", Brainnetome, ignore.case = T), 1, 
-                                   if_else(grepl("insular", Brainnetome, ignore.case = T), 1, 0))) %>%
-  group_by(subject) %>%
-  mutate(sum_insula_loc_meeting = sum(insula_loc_meeting)) %>%
-  mutate(sum_insula_AFNI = sum(insula_AFNI)) %>%
-  mutate(sum_insula_AAL = sum(insula_AAL)) %>%
-  mutate(sum_insula_BrainWeb = sum(insula_BrainWeb)) %>%
-  mutate(sum_insula_JuBrain = sum(insula_JuBrain)) %>%
-  mutate(sum_insula_VTPM = sum(insula_VTPM)) %>%
-  mutate(sum_insula_Brainnetome = sum(insula_Brainnetome))
-  
-count_elecs_table <- count_elecs %>%
-  filter(!duplicated(subject)) %>%
-  select(subject, sum_insula_loc_meeting, sum_insula_AAL, sum_insula_AFNI, sum_insula_BrainWeb, sum_insula_Brainnetome, sum_insula_JuBrain, sum_insula_VTPM) 
-
-colnames(count_elecs_table) <- gsub("sum_insula_", "", colnames(count_elecs_table))
-
-count_elecs_table %>%
-  kable() %>%
-  add_header_above(c("insula: ~64 electrodes to test" = 8)) %>%
-  kable_styling(position = "center")
-```
-
-
-```{r save_IR35_elecs}
-
-count_elecs <- count_elecs %>%
-  mutate(mfg_loc_meeting = if_else(grepl("mfg", `Loc Meeting`, ignore.case = T), 1, 
-                                   if_else(grepl("frontopolar", `Loc Meeting`, ignore.case = T), 1, 0))) %>%
-    mutate(hinal_loc_meeting = if_else(grepl("entorhinal", `Loc Meeting`, ignore.case = T), 1, 
-                                   if_else(grepl("perirhinal", `Loc Meeting`, ignore.case = T), 1, 0))) %>%
-    mutate(sts_loc_meeting = if_else(grepl("sts", `Loc Meeting`, ignore.case = T), 1, 
-                                   if_else(grepl("superior temporal", `Loc Meeting`, ignore.case = T), 1, 0))) %>%
-    mutate(cingulate_loc_meeting = if_else(grepl("cingulate", `Loc Meeting`, ignore.case = T), 1, 0)) %>%
-    mutate(ca1_loc_meeting = if_else(grepl("ca1", `Loc Meeting`, ignore.case = T), 1, 0))
-
-
-roi_IR35 <- count_elecs %>%
-  filter(subject == "IR35") %>%
-  filter(ofc_loc_meeting == 1 | insula_loc_meeting == 1 | mfg_loc_meeting == 1 | hinal_loc_meeting == 1 | sts_loc_meeting == 1 | cingulate_loc_meeting == 1 | ca1_loc_meeting == 1 )
-
-write.csv(roi_IR35, path(here(), "munge", "IR35_elecs_of_interest.csv"))
-```
-
-
-```{r save_IR39_elecs}
-
-count_elecs <- elec_notes %>%
+count_elecs <- elec_notes_clean %>%
     mutate(ofc_loc_meeting = if_else(grepl("ofc", `Loc Meeting`, ignore.case = T), 1, 
-                                   if_else(grepl("frontopolar", `Loc Meeting`, ignore.case = T), 1,
-                                   if_else(grepl("orb", `Loc Meeting`, ignore.case = T), 1, 0)))) %>%
+                                   if_else(grepl("orb", `Loc Meeting`, ignore.case = T), 1, 0))) %>%
     mutate(insula_loc_meeting = if_else(grepl("insula", `Loc Meeting`, ignore.case = T), 1, 
                                    if_else(grepl("insular", `Loc Meeting`, ignore.case = T), 1, 0))) %>%
     mutate(mfg_loc_meeting = if_else(grepl("mfg", `Loc Meeting`, ignore.case = T), 1, 
@@ -264,10 +177,49 @@ count_elecs <- elec_notes %>%
     mutate(ca1_loc_meeting = if_else(grepl("ca1", `Loc Meeting`, ignore.case = T), 1, 0))
 
 
+```
+
+## subject specific csvs 
+
+```{r save_IR35_elecs}
+## save only the IR39 electrodes in our ROI ##
+
+# exclude areas outside our interest #
+roi_IR35 <- count_elecs %>%
+  filter(subject == "IR35") %>%
+  filter(ofc_loc_meeting == 1 | insula_loc_meeting == 1 | mfg_loc_meeting == 1 | hinal_loc_meeting == 1 | sts_loc_meeting == 1 | cingulate_loc_meeting == 1 | ca1_loc_meeting == 1 )
+
+# save #
+write.csv(roi_IR35, path(here(), "munge", "IR35_elecs_of_interest.csv"))
+```
+
+```{r save_IR39_elecs}
+
+## save only the IR39 electrodes in our ROI ##
+
+# exclude areas outside our interest #
 roi_IR39 <- count_elecs %>%
   filter(subject == "IR39") %>%
   filter(ofc_loc_meeting == 1 | insula_loc_meeting == 1 | mfg_loc_meeting == 1 | hinal_loc_meeting == 1 | sts_loc_meeting == 1 | cingulate_loc_meeting == 1 | ca1_loc_meeting == 1 )
 
+# save #
 write.csv(roi_IR39, path(here(), "munge", "IR39_elecs_of_interest.csv"))
+```
+
+```{r tables}
+
+table_ofc <- count_elecs %>% filter(ofc_loc_meeting == 1)
+table(table_ofc$subject)
+
+table_cing <- count_elecs %>% filter(cingulate_loc_meeting == 1)
+table(table_cing$subject)
+
+table_insula <- count_elecs %>% filter(insula_loc_meeting == 1)
+table(table_insula$subject)
+
+# save #
+write.csv(table_insula, path(here(), "munge", "insula_electrodes.csv"))
+write.csv(table_cing, path(here(), "munge", "cingulate_electrodes.csv"))
+write.csv(table_ofc, path(here(), "munge", "ofc_electrodes.csv"))
 ```
 

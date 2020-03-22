@@ -15,10 +15,16 @@ elec_table.index = transpose(elec_index) ;
 % get num of trials %
 nTrials =  size(hg_raw.dataAvg2.trialinfo, 1)
 
+if sub == 'IR35'
+  pre_trial_time = -.2 + -.610
+else
+  pre_trial_time = -.2
+end
+
 % concactenate and cut hg %
 for idx = 1:nTrials
    % get indices between second 0 and 3 where, 0 is presentation time %
-   indices_of_interest = find(hg_raw.dataAvg2.time{idx} < 2 & hg_raw.dataAvg2.time{idx} > -.2) ; % because there was iti included, and -.2 + .6 = .4
+   indices_of_interest = find(hg_raw.dataAvg2.time{idx} < 2 & hg_raw.dataAvg2.time{idx} > pre_trial_time) ; % because there was iti included, and -.2 + .6 = .4
    % cut the extrad padding on each trial window %
    temp_hg =  hg_raw.dataAvg2.trial{idx}(1:num_elecs, indices_of_interest) ;
    % sanity check to save elecs order %
