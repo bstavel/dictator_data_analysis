@@ -209,11 +209,89 @@ hg_eda_summary %>%
 
 ```
 
+
+```{r hg_plots_binned}
+
+### PRESENTATION-LOCKED ###
+
+## load data ##
+file_path_to_hg_data <- path(here(), "munge", "IR39", "hg_behave_presentation_locked_extended_150_insula.csv")
+hg_behave <- read.csv(file_path_to_hg_data)
+
+## plot it ##
+
+for(elec in unique(hg_behave$electrodes)) {
+
+rt_plot <- hg_behave %>%
+  filter(electrodes == elec) %>%
+  arrange(desc(RT)) %>%
+  mutate(trial = factor(trial, levels = trial)) %>%
+  gather(key = "bin", value = "gamma", starts_with("bin")) %>%
+  mutate(bin = (as.numeric(gsub("bin_", "", bin)) - 2) * 50) %>%
+  ggplot(., aes(x = bin, y = trial, color = gamma, fill = gamma)) +
+  geom_tile() + 
+  geom_point(aes(y = trial, x = RT*1000), color = "white", size = 1) +
+  geom_vline(xintercept = 0, color = "white") +
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank()) + 
+  scale_fill_viridis(limits = c(-.5, 1), begin = 0, end = 1)   +
+  scale_color_viridis(limits = c(-.5, 1), begin = 0, end = 1) +
+  ggtitle(paste0(elec))
+  
+  ggsave(filename = paste0('./figures/IR39/insula/', elec, ".png"),
+     device = "png",
+     width = 10,
+     height = 10,
+     units = "cm",
+     dpi = 200,
+     plot =  print(plot(rt_plot)) ) 
+  
+  
+}
+
+### CHOICE-LOCKED ###
+
+## load data ##
+file_path_to_hg_data <- path(here(), "munge", "IR39", "hg_behave_choice_locked_cut_fixation_150_insula.csv")
+hg_behave <- read.csv(file_path_to_hg_data)
+
+## plot it ##
+
+for(elec in unique(hg_behave$electrodes)) {
+
+rt_plot <- hg_behave %>%
+  filter(electrodes == elec) %>%
+  arrange(desc(RT)) %>%
+  mutate(trial = factor(trial, levels = trial)) %>%
+  gather(key = "bin", value = "gamma", starts_with("pre"), starts_with("post")) %>%
+  mutate(bin = gsub("post_", "", bin)) %>%
+  mutate(bin = (as.numeric(gsub("pre_", "-", bin))) * 50) %>%
+  ggplot(., aes(x = bin, y = trial, color = gamma, fill = gamma)) +
+  geom_tile() + 
+  geom_point(aes(y = trial, x = -RT*1000), color = "white", size = 1) +
+  geom_vline(xintercept = 0, color = "white") +
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank()) + 
+  scale_fill_viridis(limits = c(-.5, 1), begin = 0, end = 1)   +
+  scale_color_viridis(limits = c(-.5, 1), begin = 0, end = 1) +
+  ggtitle(paste0(elec))
+  
+  ggsave(filename = paste0('./figures/IR39/insula/CHOICE/', elec, ".png"),
+     device = "png",
+     width = 10,
+     height = 10,
+     units = "cm",
+     dpi = 200,
+     plot =  print(plot(rt_plot)) ) 
+  
+  
+}
+```
+
+
 ```{r hg_plots}
 
 file_path_to_electrode_names <- path(here(), "munge", "IR39_electrodes_presentation_locked_extended.csv")
 file_path_to_hg_data <- path(here(), "munge", "IR39_hg_munge_presentation_locked_extended.csv")
-file_path_to_elecs_of_interest <- path(here(), "munge", "IR39_elecs_of_interest.csv")
+file_path_to_elecs_of_interest <- path(here(), "munge", "IR39_elecs_of_interest_insula.csv")
 
 # load data #
 # IR39

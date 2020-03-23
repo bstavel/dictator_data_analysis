@@ -16,7 +16,7 @@ elec_table.index = transpose(elec_index) ;
 nTrials =  size(hg_raw.dataAvg2.trialinfo, 1)
 
 if sub == 'IR35'
-  pre_trial_time = -.2 + -.610
+  pre_trial_time = -.2 + .610
 else
   pre_trial_time = -.2
 end

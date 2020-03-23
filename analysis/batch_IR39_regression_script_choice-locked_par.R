@@ -37,7 +37,7 @@ elecs_to_use <- read.csv(file_path_to_elecs_of_interest)
 
 ## regression parameters ##
 # save info needed for regressions #
-nBins <- colnames(hg_behave %>% select(starts_with("bin_")))
+nBins <- colnames(hg_behave %>% select(starts_with("pre_"), starts_with("post_")))
 niter <- 10000 
 
 ## insula ##
