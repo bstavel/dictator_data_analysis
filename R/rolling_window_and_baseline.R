@@ -44,7 +44,7 @@ rolling_window_and_baseline <- function(df, baseline_csv, lWin = 100, lOver = 50
     baseline <- apply(baseline_df, 1, function(x) mean(x, na.rm = T))
     # write.csv(baseline, path(here(), "munge", "baseline.csv"))
 
-    hg_df <- hg_df %>% select(201:ncol(hg_df))
+    # hg_df <- hg_df %>% select(201:ncol(hg_df))
     
     # calculate the rolling average
     df_rollmean <- apply(hg_df, 1, function(x) rollapply(x, lWin, mean, by = lOver, align = "left", partial = F, by.column = T))

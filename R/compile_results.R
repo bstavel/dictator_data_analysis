@@ -1,8 +1,8 @@
-compile_results <- function(regions, type, sub){
+compile_results <- function(regions, type, sub, path){
 # function rbinds result dfs based on list of regions #
   
   ## search the results folder for results csvs ##
-  filenames <- dir(fs::path(here(), "results", sub))
+  filenames <- dir(path)
   # only from the region list#
   files_to_combine <- filenames[grepl(paste(paste0("^", regions, "_.*results.csv"), collapse = "|"), filenames, perl = F)]
   # not anova results #
@@ -13,7 +13,7 @@ compile_results <- function(regions, type, sub){
   # loop over and rbind #
   combined_results <- NULL
   for(file in files_to_combine){
-    temp <- read.csv(fs::path(here(), "results", sub, file))
+    temp <- read.csv(path(path, file))
     predictor <- gsub("^[^_]*_", "", gsub(".*-", "", gsub(paste0("_", type, "_results.csv"), "", file))) # because _someone_ didn't save the predictor in the damn df
     region <- gsub("_.*", "", file)
     temp$predictor <- predictor

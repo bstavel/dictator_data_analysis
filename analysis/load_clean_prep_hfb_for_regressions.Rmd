@@ -99,9 +99,9 @@ elecs_to_use <- read.csv(file_path_to_elecs_of_interest)
 hg_data <- hg_data %>% filter(grepl(paste(elecs_to_use$Electrode, collapse = "|"), electrodes))
 
 # save baseline #
-baseline_data <- hg_data[, 1:200]
-baseline_data <- cbind(baseline_data, hg_data$electrodes, hg_data$trial)
-write.csv(baseline_data, path(here(), "munge", "baseline_IR35.csv"))
+# baseline_data <- hg_data[, 1:200]
+# baseline_data <- cbind(baseline_data, hg_data$electrodes, hg_data$trial)
+# write.csv(baseline_data, path(here(), "munge", "baseline_IR35.csv"))
 
 # average and baseline #
 hg_clean <- rolling_window_and_baseline(hg_data, lWin = 150, lOver = 50, choice_locked = F)
@@ -127,17 +127,17 @@ elecs_to_use <- read.csv(file_path_to_elecs_of_interest)
 # filter to good electrodes #
 hg_data <- hg_data %>% filter(grepl(paste(elecs_to_use$Electrode, collapse = "|"), electrodes))
 
-# save baseline #
-baseline_data <- hg_data[, 1:200]
-baseline_data <- cbind(baseline_data, hg_data$electrodes, hg_data$trial)
-write.csv(baseline_data, path(here(), "munge", "baseline_IR39.csv"))
+# # save baseline #
+# baseline_data <- hg_data[, 1:200]
+# baseline_data <- cbind(baseline_data, hg_data$electrodes, hg_data$trial)
+# write.csv(baseline_data, path(here(), "munge", "baseline_IR39.csv"))
 
 # average and baseline #
-hg_clean <- rolling_window_and_baseline(hg_data, lWin = 150, lOver = 50, choice_locked = F)
+hg_clean <- rolling_window_and_baseline(hg_data, lWin = 100, lOver = 50, choice_locked = F)
 
 # with behavior #
 hg_behave <- merge.data.frame(hg_clean, behave_data_12, by.x = "trial", by.y = "round", all.x = T, all.y = F)
-write.csv(hg_behave, path(here(), "munge", "IR39", "hg_behave_presentation_locked_extended_150_insula.csv"))
+write.csv(hg_behave, path(here(), "munge", "IR39", "hg_behave_presentation_locked_extended_100_insula.csv"))
 
 ```
 
