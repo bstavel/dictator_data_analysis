@@ -93,6 +93,7 @@ behave_data <- read.csv(path_to_behave_clean)
 # filter to current subject #
 behave_data_11 <- behave_data %>% filter(SID == "DG_s11")
 behave_data_12 <- behave_data %>% filter(SID == "DG_s12")
+behave_data_08 <- behave_data %>% filter(SID == "DG_s08")
 
 ```
 
@@ -573,10 +574,10 @@ fake_dis %>%
 
 # combine different csvs #
 regions_to_combine <- c("Insula")
-presentation_results_39 <- compile_results(regions_to_combine, type = "pres-locked", sub = "IR39", path = path(here(), "results", "IR39", "insula"))
+presentation_results_39 <- compile_results(regions_to_combine, type = "pres-locked-100", sub = "IR39", path = path(here(), "results", "IR39", "insula"))
 
 # runa anova for inequity results #
-path_hg_clean <- path(here(), "munge", "IR39", "hg_behave_presentation_locked_extended_150_insula.csv")
+path_hg_clean <- path(here(), "munge", "IR39", "hg_behave_presentation_locked_extended_100_insula.csv")
 hg_behave <-  read.csv(path_hg_clean)
 run_filtered_anova(presentation_results_39, hg_behave, sub = "IR39", region_name = "All", all_results = T, type = "pres-locked_insula")
 
@@ -607,19 +608,42 @@ dis_pres_results_for_plots_35 <- read.csv(fs::path(here(), "results", "IR35", pa
 
 ```{r concatenate-results-choice}
 
+
+## IR39 ##
+
 # combine different csvs #
-regions_to_combine <- c("OFC", "Insula", "Cingulate", "STS")
-choice_results <- compile_results(regions_to_combine, type = "choice-locked")
+regions_to_combine <- c("Insula")
+choice_results_39 <- compile_results(regions_to_combine, type = "choice-locked", sub = "IR39", path = path(here(), "results", "IR39", "insula"))
 
 # runa anova for inequity results #
-path_hg_clean <- path(here(), "munge", "hg_behave_choice_locked_cut_fixation.csv")
+path_hg_clean <- path(here(), "munge", "IR39", "hg_behave_choice_locked_cut_fixation_150_insula.csv")
 hg_behave <-  read.csv(path_hg_clean)
-run_filtered_anova(choice_results, hg_behave,  region_name = "All", all_results = T, type = "choice-locked")
+run_filtered_anova(choice_results_39, hg_behave, sub = "IR39", region_name = "All", all_results = T, type = "choice-locked_insula")
 
 # read back in the results #
 region_name <- "All"
-adv_choice_results_for_plots <- read.csv(fs::path(here(), "results", paste0(region_name, "_choice-locked_anova_results_advantageous.csv")))
-dis_choice_results_for_plots <- read.csv(fs::path(here(), "results", paste0(region_name, "_choice-locked_anova_results_disadvantageous.csv")))
+adv_choice_results_for_plots_39 <- read.csv(fs::path(here(), "results", "IR39", paste0(region_name, "choice-locked_insula_anova_results_advantageous.csv")))
+dis_choice_results_for_plots_39 <- read.csv(fs::path(here(), "results", "IR39", paste0(region_name, "choice-locked_anova_results_disadvantageous.csv")))
+
+
+## IR35 ##
+
+# combine different csvs #
+regions_to_combine <- c("Insula")
+choice_results_35 <- compile_results(regions_to_combine, type = "choice-locked", sub = "IR35", path = path(here(), "results", "IR35", "insula"))
+
+# runa anova for inequity results #
+path_hg_clean <- path(here(), "munge", "IR35", "hg_behave_choice_locked_cut_fixation_150_insula.csv")
+hg_behave <-  read.csv(path_hg_clean)
+run_filtered_anova(choice_results_35, hg_behave, sub = "IR35", region_name = "All", all_results = T, type = "choice-locked_insula")
+
+# read back in the results #
+region_name <- "All"
+adv_choice_results_for_plots_35 <- read.csv(fs::path(here(), "results", "IR35", paste0(region_name, "_choice-locked_insula_anova_results_advantageous.csv")))
+dis_choice_results_for_plots_35 <- read.csv(fs::path(here(), "results", "IR35", paste0(region_name, "_choice-locked_insula_anova_results_disadvantageous.csv")))
+
+
+
 ```
 
 ```{r plot-filter-anovas-presentation}
@@ -696,7 +720,7 @@ active_elec_plots(presentation_results_39, "other_var_payoff", "Other Options Re
 getPalette = colorRampPalette(brewer.pal(8, "Set1"))
 presentation_results_39 %>%
   filter(!predictor %in% c("ineq_advent", "ineq_disadvent")) %>%
-  mutate(bin_sig = if_else((p < .05 & perm_p < 0.01), 1, 0)) %>%
+  mutate(bin_sig = if_else((p < .05 & perm_p < 0.0007), 1, 0)) %>%
   group_by(bin, electrode) %>%
   mutate(bin_sum = sum(bin_sig)/6) %>%
   ungroup() %>%
@@ -716,7 +740,7 @@ presentation_results_39 %>%
 
 presentation_results_35 %>%
   filter(!predictor %in% c("ineq_advent", "ineq_disadvent")) %>%
-  mutate(bin_sig = if_else((p < .05 & perm_p < 0.01), 1, 0)) %>%
+  mutate(bin_sig = if_else((p < .05 & perm_p < 0.0007), 1, 0)) %>%
   group_by(bin, electrode) %>%
   mutate(bin_sum = sum(bin_sig)/6) %>%
   ungroup() %>%
@@ -731,6 +755,79 @@ presentation_results_35 %>%
     scale_color_manual(values = c("grey", getPalette(8))) +
     labs(y = "percent of regressors", x = "Bins", fill = "Region", color = "Region") +
   facet_wrap(~electrode) +
+  ggtitle("IR35")
+
+
+```
+
+```{r plot-filter-anova-choice}
+
+getPalette = colorRampPalette(brewer.pal(8, "Set1"))
+choice_results_39 %>%
+  mutate(bin_sig = if_else((p < .05 & perm_p < 0.0007), 1, 0)) %>%
+  group_by(bin, electrode) %>%
+  mutate(bin_sum = sum(bin_sig)/6) %>%
+  ungroup() %>%
+  mutate(predictor = if_else(bin_sig == 0, "Insig", as.character(predictor))) %>%
+  mutate(predictor = relevel(factor(predictor), ref = "Insig")) %>%
+  ggplot(., aes(x= bin, y = bin_sig, fill = predictor, color = predictor)) + 
+  geom_col(alpha = .5) + 
+  theme(axis.text.x = element_blank(), 
+        axis.ticks.x = element_blank(), 
+        panel.background = element_rect(fill = "white")) + 
+    scale_fill_manual(values = c("grey", getPalette(8))) +
+    scale_color_manual(values = c("grey", getPalette(8))) +
+    labs(y = "percent of regressors", x = "Bins", fill = "Region", color = "Region") +
+  facet_wrap(~electrode) +
+  ggtitle("IR39")
+
+
+choice_results_35 %>%
+  mutate(bin_sig = if_else((p < .05 & perm_p < 0.0007), 1, 0)) %>%
+  group_by(bin, electrode) %>%
+  mutate(bin_sum = sum(bin_sig)/6) %>%
+  ungroup() %>%
+  mutate(predictor = if_else(bin_sig == 0, "Insig", as.character(predictor))) %>%
+  mutate(predictor = relevel(factor(predictor), ref = "Insig")) %>%
+  ggplot(., aes(x= bin, y = bin_sig, fill = predictor, color = predictor)) + 
+  geom_col(alpha = .5) + 
+  theme(axis.text.x = element_blank(), 
+        axis.ticks.x = element_blank(), 
+        panel.background = element_rect(fill = "white")) + 
+    scale_fill_manual(values = c("grey", getPalette(8))) +
+    scale_color_manual(values = c("grey", getPalette(8))) +
+    labs(y = "percent of regressors", x = "Bins", fill = "Region", color = "Region") +
+  facet_wrap(~electrode) +
+  ggtitle("IR35")
+
+choice_results_39 %>%
+  filter(!predictor %in% c("ineq_advent", "ineq_disadvent")) %>%
+  mutate(bin_sig = if_else((p < .05 & perm_p < 0.0007), 1, 0)) %>%
+  group_by(bin, predictor) %>%
+  ggplot(., aes(x= bin, y = bin_sig)) + 
+  geom_col(alpha = .5) + 
+  theme(axis.text.x = element_blank(), 
+        axis.ticks.x = element_blank(), 
+        panel.background = element_rect(fill = "white")) + 
+    scale_fill_manual(values = c("grey", getPalette(8))) +
+    scale_color_manual(values = c("grey", getPalette(8))) +
+    labs(y = "num of electrode", x = "Bins", fill = "Region", color = "Region") +
+  facet_wrap(~predictor) +
+  ggtitle("IR39")
+
+choice_results_35 %>%
+  filter(!predictor %in% c("ineq_advent", "ineq_disadvent")) %>%
+  mutate(bin_sig = if_else((p < .05 & perm_p < 0.0007), 1, 0)) %>%
+  group_by(bin, predictor) %>%
+  ggplot(., aes(x= bin, y = bin_sig)) + 
+  geom_col(alpha = .5) + 
+  theme(axis.text.x = element_blank(), 
+        axis.ticks.x = element_blank(), 
+        panel.background = element_rect(fill = "white")) + 
+    scale_fill_manual(values = c("grey", getPalette(8))) +
+    scale_color_manual(values = c("grey", getPalette(8))) +
+    labs(y = "num of electrode", x = "Bins", fill = "Region", color = "Region") +
+  facet_wrap(~predictor) +
   ggtitle("IR35")
 
 

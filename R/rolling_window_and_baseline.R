@@ -1,4 +1,4 @@
-rolling_window_and_baseline <- function(df, baseline_csv, lWin = 100, lOver = 50, choice_locked){
+rolling_window_and_baseline <- function(df, baseline_csv, lWin = 150, lOver = 50, choice_locked){
   ### function to calculate the the mean in window specified as lWin with overlap lOver. ###
   #### then subtract the baseline, which is the first window. ###
   
@@ -42,9 +42,8 @@ rolling_window_and_baseline <- function(df, baseline_csv, lWin = 100, lOver = 50
     
     baseline_df <- hg_df %>% select(1:200)
     baseline <- apply(baseline_df, 1, function(x) mean(x, na.rm = T))
-    # write.csv(baseline, path(here(), "munge", "baseline.csv"))
-
-    # hg_df <- hg_df %>% select(201:ncol(hg_df))
+   
+    hg_df <- hg_df %>% select(201:ncol(hg_df))
     
     # calculate the rolling average
     df_rollmean <- apply(hg_df, 1, function(x) rollapply(x, lWin, mean, by = lOver, align = "left", partial = F, by.column = T))
@@ -58,9 +57,6 @@ rolling_window_and_baseline <- function(df, baseline_csv, lWin = 100, lOver = 50
     
     # rebind back #
     hg_clean <- cbind(indices, df_rollmean_baseline)
-    
-    # delete cols before time zero #
-    # hg_clean <- hg_clean %>% select(-bin_1, -bin_2)
     
   }
  
