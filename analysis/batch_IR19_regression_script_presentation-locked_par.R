@@ -42,6 +42,7 @@ niter <- 10000
 
 ## insula ##
 # prep #
+hg_behave <- hg_behave %>% mutate(electrodes = gsub("POL ", "", electrodes))
 insula_elecs <- elecs_to_use %>% select(Electrode)
 brain_behave_data <- hg_behave %>%
   filter(grepl(paste(insula_elecs$Electrode, collapse = "|"), electrodes))
