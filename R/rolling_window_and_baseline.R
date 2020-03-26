@@ -60,7 +60,7 @@ rolling_window_and_baseline <- function(df, baseline_csv, lWin = 100, lOver = 50
     hg_clean <- cbind(indices, df_rollmean_baseline)
     
     # delete cols before time zero #
-    hg_clean <- hg_clean %>% select(-bin_1, -bin_2)
+    # hg_clean <- hg_clean %>% select(-bin_1, -bin_2)
     
   }
  
