@@ -125,6 +125,10 @@ file_path_to_elecs_of_interest <- path(here(), "munge", "IR19_elecs_of_interest_
 hg_data <- load_high_gamma_data(file_path_to_hg_data, file_path_to_electrode_names)
 elecs_to_use <- read.csv(file_path_to_elecs_of_interest)
 
+# add behavioral data, remove bad trials, remove behavioral data again #
+hg_data <- merge.data.frame(hg_data, behave_data_08, by.x = "trial", by.y = "round", all.x = T, all.y = F)
+hg_data <- hg_data %>% filter(!is.na(RT)) %>% select(trial, electrodes, starts_with("time"))
+
 # filter to good electrodes #
 hg_data <- hg_data %>% filter(grepl(paste(elecs_to_use$Electrode, collapse = "|"), electrodes))
 
@@ -220,6 +224,10 @@ file_path_to_baseline <- path(here(), "munge", "baseline_IR19.csv")
 # load data #
 hg_data <- load_high_gamma_data(file_path_to_hg_data, file_path_to_electrode_names)
 elecs_to_use <- read.csv(file_path_to_elecs_of_interest)
+
+# add behavioral data, remove bad trials, remove behavioral data again #
+hg_data <- merge.data.frame(hg_data, behave_data_08, by.x = "trial", by.y = "round", all.x = T, all.y = F)
+hg_data <- hg_data %>% filter(!is.na(RT)) %>% select(trial, electrodes, starts_with("time"))
 
 # filter to good electrodes #
 hg_data <- hg_data %>% filter(grepl(paste(elecs_to_use$Electrode, collapse = "|"), electrodes))
