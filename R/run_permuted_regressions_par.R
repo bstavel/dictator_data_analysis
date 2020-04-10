@@ -7,7 +7,7 @@ run_permuted_regressions_par <- function(brain_behave_data, electrodes, regresso
     
     # create results dfs #
     results <- data.frame(matrix(nrow = length(nBins), ncol = 8))
-    colnames(results) <- c("electrode", "bin", "R2", "absBeta", "Fstat", "p", "fstretch", "perm_p")
+    colnames(results) <- c("electrode", "bin", "R2", "Beta", "Fstat", "p", "fstretch", "perm_p")
     
     # fill results dfs with electrode & bin info #
     results$electrode <- elec
@@ -20,7 +20,7 @@ run_permuted_regressions_par <- function(brain_behave_data, electrodes, regresso
     # initialize temp vars #
     r2 <- NULL
     fstat <- NULL
-    abs_beta <- NULL
+    beta <- NULL
     lm_pval <- NULL
     
     for (bin in nBins) {
@@ -32,7 +32,7 @@ run_permuted_regressions_par <- function(brain_behave_data, electrodes, regresso
       # store info from models #
       r2[bin] <- model$r.squared
       fstat[bin] <- model$fstatistic[1]
-      abs_beta[bin] <- abs(model$coefficients[2, 1])
+      beta[bin] <- model$coefficients[2, 1]
       lm_pval[bin] <- model$coefficients[2,4]
       
     }
@@ -43,11 +43,11 @@ run_permuted_regressions_par <- function(brain_behave_data, electrodes, regresso
     
     # if there is no stretch, take the max beta and max f statistic #
     if(is.na(indices[1])) {
-      beta_stretch <- max(abs_beta)
+      beta_stretch <- max(beta)
       fstat_stretch <- max(fstat)
       # if there is a stretch, sum the betas and the f statistics #
     } else {
-      beta_stretch <- sum(abs_beta[indices[1]:indices[2]]) # Summary stat
+      beta_stretch <- sum(beta[indices[1]:indices[2]]) # Summary stat
       fstat_stretch <- sum(fstat[indices[1]:indices[2]]) # Summary stat
     }
     
@@ -62,7 +62,6 @@ run_permuted_regressions_par <- function(brain_behave_data, electrodes, regresso
       
       # intialize vars #
       null_fstat <- NULL
-      null_abs_beta <- NULL
       null_lm_pval <- NULL
       
      for (bin in nBins) { # This is the slooooow step
@@ -99,11 +98,11 @@ run_permuted_regressions_par <- function(brain_behave_data, electrodes, regresso
 
     # save vals in results df #
     results <- results %>% 
-      mutate_cond(electrode == elec, R2 = r2, absBeta = abs_beta, Fstat = fstat, p = lm_pval, fstretch = fstat_stretch, perm_p = perm_pval)
+      mutate_cond(electrode == elec, R2 = r2, Beta = beta, Fstat = fstat, p = lm_pval, fstretch = fstat_stretch, perm_p = perm_pval)
     
   
     # save results to results folder #
-    write.csv(results, path(here(), "results", sub, paste0(region_name, "_", elec, "_", regressor, "_", tag, "_results.csv")))
+    write.csv(results, path(here(), "results", sub, "insula", paste0(region_name, "_", elec, "_", regressor, "_", tag, "_full_beta_results.csv")))
   
   }
   

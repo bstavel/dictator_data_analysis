@@ -53,9 +53,9 @@ source(path(here(), "R", 'mutate_cond.R'))
 ## plotting helpers ##
 # ggthemr("solarized")
 
-## paralellization ##
-nCores <- 2
-registerDoParallel(nCores)
+# ## paralellization ##
+# nCores <- 2
+# registerDoParallel(nCores)
 
 ```
 
@@ -83,6 +83,10 @@ behave_data_08 <- behave_data %>% filter(SID == "DG_s08")
 behave_data_11 <- behave_data %>% filter(SID == "DG_s11")
 behave_data_12 <- behave_data %>% filter(SID == "DG_s12")
 
+# table(behave_data$ineq_advent_choice)
+# table(behave_data_08$ineq_disadvent_choice)
+# table(behave_data_11$ineq_disadvent_choice)
+# table(behave_data_12$ineq_disadvent_choice)
 ```
 
 ```{r load-hg-data-presentation-locked-35}
@@ -246,6 +250,9 @@ hg_behave <- merge.data.frame(hg_clean, behave_data_08, by.x = "trial", by.y = "
 hg_behave <- hg_behave %>% filter(!is.na(RT))
 # save it #
 write.csv(hg_behave, path(here(), "munge", "IR19", "hg_behave_choice_locked_cut_fixation_150_insula.csv"))
+
+
+
 
 ```
 

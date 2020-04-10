@@ -48,20 +48,24 @@ brain_behave_data <- hg_behave %>%
 insula_electrodes <- unique(brain_behave_data$electrodes)
 
 ## run regressions ##
-# adv ineq #
-run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "ineq_advent", nBins, region_name = "Insula",niter, sub = "IR35", tag = "choice-locked")
-# disadv ineq #
-run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "ineq_disadvent", nBins, region_name = "Insula",niter, sub = "IR35", tag = "choice-locked")
-# self payoff #
-run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "self_payoff", nBins, region_name = "Insula",niter, sub = "IR35", tag = "choice-locked")
-# other payoff #
-run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "other_payoff", nBins, region_name = "Insula",niter, sub = "IR35", tag = "choice-locked")
-# self foregone #
-run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "self_foregone", nBins, region_name = "Insula",niter, sub = "IR35", tag = "choice-locked")
-# other foregone #
-run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "other_foregone", nBins, region_name = "Insula",niter, sub = "IR35", tag = "choice-locked")
-# self var paroff #
-run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "self_var_payoff", nBins, region_name = "Insula", niter, sub = "IR35", tag = "choice-locked")
-# other var payoff #
-run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "other_var_payoff", nBins, region_name = "Insula", niter, sub = "IR35", tag = "choice-locked")
+# # adv ineq #
+# run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "ineq_advent", nBins, region_name = "Insula",niter, sub = "IR35", tag = "choice-locked")
+# # disadv ineq #
+# run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "ineq_disadvent", nBins, region_name = "Insula",niter, sub = "IR35", tag = "choice-locked")
+# # self payoff #
+# run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "self_payoff", nBins, region_name = "Insula",niter, sub = "IR35", tag = "choice-locked")
+# # other payoff #
+# run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "other_payoff", nBins, region_name = "Insula",niter, sub = "IR35", tag = "choice-locked")
+# # self foregone #
+# run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "self_foregone", nBins, region_name = "Insula",niter, sub = "IR35", tag = "choice-locked")
+# # other foregone #
+# run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "other_foregone", nBins, region_name = "Insula",niter, sub = "IR35", tag = "choice-locked")
+# # self var paroff #
+# run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "self_var_payoff", nBins, region_name = "Insula", niter, sub = "IR35", tag = "choice-locked")
+# # other var payoff #
+# run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "other_var_payoff", nBins, region_name = "Insula", niter, sub = "IR35", tag = "choice-locked")
+# self_diff #
+run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "self_diff", nBins, region_name = "Insula",niter, sub = "IR35", tag = "choice-locked")
+# other_diff #
+run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "other_diff", nBins, region_name = "Insula",niter, sub = "IR35", tag = "choice-locked")
 

@@ -48,8 +48,8 @@ run_filtered_anova <- function(results, brain_behave_data, sub, region_name, all
       
       bin <- as.character(filtered_advantageous[row, "bin"])
       elec <- as.character(filtered_advantageous[row, "electrode"])
-      eval(parse(text = paste0("ineq_model <- lm(", bin, "~ ineq_advent + self_payoff + other_payoff, data = brain_behave_data[brain_behave_data$electrodes == '", elec, "', ])")))
-      eval(parse(text = paste0("base_model <- lm(", bin, "~ self_payoff + other_payoff, data = brain_behave_data[brain_behave_data$electrodes == '", elec, "', ])")))
+      eval(parse(text = paste0("ineq_model <- lm(", bin, "~ ineq_advent + self_var_payoff + other_var_payoff, data = brain_behave_data[brain_behave_data$electrodes == '", elec, "', ])")))
+      eval(parse(text = paste0("base_model <- lm(", bin, "~ self_var_payoff + other_var_payoff, data = brain_behave_data[brain_behave_data$electrodes == '", elec, "', ])")))
       
       anova_sum <- anova(base_model, ineq_model, test = "Chisq")
       anova_adv_pval[row] <- anova_sum$`Pr(>Chi)`[2]
@@ -69,7 +69,7 @@ run_filtered_anova <- function(results, brain_behave_data, sub, region_name, all
   filtered_advantageous$correction <- adv_correction
   
   # save results to results folder #
-  write.csv(filtered_disadvantageous, path(here(), "results", sub, paste0(region_name, "_", type, "_anova_results_disadvantageous.csv")))
-  write.csv(filtered_advantageous, path(here(), "results", sub, paste0(region_name, "_", type, "_anova_results_advantageous.csv")))
+  write.csv(filtered_disadvantageous, path(here(), "results", sub, paste0(region_name, "_", type, "_anova_results_disadvantageous_test2.csv")))
+  write.csv(filtered_advantageous, path(here(), "results", sub, paste0(region_name, "_", type, "_anova_results_advantageous_test2.csv")))
   
 }

@@ -38,7 +38,7 @@ elecs_to_use <- read.csv(file_path_to_elecs_of_interest)
 ## regression parameters ##
 # save info needed for regressions #
 nBins <- colnames(hg_behave %>% select(starts_with("bin_")))
-niter <- 10000 
+niter <- 10000
 
 ## insula ##
 # prep #
@@ -48,20 +48,24 @@ brain_behave_data <- hg_behave %>%
 insula_electrodes <- unique(brain_behave_data$electrodes)
 
 ## run regressions ##
-# adv ineq #
-run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "ineq_advent", nBins, region_name = "Insula",niter, sub = "IR39", tag = "pres-locked-100")
-# disadv ineq #
-run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "ineq_disadvent", nBins, region_name = "Insula",niter, sub = "IR39", tag = "pres-locked-100")
-# self payoff #
-run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "self_payoff", nBins, region_name = "Insula",niter, sub = "IR39", tag = "pres-locked-100")
-# other payoff #
-run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "other_payoff", nBins, region_name = "Insula",niter, sub = "IR39", tag = "pres-locked-100")
-# self foregone #
-run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "self_foregone", nBins, region_name = "Insula",niter, sub = "IR39", tag = "pres-locked-100")
-# other foregone #
-run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "other_foregone", nBins, region_name = "Insula",niter, sub = "IR39", tag = "pres-locked-100")
-# self var paroff #
-run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "self_var_payoff", nBins, region_name = "Insula", niter, sub = "IR39", tag = "pres-locked-100")
-# other var payoff #
-run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "other_var_payoff", nBins, region_name = "Insula", niter, sub = "IR39", tag = "pres-locked-100")
+# # adv ineq #
+# run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "ineq_advent", nBins, region_name = "Insula",niter, sub = "IR39", tag = "pres-locked-100")
+# # disadv ineq #
+# run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "ineq_disadvent", nBins, region_name = "Insula",niter, sub = "IR39", tag = "pres-locked-100")
+# # self payoff #
+# run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "self_payoff", nBins, region_name = "Insula",niter, sub = "IR39", tag = "pres-locked-100")
+# # other payoff #
+# run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "other_payoff", nBins, region_name = "Insula",niter, sub = "IR39", tag = "pres-locked-100")
+# # self foregone #
+# run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "self_foregone", nBins, region_name = "Insula",niter, sub = "IR39", tag = "pres-locked-100")
+# # other foregone #
+# run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "other_foregone", nBins, region_name = "Insula",niter, sub = "IR39", tag = "pres-locked-100")
+# # self var paroff #
+# run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "self_var_payoff", nBins, region_name = "Insula", niter, sub = "IR39", tag = "pres-locked-100")
+# # other var payoff #
+# run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "other_var_payoff", nBins, region_name = "Insula", niter, sub = "IR39", tag = "pres-locked-100")
+# self diff #
+run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "self_diff", nBins, region_name = "Insula",niter, sub = "IR39", tag = "pres-locked-100")
+# other diff #
+run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "other_diff", nBins, region_name = "Insula",niter, sub = "IR39", tag = "pres-locked-100")
 
