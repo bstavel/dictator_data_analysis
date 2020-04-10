@@ -232,7 +232,7 @@ active_elec_plots <- function(df, var, title) {
 combined_active_plots <- function(df, subject, num_rows, sig_thresh){
   df  %>%
     # filter(!predictor %in% c("ineq_advent", "ineq_disadvent")) %>%
-    mutate(bin_sig = if_else((p < .05 & perm_p < 0.0125), 1, 0)) %>%
+    mutate(bin_sig = if_else((p < .05 & perm_p < sig_thresh), 1, 0)) %>%
     mutate(Beta = if_else(predictor == "ineq_advent", Beta * -1, Beta)) %>%
     mutate(bin_sig = if_else(Beta < 0 & bin_sig == 1, -1, bin_sig)) %>%
     group_by(bin, electrode) %>%
@@ -284,7 +284,7 @@ combined_beta_plots <- function(df, subject, num_rows, sig_thresh){
 combined_active_plots_choice <- function(df, subject, num_rows, sig_thresh){
   df  %>%
     # filter(!predictor %in% c("ineq_advent", "ineq_disadvent")) %>%
-    mutate(bin_sig = if_else((p < .05 & perm_p < 0.0125), 1, 0)) %>%
+    mutate(bin_sig = if_else((p < .05 & perm_p < sig_thresh), 1, 0)) %>%
     mutate(Beta = if_else(predictor == "ineq_advent", Beta * -1, Beta)) %>%
     mutate(bin_sig = if_else(Beta < 0 & bin_sig == 1, -1, bin_sig)) %>%
     group_by(bin, electrode) %>%
@@ -318,33 +318,33 @@ combined_active_plots_choice <- function(df, subject, num_rows, sig_thresh){
 presentation_results_35 <- presentation_results_35 %>% filter(electrode != "LAC10-LAC11" & electrode != "LAC9-LAC10" & electrode != "LIN9-LIN10")
 presentation_results_19 <- presentation_results_19 %>% filter(electrode != "LIN10-Ref-LIN11-Ref" & electrode != "LIN12-Ref-LIN13-Ref" & electrode != "LIN11-Ref-LIN12-Ref" & electrode != "LIN9-Ref-LIN10-Ref" & electrode != "RIN10-Ref-RIN11-Ref" & electrode != "RIN11-Ref-RIN12-Ref" & electrode != "RIN12-Ref-RIN13-Ref" & electrode != "RIN9-Ref-RIN10-Ref")
 
-plot_39_00625 <- combined_active_plots(presentation_results_39, "IR39 ~ Presentation", 2, sig_thresh = 0.00625)
-plot_35_00625 <- combined_active_plots(presentation_results_35, "IR35 ~ Presentation", 2, sig_thresh = 0.00625)
-plot_19_00625 <- combined_active_plots(presentation_results_19, "IR19 ~ Presentation", 3, sig_thresh = 0.00625)
+plot_39_01 <- combined_active_plots(presentation_results_39, "IR39 ~ Presentation", 2, sig_thresh = 0.01)
+plot_35_01 <- combined_active_plots(presentation_results_35, "IR35 ~ Presentation", 2, sig_thresh = 0.01)
+plot_19_01 <- combined_active_plots(presentation_results_19, "IR19 ~ Presentation", 3, sig_thresh = 0.01)
 
-ggsave(filename = paste0(path(here(), './figures/plot_39_00625.png')),
+ggsave(filename = paste0(path(here(), './figures/plot_39_01.png')),
      device = "png",
      width = 20,
      height = 10,
      units = "cm",
      dpi = 200,
-     plot =  print(plot(plot_39_00625)) )
+     plot =  print(plot(plot_39_01)) )
 
-ggsave(filename = paste0(path(here(), './figures/plot_35_00625.png')),
+ggsave(filename = paste0(path(here(), './figures/plot_35_01.png')),
      device = "png",
      width = 20,
      height = 10,
      units = "cm",
      dpi = 200,
-     plot =  print(plot(plot_35_00625)) )
+     plot =  print(plot(plot_35_01)) )
 
-ggsave(filename = paste0(path(here(), './figures/plot_19_00625.png')),
+ggsave(filename = paste0(path(here(), './figures/plot_19_01.png')),
      device = "png",
      width = 20,
      height = 10,
      units = "cm",
      dpi = 200,
-     plot =  print(plot(plot_19_00625)) )
+     plot =  print(plot(plot_19_01)) )
 
 ```
 

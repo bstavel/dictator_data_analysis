@@ -99,7 +99,7 @@ run_permuted_regressions <- function(brain_behave_data, electrodes, regressor, n
     
   
     # save results to results folder #
-    write.csv(results, path(here(), "results", paste0(region_name, "_", elec, "_", regressor, "_full_beta_results.csv")))
+    write.csv(results, path(here(), "results", paste0(region_name, "_", elec, "_", regressor, "_results.csv")))
   
   }
   
