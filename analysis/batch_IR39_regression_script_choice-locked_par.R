@@ -65,7 +65,7 @@ insula_electrodes <- unique(brain_behave_data$electrodes)
 # # other var payoff #
 # run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "other_var_payoff", nBins, region_name = "Insula", niter, sub = "IR39", tag = "choice-locked")
 # self diff #
-run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "self diff", nBins, region_name = "Insula",niter, sub = "IR39", tag = "choice-locked")
+run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "self_diff", nBins, region_name = "Insula",niter, sub = "IR39", tag = "choice-locked")
 # other diff #
-run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "other diff", nBins, region_name = "Insula",niter, sub = "IR39", tag = "choice-locked")
+run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "other_diff", nBins, region_name = "Insula",niter, sub = "IR39", tag = "choice-locked")
 
