@@ -117,6 +117,32 @@ write.csv(hg_behave, path(here(), "munge", "IR35", "hg_behave_presentation_locke
 
 ```
 
+```{r look-at-other-bins}
+hg_behave <- merge.data.frame(hg_data, behave_data_11, by.x = "trial", by.y = "round", all.x = T, all.y = F)
+hg_behave <- hg_behave %>% select(starts_with("time"), RT, trial, electrodes)
+
+test <- hg_behave %>%
+  gather(key = "time", value = "gamma", -RT, -trial, -electrodes) %>%
+  mutate(time = as.numeric(gsub("time_", "", time))) %>%
+  group_by(RT, trial) %>%
+  mutate(RT_cut = if_else(time < RT*1000, 1, 0)) %>%
+  filter(RT_cut == 1) %>%
+  mutate(length_of_bins = ceiling(RT*1000/10)) %>% # must be ceiling for RTs < 1s
+  group_by(RT, trial, electrodes) %>%
+  mutate(averaging_groups = if_else(RT < 1, as.numeric(sapply(1:10, function(x) rep(x, unique(length_of_bins))))[1:((RT*1000))], 
+                                    as.numeric(sapply(1:10, function(x) rep(x, unique(length_of_bins))))[1:((RT*1000)- 1)])) %>%
+  group_by(RT, electrode, averaging_groups) %>%
+  mutate(gamma_bins = mean(gamma))
+
+test %>%
+  filter(electrodes == "LIN1-LIN2") %>%
+  ggplot(., aes(x= averaging_groups, y = trial, fill = mean_gamma)) +
+  geom_tile() +
+  geom_point(aes(x = RT*1000, y = trial))
+
+
+```
+
 
 ```{r load-hg-data-presentation-locked-19}
 

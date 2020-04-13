@@ -1,10 +1,12 @@
-compile_results <- function(regions, type, sub, path, absBeta = F){
+compile_results <- function(regions, type, sub, path, spec_vars = c("*", "*"), absBeta = F){
 # function rbinds result dfs based on list of regions #
   
   ## search the results folder for results csvs ##
   filenames <- dir(path)
   # only from the region list#
   files_to_combine <- filenames[grepl(paste(paste0("^", regions, "_.*results.csv"), collapse = "|"), filenames, perl = F)]
+  # on certain variables? #
+  files_to_combine <- files_to_combine[grepl(paste(spec_vars, collapse = "|"), files_to_combine)]
   # not anova results #
   files_to_combine <- files_to_combine[!grepl("anova", files_to_combine)] # HACK fix this later please
   # not beta results #

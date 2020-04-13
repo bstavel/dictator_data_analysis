@@ -1,15 +1,15 @@
-run_filtered_anova <- function(results, brain_behave_data, sub, region_name, all_results = FALSE, type) {
+run_filtered_anova <- function(results, brain_behave_data, sub, region_name, reg_name_one, reg_name_two, all_results = FALSE, type) {
   
   if(all_results == F){
     # get active electrodes #
-    filtered_disadvantageous <- results %>% filter(predictor == "ineq_disadvent") %>% filter(perm_p < 0.05 & p < 0.05)
-    filtered_advantageous <-  results %>% filter(predictor == "ineq_advent") %>% filter(perm_p < 0.05 & p < 0.05)
+    filtered_disadvantageous <- results %>% filter(predictor == reg_name_one) %>% filter(perm_p < 0.05 & p < 0.05)
+    filtered_advantageous <-  results %>% filter(predictor == reg_name_two) %>% filter(perm_p < 0.05 & p < 0.05)
     dis_correction <- nrow(filtered_disadvantageous)
     adv_correction <- nrow(filtered_advantageous)
   } else  {
     # get all electrodes #
-    filtered_disadvantageous <- results %>% filter(predictor == "ineq_disadvent")
-    filtered_advantageous <-  results %>% filter(predictor == "ineq_advent") 
+    filtered_disadvantageous <- results %>% filter(predictor == reg_name_one)
+    filtered_advantageous <-  results %>% filter(predictor == reg_name_two) 
     dis_correction <- nrow(filtered_disadvantageous %>% filter(perm_p < 0.05 & p < 0.05))
     adv_correction <- nrow(filtered_advantageous %>% filter(perm_p < 0.05 & p < 0.05))
   }
@@ -31,8 +31,8 @@ run_filtered_anova <- function(results, brain_behave_data, sub, region_name, all
       
       bin <- as.character(filtered_disadvantageous[row, "bin"])
       elec <- as.character(filtered_disadvantageous[row, "electrode"])
-      eval(parse(text = paste0("ineq_model <- lm(", bin, "~ ineq_disadvent + self_payoff + other_payoff, data = brain_behave_data[brain_behave_data$electrodes == '", elec, "', ])")))
-      eval(parse(text = paste0("base_model <- lm(", bin, "~ self_payoff + other_payoff, data = brain_behave_data[brain_behave_data$electrodes == '", elec, "', ])")))
+      eval(parse(text = paste0("ineq_model <- lm(", bin, "~ ", reg_name_one, " + self_var_payoff + other_var_payoff, data = brain_behave_data[brain_behave_data$electrodes == '", elec, "', ])")))
+      eval(parse(text = paste0("base_model <- lm(", bin, "~ self_var_payoff + other_var_payoff, data = brain_behave_data[brain_behave_data$electrodes == '", elec, "', ])")))
       
       anova_sum <- anova(base_model, ineq_model, test = "Chisq")
       anova_dis_pval[row] <- anova_sum$`Pr(>Chi)`[2]
@@ -48,7 +48,7 @@ run_filtered_anova <- function(results, brain_behave_data, sub, region_name, all
       
       bin <- as.character(filtered_advantageous[row, "bin"])
       elec <- as.character(filtered_advantageous[row, "electrode"])
-      eval(parse(text = paste0("ineq_model <- lm(", bin, "~ ineq_advent + self_var_payoff + other_var_payoff, data = brain_behave_data[brain_behave_data$electrodes == '", elec, "', ])")))
+      eval(parse(text = paste0("ineq_model <- lm(", bin, "~ ", reg_name_two, " + self_var_payoff + other_var_payoff, data = brain_behave_data[brain_behave_data$electrodes == '", elec, "', ])")))
       eval(parse(text = paste0("base_model <- lm(", bin, "~ self_var_payoff + other_var_payoff, data = brain_behave_data[brain_behave_data$electrodes == '", elec, "', ])")))
       
       anova_sum <- anova(base_model, ineq_model, test = "Chisq")
@@ -69,7 +69,7 @@ run_filtered_anova <- function(results, brain_behave_data, sub, region_name, all
   filtered_advantageous$correction <- adv_correction
   
   # save results to results folder #
-  write.csv(filtered_disadvantageous, path(here(), "results", sub, paste0(region_name, "_", type, "_anova_results_disadvantageous_test2.csv")))
-  write.csv(filtered_advantageous, path(here(), "results", sub, paste0(region_name, "_", type, "_anova_results_advantageous_test2.csv")))
+  write.csv(filtered_disadvantageous, path(here(), "results", sub, paste0(region_name, "_", type, "_anova_results_", reg_name_one, ".csv")))
+  write.csv(filtered_advantageous, path(here(), "results", sub, paste0(region_name, "_", type, "_anova_results_", reg_name_two, ".csv")))
   
 }

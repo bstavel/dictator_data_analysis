@@ -71,57 +71,85 @@ Load and prep presentation-locked results for all subjects.
 
 ```{r concatenate-results-presentation}
 
+### any subject general vars ###
+spec_vars <- c("self_diff", "other_diff")
+abs_beta_val <- F
+reg_name_one <- "self_diff"
+reg_name_two <- "other_diff"
+  
 ## IR39 ##
 
 # combine different csvs #
 regions_to_combine <- c("Insula")
-presentation_results_39 <- compile_results(regions_to_combine, type = "pres-locked-100", sub = "IR39", path = path(here(), "results", "IR39", "insula"), absBeta = T)
+presentation_results_39 <- compile_results(regions_to_combine, type = "pres-locked-100", sub = "IR39", path = path(here(), "results", "IR39", "insula"), absBeta = abs_beta_val)
 
 # runa anova for inequity results #
 path_hg_clean <- path(here(), "munge", "IR39", "hg_behave_presentation_locked_extended_100_insula.csv")
-# hg_behave <-  read.csv(path_hg_clean)
-# run_filtered_anova(presentation_results_39, hg_behave, sub = "IR39", region_name = "All", all_results = T, type = "pres-locked_insula")
+hg_behave <-  read.csv(path_hg_clean)
+run_filtered_anova(results = presentation_results_39, 
+                   brain_behave_data = hg_behave, 
+                   sub = "IR39", 
+                   region_name = "All", 
+                   reg_name_one = reg_name_one, 
+                   reg_name_two = reg_name_two, 
+                   all_results = T, 
+                   type = "pres-locked_insula")
 
 # read back in the results #
 region_name <- "All"
-adv_pres_results_for_plots_39 <- read.csv(fs::path(here(), "results", "IR39", paste0(region_name, "_pres-locked_insula_anova_results_advantageous.csv")))
-dis_pres_results_for_plots_39 <- read.csv(fs::path(here(), "results", "IR39", paste0(region_name, "_pres-locked_anova_results_disadvantageous.csv")))
+adv_pres_results_for_plots_39 <- read.csv(fs::path(here(), "results", "IR39", paste0(region_name, "_pres-locked_insula_anova_results_", reg_name_one, ".csv")))
+dis_pres_results_for_plots_39 <- read.csv(fs::path(here(), "results", "IR39", paste0(region_name, "_pres-locked_insula_anova_results_", reg_name_two, ".csv")))
 
 
 ## IR35 ##
 
 # combine different csvs #
 regions_to_combine <- c("Insula")
-presentation_results_35 <- compile_results(regions_to_combine, type = "pres-locked", sub = "IR35", path = path(here(), "results", "IR35", "insula"), absBeta = T)
+presentation_results_35 <- compile_results(regions_to_combine, type = "pres-locked", sub = "IR35", path = path(here(), "results", "IR35", "insula"), absBeta = abs_beta_val)
 
 # runa anova for inequity results #
 path_hg_clean <- path(here(), "munge", "IR35", "hg_behave_presentation_locked_extended_150_insula.csv")
 hg_behave <-  read.csv(path_hg_clean)
-run_filtered_anova(presentation_results_35, hg_behave, sub = "IR35", region_name = "All", all_results = T, type = "pres-locked_insula")
+run_filtered_anova(results = presentation_results_35, 
+                   brain_behave_data = hg_behave, 
+                   sub = "IR35", 
+                   region_name = "All", 
+                   all_results = T, 
+                   reg_name_one = reg_name_one, 
+                   reg_name_two = reg_name_two,                    
+                   type = "pres-locked_insula")
 
 # read back in the results #
 region_name <- "All"
-adv_pres_results_for_plots_35 <- read.csv(fs::path(here(), "results", "IR35", paste0(region_name, "_pres-locked_insula_anova_results_advantageous.csv")))
-dis_pres_results_for_plots_35 <- read.csv(fs::path(here(), "results", "IR35", paste0(region_name, "_pres-locked_insula_anova_results_disadvantageous.csv")))
+adv_pres_results_for_plots_35 <- read.csv(fs::path(here(), "results", "IR35", paste0(region_name, "_pres-locked_insula_anova_results_", reg_name_one, ".csv")))
+dis_pres_results_for_plots_35 <- read.csv(fs::path(here(), "results", "IR35", paste0(region_name, "_pres-locked_insula_anova_results_", reg_name_one, ".csv")))
 
 ## IR19 ##
 
 # combine different csvs #
 regions_to_combine <- c("Insula")
-presentation_results_19 <- compile_results(regions_to_combine, type = "pres-locked", sub = "IR19", path = path(here(), "results", "IR19", "insula"), absBeta = T)
+presentation_results_19 <- compile_results(regions_to_combine, type = "pres-locked", sub = "IR19", spec_vars, path = path(here(), "results", "IR19", "insula"), absBeta = abs_beta_val)
 
 # runa anova for inequity results #
 path_hg_clean <- path(here(), "munge", "IR19", "hg_behave_presentation_locked_extended_150_insula.csv")
 hg_behave <-  read.csv(path_hg_clean)
 hg_behave <- hg_behave %>% mutate(electrodes = gsub("POL ", "", electrodes)) # IR19 has weird elec names
-# run_filtered_anova(presentation_results_19, hg_behave, sub = "IR19", region_name = "All", all_results = T, type = "pres-locked_insula")
+run_filtered_anova(results = presentation_results_19, 
+                   brain_behave_data = hg_behave, 
+                   sub = "IR19", 
+                   region_name = "All", 
+                   reg_name_one = reg_name_one, 
+                   reg_name_two = reg_name_two,                    
+                   all_results = T, 
+                   type = "pres-locked_insula")
 
 # read back in the results #
 region_name <- "All"
-adv_pres_results_for_plots_19 <- read.csv(fs::path(here(), "results", "IR19", paste0(region_name, "_pres-locked_insula_anova_results_advantageous.csv")))
-dis_pres_results_for_plots_19 <- read.csv(fs::path(here(), "results", "IR19", paste0(region_name, "_pres-locked_insula_anova_results_disadvantageous.csv")))
+adv_pres_results_for_plots_19 <- read.csv(fs::path(here(), "results", "IR19", paste0(region_name, "_pres-locked_insula_anova_results_", reg_name_one, ".csv")))
+dis_pres_results_for_plots_19 <- read.csv(fs::path(here(), "results", "IR19", paste0(region_name, "_pres-locked_insula_anova_results_", reg_name_one, ".csv")))
 
 ```
+
 
 ## Load Choice
 
