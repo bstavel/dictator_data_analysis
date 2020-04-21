@@ -118,27 +118,66 @@ write.csv(hg_behave, path(here(), "munge", "IR35", "hg_behave_presentation_locke
 ```
 
 ```{r look-at-other-bins}
+
+beep_on_error({
+  
 hg_behave <- merge.data.frame(hg_data, behave_data_11, by.x = "trial", by.y = "round", all.x = T, all.y = F)
 hg_behave <- hg_behave %>% select(starts_with("time"), RT, trial, electrodes)
 
-test <- hg_behave %>%
+
+hg_behave_trial_parts <- hg_behave %>%
   gather(key = "time", value = "gamma", -RT, -trial, -electrodes) %>%
   mutate(time = as.numeric(gsub("time_", "", time))) %>%
-  group_by(RT, trial) %>%
-  mutate(RT_cut = if_else(time < RT*1000, 1, 0)) %>%
-  filter(RT_cut == 1) %>%
-  mutate(length_of_bins = ceiling(RT*1000/10)) %>% # must be ceiling for RTs < 1s
-  group_by(RT, trial, electrodes) %>%
-  mutate(averaging_groups = if_else(RT < 1, as.numeric(sapply(1:10, function(x) rep(x, unique(length_of_bins))))[1:((RT*1000))], 
-                                    as.numeric(sapply(1:10, function(x) rep(x, unique(length_of_bins))))[1:((RT*1000)- 1)])) %>%
-  group_by(RT, electrode, averaging_groups) %>%
-  mutate(gamma_bins = mean(gamma))
+  group_by(trial) %>%
+  mutate(RT_cut = if_else(time < 200, "baseline", if_else(time < ( (RT*1000) + 200), "during", "post")))
 
-test %>%
-  filter(electrodes == "LIN1-LIN2") %>%
-  ggplot(., aes(x= averaging_groups, y = trial, fill = mean_gamma)) +
-  geom_tile() +
-  geom_point(aes(x = RT*1000, y = trial))
+baseline_averaged <- hg_behave_trial_parts %>%
+  filter(RT_cut == "baseline") %>%
+  group_by(trial, electrodes) %>%
+  summarise_at(vars(gamma), mean) %>%
+  mutate(averaging_groups = 0)
+         
+averaged_trial_parts <- hg_behave_trial_parts %>%
+  filter(RT_cut == "during") %>%
+  mutate(length_of_bins = ceiling((RT*1000)/15)) %>% # must be ceiling for RTs < 1s
+  group_by(trial, electrodes) %>%
+  mutate(averaging_groups_size  = n()) %>%
+  mutate(averaging_groups = as.numeric(sapply(1:15, function(x) 
+                                      rep(x, unique(length_of_bins))))[1:unique(averaging_groups_size)]) %>%
+  group_by(trial, electrodes, averaging_groups) %>%
+  summarise_at(vars(gamma), mean) 
+
+
+ten_bin_data <- rbind(baseline_averaged, averaged_trial_parts)
+
+# remove extra information #
+cleaned_data <- ten_bin_data %>%
+  select(-RT, -time, -RT_cut, -gamma) %>%
+  rename(bins = averaging_groups) %>%
+  mutate(bins = paste0("bin_", bins)) %>%
+  pivot_wider(id_cols = c(electrodes, trial), names_from = bins, values_from = mean_gamma, values_fn = list(breaks = unique(.)))
+
+}, "shotgun")
+beep(2)
+
+for(elec in unique(ten_bin_data$electrodes)){
+  plot <- ten_bin_data %>%
+    filter(electrodes == elec) %>%
+    ggplot(., aes(x= averaging_groups, y = trial, fill = mean_gamma)) +
+    geom_tile() + 
+    scale_fill_viridis(limits = c(-.5, 1), begin = 0, end = 1) +
+    ggtitle(elec)
+  
+    ggsave(filename = path(here(), 'figures', 'IR35', 'insula', 'PRESENTATION', 'ten_bins', paste0(elec, ".png")),
+     device = "png",
+     width = 10,
+     height = 10,
+     units = "cm",
+     dpi = 200,
+     plot =  print(plot(plot)) ) 
+  
+  
+}
 
 
 ```
@@ -233,13 +272,15 @@ hg_clean <- rolling_window_and_baseline(hg_data, baseline_csv = file_path_to_bas
 half_index <- sample(1:228, 114)
 hg_eda <- hg_clean %>% filter(trial %in% half_index)
 
-
+# modify norm behavior #
+behave_data_11 %>%
+  mutate(norm_deviance = if_else( (chose_equality == "Advent") | (chose_equality == "Equal") |(chose_equality == "10-10" & self_foregone <= 10) , 0, 1))
 # with behavior #
 hg_behave <- merge.data.frame(hg_clean, behave_data_11, by.x = "trial", by.y = "round", all.x = T, all.y = F)
 # clean any missing RTs #
 hg_behave <- hg_behave %>% filter(!is.na(RT))
 # save it #
-write.csv(hg_behave, path(here(), "munge", "IR35", "hg_behave_choice_locked_cut_fixation_150_insula.csv"))
+write.csv(hg_behave, path(here(), "munge", "IR35", "hg_behave_choice_locked_cut_fixation_150_insula_norm_deviance.csv"))
 
 ```
 

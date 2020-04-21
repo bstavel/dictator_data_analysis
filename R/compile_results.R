@@ -22,12 +22,16 @@ compile_results <- function(regions, type, sub, path, spec_vars = c("*", "*"), a
     region <- gsub("_.*", "", file)
     temp$predictor <- predictor
     temp$region <- region
-    if(absBeta == T){
-      # grab not absolute value beta #
-      not_abs_beta_file <- gsub("_results", "_full_beta_results", file)
+    # # grab not absolute value beta for exist check #
+    not_abs_beta_file <- gsub("_results", "_full_beta_results", file)
+    if(absBeta == T & file.exists(path(path, not_abs_beta_file))){
+      # read in beta file #
       full_beta_tmp <- read.csv(path(path, not_abs_beta_file))
+      # add beta col to temp df #
       temp$Beta <- full_beta_tmp$Beta
     }
+    # remove absolute beta so it can be combined with other values
+    temp <- temp %>% select(-absBeta, -X)
     combined_results <- rbind(combined_results, temp)
   }
   

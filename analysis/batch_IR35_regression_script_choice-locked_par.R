@@ -31,7 +31,7 @@ registerDoParallel(nCores)
 
 ## read in data ##
 file_path_to_elecs_of_interest <- path(here(), "munge", "IR35_elecs_of_interest_insula.csv")
-path_hg_clean <- path(here(), "munge", "IR35", "hg_behave_choice_locked_cut_fixation_150_insula.csv")
+path_hg_clean <- path(here(), "munge", "IR35", "hg_behave_choice_locked_cut_fixation_150_insula_norm_deviance.csv")
 hg_behave <-  read.csv(path_hg_clean)
 elecs_to_use <- read.csv(file_path_to_elecs_of_interest)
 
@@ -64,8 +64,10 @@ insula_electrodes <- unique(brain_behave_data$electrodes)
 # run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "self_var_payoff", nBins, region_name = "Insula", niter, sub = "IR35", tag = "choice-locked")
 # # other var payoff #
 # run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "other_var_payoff", nBins, region_name = "Insula", niter, sub = "IR35", tag = "choice-locked")
-# self_diff #
-run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "self_diff", nBins, region_name = "Insula",niter, sub = "IR35", tag = "choice-locked")
-# other_diff #
-run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "other_diff", nBins, region_name = "Insula",niter, sub = "IR35", tag = "choice-locked")
+# # self_diff #
+# run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "self_diff", nBins, region_name = "Insula", niter, sub = "IR35", tag = "choice-locked")
+# # other_diff #
+# run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "other_diff", nBins, region_name = "Insula", niter, sub = "IR35", tag = "choice-locked")
+# norm_deviance #
+run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "norm_deviance", nBins, region_name = "Insula", niter, sub = "IR35", tag = "choice-locked")
 
