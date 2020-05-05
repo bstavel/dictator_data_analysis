@@ -30,43 +30,43 @@ nCores <- 10
 registerDoParallel(nCores)
 
 ## read in data ##
-file_path_to_elecs_of_interest <- path(here(), "munge", "IR19_elecs_of_interest_insula.csv")
-path_hg_clean <- path(here(), "munge", "IR19", "hg_behave_choice_locked_cut_fixation_150_insula.csv")
+file_path_to_elecs_of_interest <- path(here(), "munge", "IR19_elecs_of_interest.csv")
+path_hg_clean <- path(here(), "munge", "IR19", "hg_behave_choice_locked_cut_fixation_150.csv")
 hg_behave <-  read.csv(path_hg_clean)
 elecs_to_use <- read.csv(file_path_to_elecs_of_interest)
 
 ## regression parameters ##
 # save info needed for regressions #
 nBins <- colnames(hg_behave %>% select(starts_with("pre_"), starts_with("post_")))
-niter <- 10000
+niter <- 10000 
 
-## insula ##
+## electrodes ##
 # prep #
-hg_behave <- hg_behave %>% mutate(electrodes = gsub("POL ", "", electrodes))
-insula_elecs <- elecs_to_use %>% select(Electrode)
+all_elecs <- elecs_to_use %>% select(Electrode)
 brain_behave_data <- hg_behave %>%
   filter(grepl(paste(insula_elecs$Electrode, collapse = "|"), electrodes))
-insula_electrodes <- unique(brain_behave_data$electrodes)
+all_electrodes <- unique(brain_behave_data$electrodes)
 
 ## run regressions ##
-# # adv ineq #
-# run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "ineq_advent", nBins, region_name = "Insula",niter, sub = "IR19", tag = "choice-locked")
-# # disadv ineq #
-# run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "ineq_disadvent", nBins, region_name = "Insula",niter, sub = "IR19", tag = "choice-locked")
-# # self payoff #
-# run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "self_payoff", nBins, region_name = "Insula",niter, sub = "IR19", tag = "choice-locked")
-# # other payoff #
-# run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "other_payoff", nBins, region_name = "Insula",niter, sub = "IR19", tag = "choice-locked")
-# # self foregone #
-# run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "self_foregone", nBins, region_name = "Insula",niter, sub = "IR19", tag = "choice-locked")
-# # other foregone #
-# run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "other_foregone", nBins, region_name = "Insula",niter, sub = "IR19", tag = "choice-locked")
-# # self var paroff #
-# run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "self_var_payoff", nBins, region_name = "Insula", niter, sub = "IR19", tag = "choice-locked")
-# # other var payoff #
-# run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "other_var_payoff", nBins, region_name = "Insula", niter, sub = "IR19", tag = "choice-locked")
+
+# adv ineq #
+run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "ineq_advent", nBins, region_name =  "All_Regions", niter, sub = "IR19", tag = "choice-locked")
+# disadv ineq #
+run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "ineq_disadvent", nBins, region_name =  "All_Regions", niter, sub = "IR19", tag = "choice-locked")
+# self payoff #
+run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_payoff", nBins, region_name =  "All_Regions", niter, sub = "IR19", tag = "choice-locked")
+# other payoff #
+run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_payoff", nBins, region_name =  "All_Regions", niter, sub = "IR19", tag = "choice-locked")
+# self foregone #
+run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_foregone", nBins, region_name =  "All_Regions", niter, sub = "IR19", tag = "choice-locked")
+# other foregone #
+run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_foregone", nBins, region_name =  "All_Regions", niter, sub = "IR19", tag = "choice-locked")
+# self var paroff #
+run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff", nBins, region_name =  "All_Regions", niter, sub = "IR19", tag = "choice-locked")
+# other var payoff #
+run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff", nBins, region_name =  "All_Regions", niter, sub = "IR19", tag = "choice-locked")
 # self diff #
-run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "self_diff", nBins, region_name = "Insula",niter, sub = "IR19", tag = "choice-locked")
+run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_diff", nBins, region_name =  "All_Regions", niter, sub = "IR19", tag = "choice-locked")
 # other diff #
-run_permuted_regressions_par(brain_behave_data, electrodes = insula_electrodes, regressor = "other_diff", nBins, region_name = "Insula",niter, sub = "IR19", tag = "choice-locked")
+run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_diff", nBins, region_name =  "All_Regions", niter, sub = "IR19", tag = "choice-locked")
 

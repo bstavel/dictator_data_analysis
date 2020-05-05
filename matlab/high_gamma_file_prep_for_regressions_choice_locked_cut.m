@@ -13,10 +13,12 @@ elec_index = 1:num_elecs ;
 elec_table.index = transpose(elec_index) ;
 
 % get num of trials %
-nTrials =  size(hg_raw.dataAvg2.trialinfo, 1)
+trial_vector =  hg_raw.dataAvg2.trialinfo(:, 1);
+nTrials = size(trial_vector);
 
 % concactenate and cut hg %
 for idx = 1:nTrials
+   tIdx = trial_vector(idx); % since some trials are skipped, need to reindex
    % get indices between second -.75 and 1.5 where 0 is choice time %
    indices_of_interest = find(hg_raw.dataAvg2.time{idx} < 1.5 & hg_raw.dataAvg2.time{idx} > -.75) ;
    % cut the extrad padding on each trial window %
@@ -24,7 +26,7 @@ for idx = 1:nTrials
    % sanity check to save elecs order %
    elecs_counter = size(temp_hg, 2);
    temp_hg(:, (elecs_counter + 1)) = 1:num_elecs ;
-   temp_hg(:, (elecs_counter + 2)) = idx ;
+   temp_hg(:, (elecs_counter + 2)) = tIdx ;
    % concactenate across trials %
    if idx == 1
      hg_prepped = temp_hg ;

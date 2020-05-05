@@ -97,17 +97,49 @@ behave_data_08 <- behave_data %>% filter(SID == "DG_s08")
 
 ```
 
+```{r behave-analysis}
+getPalette = colorRampPalette(brewer.pal(12, "Set1"))
+behave_data %>%
+  filter(chose_equality != "Equal") %>%
+  group_by(SID, self_var_payoff) %>%
+  mutate(prob_ten = sum(as.numeric(chose_equality == "10-10"))/length(chose_equality) ) %>%
+  ggplot(., aes(x = self_var_payoff, y = prob_ten, color = SID)) + 
+  geom_point() + 
+  geom_line() +
+  scale_color_manual(values = c("grey", getPalette(12))) +
+  theme(panel.background = element_rect(fill = "white"))
+
+behave_data_12 %>%
+  filter(chose_equality != "Equal") %>%
+  group_by(SID, other_var_payoff) %>%
+  mutate(prob_ten = sum(as.numeric(chose_equality == "10-10"))/length(chose_equality) ) %>%
+  ggplot(., aes(x = other_var_payoff, y = prob_ten, color = SID)) + 
+  geom_point() + 
+  geom_line() +
+  scale_color_manual(values = c("grey", getPalette(12))) +
+  theme(panel.background = element_rect(fill = "white"))
+
+```
+
 ```{r behave_corrs}
 
-behave_correl_data <- behave_data %>%
-  select(-SID, -round, -ends_with("time"), -RT, -side_chosen, -X)
+behave_correl_data <- behave_data_11 %>%
+  select(self_payoff, other_payoff, self_var_payoff, other_var_payoff, other_foregone, self_foregone, self_diff, other_diff, norm_deviance)
 
 behavioral_cor <- cor(behave_correl_data, use = "pairwise.complete.obs")
 
-ggcorrplot(behavioral_cor,
+cor_plot <- ggcorrplot(behavioral_cor,
            lab = T,
            type = "lower",
            colors = wes_palette("Zissou1", 3, type = "continuous"))
+
+ggsave(filename = paste0(path(here(), './figures/correlation_ind_vars.png')),
+     device = "png",
+     width = 10,
+     height = 10,
+     units = "cm",
+     dpi = 200,
+     plot =  print(plot(cor_plot)) )
 
 ```
 
@@ -615,6 +647,13 @@ print("IR35")
 table(behave_data_11$chose_equality)
 print("IR39")
 table(behave_data_12$chose_equality)
+
+
+behave_data_11 %>%
+  mutate(norm_deviance = if_else( (chose_equality == "Advent") | (chose_equality == "Equal") |(chose_equality == "10-10" & self_foregone <= 10) , 0, 1)) %>%
+  ggplot(., aes(x = self_payoff, self_foregone)) +
+  geom_point(alpha = .5, size = 3) +
+  facet_wrap(~norm_deviance)
 
 ```
 

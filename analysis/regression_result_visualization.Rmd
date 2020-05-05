@@ -161,6 +161,35 @@ region_name <- "All"
 adv_pres_results_for_plots_19 <- read.csv(fs::path(here(), "results", "IR19", paste0(region_name, "_pres-locked_insula_anova_results_", reg_name_one, ".csv")))
 dis_pres_results_for_plots_19 <- read.csv(fs::path(here(), "results", "IR19", paste0(region_name, "_pres-locked_insula_anova_results_", reg_name_two, ".csv")))
 
+## IR16 ##
+
+# combine different csvs #
+presentation_results_16 <- compile_results(regions = regions_to_combine,
+                                           type = "pres-locked",
+                                           sub = "IR16",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR16", "insula"),
+                                           absBeta = abs_beta_val)
+
+# runa anova for inequity results #
+path_hg_clean <- path(here(), "munge", "IR16", "hg_behave_presentation_locked_extended_150_insula.csv")
+hg_behave <-  read.csv(path_hg_clean)
+hg_behave <- hg_behave %>% mutate(electrodes = gsub("POL ", "", electrodes)) # IR16 has weird elec names
+run_filtered_anova(results = presentation_results_16,
+                   brain_behave_data = hg_behave,
+                   sub = "IR16",
+                   region_name = "All",
+                   reg_name_one = reg_name_one,
+                   reg_name_two = reg_name_two,
+                   all_results = T,
+                   type = "pres-locked_insula")
+
+# read back in the results #
+region_name <- "All"
+adv_pres_results_for_plots_16 <- read.csv(fs::path(here(), "results", "IR16", paste0(region_name, "_pres-locked_insula_anova_results_", reg_name_one, ".csv")))
+dis_pres_results_for_plots_16 <- read.csv(fs::path(here(), "results", "IR16", paste0(region_name, "_pres-locked_insula_anova_results_", reg_name_two, ".csv")))
+
+
 ```
 
 
@@ -261,6 +290,35 @@ run_filtered_anova(results = choice_results_19,
 region_name <- "All"
 adv_choice_results_for_plots_19 <- read.csv(fs::path(here(), "results", "IR19", paste0(region_name, "_choice-locked_insula_anova_results_", reg_name_one, ".csv")))
 dis_choice_results_for_plots_19 <- read.csv(fs::path(here(), "results", "IR19", paste0(region_name, "_choice-locked_insula_anova_results_", reg_name_two, ".csv")))
+
+## IR16 ##
+
+# combine different csvs #
+regions_to_combine <- c("Insula")
+choice_results_16 <- compile_results(regions = regions_to_combine, 
+                                     type = "choice-locked", 
+                                     sub = "IR16", 
+                                     spec_vars = spec_vars, 
+                                     path = path(here(), "results", "IR16", "insula"), 
+                                     absBeta = abs_beta_val)
+
+# runa anova for inequity results #
+path_hg_clean <- path(here(), "munge", "IR16", "hg_behave_choice_locked_cut_fixation_150_insula.csv")
+hg_behave <-  read.csv(path_hg_clean)
+hg_behave <- hg_behave %>% mutate(electrodes = gsub("POL ", "", electrodes)) # IR16 has weird elec names
+run_filtered_anova(results = choice_results_16, 
+                   brain_behave_data = hg_behave, 
+                   sub = "IR16", 
+                   region_name = "All", 
+                   reg_name_one = reg_name_one, 
+                   reg_name_two = reg_name_two,                    
+                   all_results = T, 
+                   type = "choice-locked_insula")
+
+# read back in the results #
+region_name <- "All"
+adv_choice_results_for_plots_16 <- read.csv(fs::path(here(), "results", "IR16", paste0(region_name, "_choice-locked_insula_anova_results_", reg_name_one, ".csv")))
+dis_choice_results_for_plots_16 <- read.csv(fs::path(here(), "results", "IR16", paste0(region_name, "_choice-locked_insula_anova_results_", reg_name_two, ".csv")))
 
 ```
 
@@ -580,6 +638,8 @@ ggsave(filename = paste0(path(here(), './figures/plot_19_05.png')),
      plot =  print(plot(plot_19_05)) )
 
 
+combined_active_plots(presentation_results_16, "IR16 ~ Presentation", 2, sig_thresh = 0.01)
+combined_active_plots_choice(choice_results_16, "IR16 ~ choice", 2, sig_thresh = 0.01)
 
 ```
 

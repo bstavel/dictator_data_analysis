@@ -1,4 +1,4 @@
-run_filtered_anova_permuted <- function(results, brain_behave_data, region_name, all_results = FALSE) {
+run_filtered_anova_permuted <- function(results, brain_behave_data, sub, region_name, all_results = FALSE, type) {
   
   if(all_results == F){
     # get active electrodes #
@@ -36,8 +36,8 @@ run_filtered_anova_permuted <- function(results, brain_behave_data, region_name,
       
       bin <- as.character(filtered_disadvantageous[row, "bin"])
       elec <- as.character(filtered_disadvantageous[row, "electrode"])
-      eval(parse(text = paste0("ineq_model <- lm(", bin, "~ ineq_disadvent + self_payoff + other_payoff, data = brain_behave_data[brain_behave_data$electrodes == '", elec, "', ])")))
-      eval(parse(text = paste0("base_model <- lm(", bin, "~ self_payoff + other_payoff, data = brain_behave_data[brain_behave_data$electrodes == '", elec, "', ])")))
+      eval(parse(text = paste0("ineq_model <- lm(", bin, "~ ineq_disadvent + self_var_payoff + other_var_payoff, data = brain_behave_data[brain_behave_data$electrodes == '", elec, "', ])")))
+      eval(parse(text = paste0("base_model <- lm(", bin, "~ self_var_payoff + other_var_payoff, data = brain_behave_data[brain_behave_data$electrodes == '", elec, "', ])")))
       
       anova_sum <- lrtest(base_model, ineq_model)
       anova_dis_pval[row] <- anova_sum$`Pr(>Chisq)`[2]
@@ -54,8 +54,8 @@ run_filtered_anova_permuted <- function(results, brain_behave_data, region_name,
       
       bin <- as.character(filtered_advantageous[row, "bin"])
       elec <- as.character(filtered_advantageous[row, "electrode"])
-      eval(parse(text = paste0("ineq_model <- lm(", bin, "~ ineq_advent + self_payoff + other_payoff, data = brain_behave_data[brain_behave_data$electrodes == '", elec, "', ])")))
-      eval(parse(text = paste0("base_model <- lm(", bin, "~ self_payoff + other_payoff, data = brain_behave_data[brain_behave_data$electrodes == '", elec, "', ])")))
+      eval(parse(text = paste0("ineq_model <- lm(", bin, "~ ineq_advent + self_var_payoff + other_var_payoff, data = brain_behave_data[brain_behave_data$electrodes == '", elec, "', ])")))
+      eval(parse(text = paste0("base_model <- lm(", bin, "~ self_var_payoff + other_var_payoff, data = brain_behave_data[brain_behave_data$electrodes == '", elec, "', ])")))
       
       anova_sum <- lrtest(base_model, ineq_model)
       anova_adv_pval[row] <- anova_sum$`Pr(>Chisq)`[2]
@@ -66,36 +66,25 @@ run_filtered_anova_permuted <- function(results, brain_behave_data, region_name,
     }
   }
   
-  sum_chisq_bins <- function(indices, values) {
-    sum_temp <- values[indices[1]]
-    back_idx <- indices[1]
-    sum_vec <- rep(0, length(values))
-    for(idx in 1:length(indices)){
-      
-      if(is.na(indices[idx + 1])) {
-         if((indices[idx] - indices[idx-1] == 1) ) {
-            sum_vec[back_idx:indices[idx]] <- sum_temp
-          } else {
-            sum_vec[indices[idx]] <- values[indices[idx]]
-          }
-        
-      } else if(indices[idx + 1] - indices[idx] == 1) {
-        sum_temp <- sum_temp + values[indices[idx + 1]]
-        
-      } else if(idx != 1){
-        if(indices[idx] - indices[idx-1] == 1) {
-        sum_vec[back_idx:indices[idx]] <- sum_temp
-        back_idx <- indices[idx + 1]
-        sum_temp <- values[indices[idx + 1]]
-        } else {
-          sum_vec[indices[idx]] <- values[indices[idx]]
-        }
-      } else {
-        sum_vec[indices[idx]] <- values[indices[idx]]
-      }
+  sum_chisq_bins <- function(pvals, chi_values) {
+    # zero out all non sig values #
+    chi_values[pvals >= 0.05] <- 0
+    # cumulative sum number of 0 chi sq vals #
+    cum_sum_chi <- cumsum(chi_values == 0)
+    # split the vector into groups where the num of zeros does not change #
+    stretch_list <- split(chi_values[chi_values!=0], cum_sum_chi[chi_values!=0])
+    # sum values in the list #
+    chi_sums <- unlist(lapply(stretch_list, sum))
+    
+    # get all the sums and fill in sig bins with the appropriate sum #
+    for(sum in seq_along(chi_sums)){
+      chi_values <- replace(chi_values, which(cum_sum_chi == as.numeric(names(chi_sums)[sum])), chi_sums[sum])
     }
-
-    return(sum_vec)
+    
+    # zero out the no sig pvals again (one extra value always added based on summing non zeros)
+    chi_values[pvals >= 0.05] <- 0
+    
+    return(chi_values)
   }
   
   ## Find out the longest stretch in which pval < 0.05 and create sum-of-F-stats statistic ##
@@ -109,7 +98,7 @@ run_filtered_anova_permuted <- function(results, brain_behave_data, region_name,
     
   } else {
     # if a stretch take the sum of f stats #  
-    dis_chisq_stretch <-  sum_chisq_bins(indices, anova_chisq_dis)
+    dis_chisq_stretch <-  sum_chisq_bins(anova_dis_pval, anova_chisq_dis)
   }
   
   # advantageous #
@@ -121,7 +110,7 @@ run_filtered_anova_permuted <- function(results, brain_behave_data, region_name,
     
   } else {
     # if a stretch take the sum of f stats #  
-    adv_chisq_stretch <-  sum_chisq_bins(indices, anova_chisq_adv) # Summary stat
+    adv_chisq_stretch <-  sum_chisq_bins(anova_adv_pval, anova_chisq_adv) # Summary stat
   }
     
   filtered_disadvantageous$anova_p <- anova_dis_pval

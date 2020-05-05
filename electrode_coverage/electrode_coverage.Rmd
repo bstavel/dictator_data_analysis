@@ -44,15 +44,15 @@ Subjects: IR9  IR10  IR14  IR16  IR17  IR19  IR26  IR28  IR35  IR39  IR57 ST40 G
 
 # Using and have Recons
 * IR9: Only has loc meeting notes in orginal file-- look at both and fix with Bob
-* IR10
+* IR10 -done
 * IR16
-* IR19
+* IR19 -done
 * IR26
 * IR28
-* IR35
-* IR39
-* IR57 -- missing behavior
-* ST40
+* IR35 -done
+* IR39 -done
+* IR57 -- missing behavior, waiting on Ignacio
+* ST40 -- 
 
 # Waiting List
 
