@@ -44,7 +44,7 @@ niter <- 10000
 # prep #
 all_elecs <- elecs_to_use %>% select(Electrode)
 brain_behave_data <- hg_behave %>%
-  filter(grepl(paste(insula_elecs$Electrode, collapse = "|"), electrodes))
+  filter(grepl(paste(all_elecs$Electrode, collapse = "|"), electrodes))
 all_electrodes <- unique(brain_behave_data$electrodes)
 
 ## run regressions ##
