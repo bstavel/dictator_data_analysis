@@ -98,7 +98,7 @@ behave_data_06 <- behave_data %>% filter(SID == "DG_s06")
 # necessary paths #
 file_path_to_electrode_names <- path(here(), "munge", "IR35_electrodes_presentation_locked_extended.csv")
 file_path_to_hg_data <- path(here(), "munge", "IR35_hg_munge_presentation_locked_extended.csv")
-file_path_to_elecs_of_interest <- path(here(), "munge", "IR35_elecs_of_interest_insula.csv")
+file_path_to_elecs_of_interest <- path(here(), "munge", "IR35_elecs_of_interest.csv")
 
 # load data #
 hg_data <- load_high_gamma_data(file_path_to_hg_data, file_path_to_electrode_names)
@@ -117,7 +117,7 @@ hg_clean <- rolling_window_and_baseline(hg_data, lWin = 150, lOver = 50, choice_
 
 # with behavior #
 hg_behave <- merge.data.frame(hg_clean, behave_data_11, by.x = "trial", by.y = "round", all.x = T, all.y = F)
-write.csv(hg_behave, path(here(), "munge", "IR35", "hg_behave_presentation_locked_extended_150_insula.csv"))
+write.csv(hg_behave, path(here(), "munge", "IR35", "hg_behave_presentation_locked_extended_150.csv"))
 
 ```
 
@@ -126,7 +126,7 @@ write.csv(hg_behave, path(here(), "munge", "IR35", "hg_behave_presentation_locke
 # necessary paths #
 file_path_to_electrode_names <- path(here(), "munge", "IR19_electrodes_presentation_locked_extended.csv")
 file_path_to_hg_data <- path(here(), "munge", "IR19_hg_munge_presentation_locked_extended.csv")
-file_path_to_elecs_of_interest <- path(here(), "munge", "IR19_elecs_of_interest_insula.csv")
+file_path_to_elecs_of_interest <- path(here(), "munge", "IR19_elecs_of_interest.csv")
 
 # load data #
 hg_data <- load_high_gamma_data(file_path_to_hg_data, file_path_to_electrode_names)
@@ -152,7 +152,7 @@ hg_behave <- merge.data.frame(hg_clean, behave_data_08, by.x = "trial", by.y = "
 # clean any missing RTs #
 hg_behave <- hg_behave %>% filter(!is.na(RT))
 # save it #
-write.csv(hg_behave, path(here(), "munge", "IR19", "hg_behave_presentation_locked_extended_150_insula.csv"))
+write.csv(hg_behave, path(here(), "munge", "IR19", "hg_behave_presentation_locked_extended_150.csv"))
 
 ```
 
@@ -161,38 +161,7 @@ write.csv(hg_behave, path(here(), "munge", "IR19", "hg_behave_presentation_locke
 # necessary paths #
 file_path_to_electrode_names <- path(here(), "munge", "IR39_electrodes_presentation_locked_extended.csv")
 file_path_to_hg_data <- path(here(), "munge", "IR39_hg_munge_presentation_locked_extended.csv")
-file_path_to_elecs_of_interest <- path(here(), "munge", "IR39_elecs_of_interest_insula.csv")
-
-# load data #
-hg_data <- load_high_gamma_data(file_path_to_hg_data, file_path_to_electrode_names)
-elecs_to_use <- read.csv(file_path_to_elecs_of_interest)
-
-# filter to good electrodes #
-hg_data <- hg_data %>% filter(grepl(paste(elecs_to_use$Electrode, collapse = "|"), electrodes))
-
-# # save baseline #
-# baseline_data <- hg_data[, 1:200]
-# baseline_data <- cbind(baseline_data, hg_data$electrodes, hg_data$trial)
-# write.csv(baseline_data, path(here(), "munge", "baseline_IR39.csv"))
-
-# average and baseline #
-hg_clean <- rolling_window_and_baseline(hg_data, lWin = 150, lOver = 50, choice_locked = F)
-
-# with behavior #
-hg_behave <- merge.data.frame(hg_clean, behave_data_12, by.x = "trial", by.y = "round", all.x = T, all.y = F)
-# clean any missing RTs #
-hg_behave <- hg_behave %>% filter(!is.na(RT))
-# save it #
-write.csv(hg_behave, path(here(), "munge", "IR39", "hg_behave_presentation_locked_extended_150_insula.csv"))
-
-```
-
-```{r load-hg-data-presentation-locked-16}
-
-# necessary paths #
-file_path_to_electrode_names <- path(here(), "munge", "IR16_electrodes_presentation_locked_extended.csv")
-file_path_to_hg_data <- path(here(), "munge", "IR16_hg_munge_presentation_locked_extended.csv")
-file_path_to_elecs_of_interest <- path(here(), "munge", "IR16_elecs_of_interest_insula.csv")
+file_path_to_elecs_of_interest <- path(here(), "munge", "IR39_elecs_of_interest.csv")
 
 # load data #
 hg_data <- load_high_gamma_data(file_path_to_hg_data, file_path_to_electrode_names)
@@ -204,15 +173,49 @@ hg_data <- hg_data %>% filter(grepl(paste(elecs_to_use$Electrode, collapse = "|"
 # save baseline #
 baseline_data <- hg_data[, 1:200]
 baseline_data <- cbind(baseline_data, hg_data$electrodes, hg_data$trial)
+write.csv(baseline_data, path(here(), "munge", "baseline_IR39.csv"))
+
+# average and baseline #
+hg_clean <- rolling_window_and_baseline(hg_data, lWin = 150, lOver = 50, choice_locked = F)
+
+# with behavior #
+hg_behave <- merge.data.frame(hg_clean, behave_data_12, by.x = "trial", by.y = "round", all.x = T, all.y = F)
+# clean any missing RTs #
+hg_behave <- hg_behave %>% filter(!is.na(RT))
+# save it #
+write.csv(hg_behave, path(here(), "munge", "IR39", "hg_behave_presentation_locked_extended_150.csv"))
+
+```
+
+```{r load-hg-data-presentation-locked-16}
+
+# necessary paths #
+file_path_to_electrode_names <- path(here(), "munge", "IR16_electrodes_presentation_locked_extended.csv")
+file_path_to_hg_data <- path(here(), "munge", "IR16_hg_munge_presentation_locked_extended.csv")
+file_path_to_elecs_of_interest <- path(here(), "munge", "IR16_elecs_of_interest.csv")
+
+# load data #
+hg_data <- load_high_gamma_data(file_path_to_hg_data, file_path_to_electrode_names)
+elecs_to_use <- read.csv(file_path_to_elecs_of_interest)
+
+# filter to good electrodes #
+hg_data <- hg_data %>% filter(grepl(paste(elecs_to_use$Electrode, collapse = "|"), electrodes))
+
+# Exclude trial 1 for this person because choice data is missing trial 1, presentation is not, and there is a missing response #
+hg_data  <- hg_data %>% filter(trial != 1)
+beep(2)
+# save baseline #
+baseline_data <- hg_data[, 1:200]
+baseline_data <- cbind(baseline_data, hg_data$electrodes, hg_data$trial)
 write.csv(baseline_data, path(here(), "munge", "baseline_IR16.csv"))
 
 # average and baseline #
 hg_clean <- rolling_window_and_baseline(hg_data, lWin = 150, lOver = 50, choice_locked = F)
-# clean any missing RTs #
-hg_behave <- hg_behave %>% filter(!is.na(RT))
 # with behavior #
 hg_behave <- merge.data.frame(hg_clean, behave_data_06, by.x = "trial", by.y = "round", all.x = T, all.y = F)
-write.csv(hg_behave, path(here(), "munge", "IR16", "hg_behave_presentation_locked_extended_150_insula.csv"))
+# clean any missing RTs #
+hg_behave <- hg_behave %>% filter(!is.na(RT))
+write.csv(hg_behave, path(here(), "munge", "IR16", "hg_behave_presentation_locked_extended_150.csv"))
 
 beep(2)
 ```
@@ -224,7 +227,7 @@ beep(2)
 # necessary paths #
 file_path_to_electrode_names <- path(here(), "munge", "IR35_electrodes_choice_locked_cut_fixation.csv")
 file_path_to_hg_data <- path(here(), "munge", "IR35_hg_munge_choice_locked_cut_fixation.csv")
-file_path_to_elecs_of_interest <- path(here(), "munge", "IR35_elecs_of_interest_insula.csv")
+file_path_to_elecs_of_interest <- path(here(), "munge", "IR35_elecs_of_interest.csv")
 file_path_to_baseline <- path(here(), "munge", "baseline_IR35.csv")
 
 # load data #
@@ -234,6 +237,11 @@ elecs_to_use <- read.csv(file_path_to_elecs_of_interest)
 # filter to good electrodes #
 hg_data <- hg_data %>% filter(grepl(paste(elecs_to_use$Electrode, collapse = "|"), electrodes))
 
+# save baseline #
+baseline_data <- hg_data[, 1:200]
+baseline_data <- cbind(baseline_data, hg_data$electrodes, hg_data$trial)
+write.csv(baseline_data, path(here(), "munge", "baseline_IR35.csv"))
+
 # average and baseline #
 hg_clean <- rolling_window_and_baseline(hg_data, baseline_csv = file_path_to_baseline, lWin = 150, lOver = 50, choice_locked = T)
 
@@ -242,15 +250,16 @@ half_index <- sample(1:228, 114)
 hg_eda <- hg_clean %>% filter(trial %in% half_index)
 
 # modify norm behavior #
-behave_data_11 <- behave_data_11 %>%
-  mutate(norm_deviance = if_else( (chose_equality == "Advent") | (chose_equality == "Equal") |(chose_equality == "10-10" & self_foregone <= 10) , 0, 1))
+# behave_data_11 <- behave_data_11 %>%
+#   mutate(norm_deviance = if_else( (chose_equality == "Advent") | (chose_equality == "Equal") |(chose_equality == "10-10" & self_foregone <= 10) , 0, 1))
 # with behavior #
 hg_behave <- merge.data.frame(hg_clean, behave_data_11, by.x = "trial", by.y = "round", all.x = T, all.y = F)
 # clean any missing RTs #
 hg_behave <- hg_behave %>% filter(!is.na(RT))
 # save it #
-write.csv(hg_behave, path(here(), "munge", "IR35", "hg_behave_choice_locked_cut_fixation_150_insula_norm_deviance.csv"))
+write.csv(hg_behave, path(here(), "munge", "IR35", "hg_behave_choice_locked_cut_fixation_150.csv"))
 
+beep(2)
 ```
 
 ```{r load-hg-data-choice-locked-19}
@@ -258,7 +267,7 @@ write.csv(hg_behave, path(here(), "munge", "IR35", "hg_behave_choice_locked_cut_
 # necessary paths #
 file_path_to_electrode_names <- path(here(), "munge", "IR19_electrodes_choice_locked_cut_fixation.csv")
 file_path_to_hg_data <- path(here(), "munge", "IR19_hg_munge_choice_locked_cut_fixation.csv")
-file_path_to_elecs_of_interest <- path(here(), "munge", "IR19_elecs_of_interest_insula.csv")
+file_path_to_elecs_of_interest <- path(here(), "munge", "IR19_elecs_of_interest.csv")
 file_path_to_baseline <- path(here(), "munge", "baseline_IR19.csv")
 
 # load data #
@@ -285,7 +294,7 @@ hg_behave <- merge.data.frame(hg_clean, behave_data_08, by.x = "trial", by.y = "
 # clean any missing RTs #
 hg_behave <- hg_behave %>% filter(!is.na(RT))
 # save it #
-write.csv(hg_behave, path(here(), "munge", "IR19", "hg_behave_choice_locked_cut_fixation_150_insula.csv"))
+write.csv(hg_behave, path(here(), "munge", "IR19", "hg_behave_choice_locked_cut_fixation_150.csv"))
 
 
 
@@ -297,7 +306,7 @@ write.csv(hg_behave, path(here(), "munge", "IR19", "hg_behave_choice_locked_cut_
 # necessary paths #
 file_path_to_electrode_names <- path(here(), "munge", "IR39_electrodes_choice_locked_cut_fixation.csv")
 file_path_to_hg_data <- path(here(), "munge", "IR39_hg_munge_choice_locked_cut_fixation.csv")
-file_path_to_elecs_of_interest <- path(here(), "munge", "IR39_elecs_of_interest_insula.csv")
+file_path_to_elecs_of_interest <- path(here(), "munge", "IR39_elecs_of_interest.csv")
 file_path_to_baseline <- path(here(), "munge", "baseline_IR39.csv")
 
 # load data #
@@ -320,8 +329,9 @@ hg_behave <- merge.data.frame(hg_clean, behave_data_12, by.x = "trial", by.y = "
 # clean any missing RTs #
 hg_behave <- hg_behave %>% filter(!is.na(RT))
 # save it #
-write.csv(hg_behave, path(here(), "munge", "IR39", "hg_behave_choice_locked_cut_fixation_150_insula.csv"))
+write.csv(hg_behave, path(here(), "munge", "IR39", "hg_behave_choice_locked_cut_fixation_150.csv"))
 
+beep(2)
 ```
 
 ```{r load-hg-data-choice-locked-16}
@@ -329,7 +339,7 @@ write.csv(hg_behave, path(here(), "munge", "IR39", "hg_behave_choice_locked_cut_
 # necessary paths #
 file_path_to_electrode_names <- path(here(), "munge", "IR16_electrodes_choice_locked_cut_fixation.csv")
 file_path_to_hg_data <- path(here(), "munge", "IR16_hg_munge_choice_locked_cut_fixation.csv")
-file_path_to_elecs_of_interest <- path(here(), "munge", "IR16_elecs_of_interest_insula.csv")
+file_path_to_elecs_of_interest <- path(here(), "munge", "IR16_elecs_of_interest.csv")
 file_path_to_baseline <- path(here(), "munge", "baseline_IR16.csv")
 
 # load data #
@@ -352,7 +362,7 @@ hg_behave <- merge.data.frame(hg_clean, behave_data_06, by.x = "trial", by.y = "
 # clean any missing RTs #
 hg_behave <- hg_behave %>% filter(!is.na(RT))
 # save it #
-write.csv(hg_behave, path(here(), "munge", "IR16", "hg_behave_choice_locked_cut_fixation_150_insula.csv"))
+write.csv(hg_behave, path(here(), "munge", "IR16", "hg_behave_choice_locked_cut_fixation_150.csv"))
 
 beep(2)
 ```
