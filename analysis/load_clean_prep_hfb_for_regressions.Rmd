@@ -84,11 +84,35 @@ behave_data_08 <- behave_data %>% filter(SID == "DG_s08")
 behave_data_11 <- behave_data %>% filter(SID == "DG_s11")
 behave_data_12 <- behave_data %>% filter(SID == "DG_s12")
 behave_data_06 <- behave_data %>% filter(SID == "DG_s06")
+behave_data_13 <- behave_data %>% filter(SID == "DG_s13")
 
 # table(behave_data$ineq_advent_choice)
 # table(behave_data_08$ineq_disadvent_choice)
 # table(behave_data_11$ineq_disadvent_choice)
 # table(behave_data_12$ineq_disadvent_choice)
+```
+
+```{r behavioral-correlations}
+
+plot_behave_cors <- function(df){
+  
+  behave_correl_data <- df %>%
+    select(self_payoff, other_payoff, self_var_payoff, other_var_payoff, other_foregone, self_foregone, self_diff, other_diff, ineq_advent, ineq_disadvent)
+  
+  behavioral_cor <- cor(behave_correl_data, use = "pairwise.complete.obs")
+  
+  ggcorrplot(behavioral_cor,
+             lab = T,
+             type = "lower",
+             colors = wes_palette("Zissou1", 3, type = "continuous"))
+}
+
+plot_behave_cors(behave_data_06)
+plot_behave_cors(behave_data_08)
+plot_behave_cors(behave_data_11)
+plot_behave_cors(behave_data_12)
+plot_behave_cors(behave_data_13)
+
 ```
 
 ## Presentation
@@ -203,7 +227,7 @@ hg_data <- hg_data %>% filter(grepl(paste(elecs_to_use$Electrode, collapse = "|"
 
 # Exclude trial 1 for this person because choice data is missing trial 1, presentation is not, and there is a missing response #
 hg_data  <- hg_data %>% filter(trial != 1)
-beep(2)
+
 # save baseline #
 baseline_data <- hg_data[, 1:200]
 baseline_data <- cbind(baseline_data, hg_data$electrodes, hg_data$trial)
@@ -216,6 +240,40 @@ hg_behave <- merge.data.frame(hg_clean, behave_data_06, by.x = "trial", by.y = "
 # clean any missing RTs #
 hg_behave <- hg_behave %>% filter(!is.na(RT))
 write.csv(hg_behave, path(here(), "munge", "IR16", "hg_behave_presentation_locked_extended_150.csv"))
+
+beep(2)
+```
+
+
+```{r load-hg-data-presentation-locked-57}
+
+# necessary paths #
+file_path_to_electrode_names <- path(here(), "munge", "IR57_electrodes_presentation_locked_extended.csv")
+file_path_to_hg_data <- path(here(), "munge", "IR57_hg_munge_presentation_locked_extended.csv")
+file_path_to_elecs_of_interest <- path(here(), "munge", "IR57_elecs_of_interest.csv")
+
+# load data #
+hg_data <- load_high_gamma_data(file_path_to_hg_data, file_path_to_electrode_names)
+elecs_to_use <- read.csv(file_path_to_elecs_of_interest)
+
+# filter to good electrodes #
+hg_data <- hg_data %>% filter(grepl(paste(elecs_to_use$Electrode, collapse = "|"), electrodes))
+
+# Exclude trial 1 for this person because choice data is missing trial 1, presentation is not, and there is a missing response #
+# hg_data  <- hg_data %>% filter(trial != 105)
+
+# save baseline #
+baseline_data <- hg_data[, 1:200]
+baseline_data <- cbind(baseline_data, hg_data$electrodes, hg_data$trial)
+write.csv(baseline_data, path(here(), "munge", "baseline_IR57.csv"))
+
+# average and baseline #
+hg_clean <- rolling_window_and_baseline(hg_data, lWin = 150, lOver = 50, choice_locked = F)
+# with behavior #
+hg_behave <- merge.data.frame(hg_clean, behave_data_13, by.x = "trial", by.y = "round", all.x = T, all.y = F)
+# clean any missing RTs #
+hg_behave <- hg_behave %>% filter(!is.na(RT))
+write.csv(hg_behave, path(here(), "munge", "IR57", "hg_behave_presentation_locked_extended_150.csv"))
 
 beep(2)
 ```
@@ -349,6 +407,9 @@ elecs_to_use <- read.csv(file_path_to_elecs_of_interest)
 # filter to good electrodes #
 hg_data <- hg_data %>% filter(grepl(paste(elecs_to_use$Electrode, collapse = "|"), electrodes))
 
+# Exclude trials  due to misalignment with baseline #
+hg_data  <- hg_data %>% filter(trial != 74 & trial != 95)
+
 # average and baseline #
 hg_clean <- rolling_window_and_baseline(hg_data, baseline_csv = file_path_to_baseline, lWin = 150, lOver = 50, choice_locked = T)
 
@@ -367,6 +428,42 @@ write.csv(hg_behave, path(here(), "munge", "IR16", "hg_behave_choice_locked_cut_
 beep(2)
 ```
 
+
+```{r load-hg-data-choice-locked-57}
+
+# necessary paths #
+file_path_to_electrode_names <- path(here(), "munge", "IR57_electrodes_choice_locked_cut_fixation.csv")
+file_path_to_hg_data <- path(here(), "munge", "IR57_hg_munge_choice_locked_cut_fixation.csv")
+file_path_to_elecs_of_interest <- path(here(), "munge", "IR57_elecs_of_interest.csv")
+file_path_to_baseline <- path(here(), "munge", "baseline_IR57.csv")
+
+# load data #
+hg_data <- load_high_gamma_data(file_path_to_hg_data, file_path_to_electrode_names)
+elecs_to_use <- read.csv(file_path_to_elecs_of_interest)
+
+# filter to good electrodes #
+hg_data <- hg_data %>% filter(grepl(paste(elecs_to_use$Electrode, collapse = "|"), electrodes))
+
+# Exclude trials  due to misalignment with baseline #
+hg_data  <- hg_data %>% filter(trial != 105)
+
+# average and baseline #
+hg_clean <- rolling_window_and_baseline(hg_data, baseline_csv = file_path_to_baseline, lWin = 150, lOver = 50, choice_locked = T)
+
+# create temp data for visualiztion #
+half_index <- sample(1:228, 114)
+hg_eda <- hg_clean %>% filter(trial %in% half_index)
+
+
+# with behavior #
+hg_behave <- merge.data.frame(hg_clean, behave_data_13, by.x = "trial", by.y = "round", all.x = T, all.y = F)
+# clean any missing RTs #
+hg_behave <- hg_behave %>% filter(!is.na(RT))
+# save it #
+write.csv(hg_behave, path(here(), "munge", "IR57", "hg_behave_choice_locked_cut_fixation_150.csv"))
+
+beep(2)
+```
 
 # Time Warping 
 

@@ -256,7 +256,7 @@ hg_eda_summary %>%
 ### PRESENTATION-LOCKED ###
 
 ## load data ##
-file_path_to_hg_data <- path(here(), "munge", "IR35", "hg_behave_presentation_locked_extended_150_insula.csv")
+file_path_to_hg_data <- path(here(), "munge", "IR19", "hg_behave_presentation_locked_extended_150_insula.csv")
 hg_behave <- read.csv(file_path_to_hg_data)
 
 ## plot it ##
@@ -292,15 +292,19 @@ rt_plot <- hg_behave %>%
 ### CHOICE-LOCKED ###
 
 ## load data ##
-file_path_to_hg_data <- path(here(), "munge", "IR35", "hg_behave_choice_locked_cut_fixation_150_insula.csv")
+file_path_to_hg_data <- path(here(), "munge", "IR19", "hg_behave_choice_locked_cut_fixation_150.csv")
 hg_behave <- read.csv(file_path_to_hg_data)
 
 ## plot it ##
 
 for(elec in unique(hg_behave$electrodes)) {
-
+elec <- "LPC7-LPC8"
 rt_plot <- hg_behave %>%
-  filter(electrodes == elec) %>%
+  mutate(electrodes = gsub("POL ", "", electrodes)) %>%
+  mutate(electrodes = gsub(" POL", "", electrodes)) %>%
+  mutate(electrodes = gsub("-Ref", "", electrodes)) %>%
+  mutate(electrodes = gsub("-Ref-", "-", electrodes)) %>%
+  filter(electrodes == elec & side_chosen == "Left") %>%
   arrange(desc(RT)) %>%
   mutate(trial = factor(trial, levels = trial)) %>%
   gather(key = "bin", value = "gamma", starts_with("pre"), starts_with("post")) %>%
@@ -315,7 +319,7 @@ rt_plot <- hg_behave %>%
   scale_color_viridis(limits = c(-.5, 1), begin = 0, end = 1) +
   ggtitle(paste0(elec))
   
-  ggsave(filename = paste0('./figures/IR35/insula/CHOICE/', elec, ".png"),
+  ggsave(filename = paste0('./figures/IR19/CHOICE/', elec, ".png"),
      device = "png",
      width = 10,
      height = 10,
@@ -325,6 +329,8 @@ rt_plot <- hg_behave %>%
   
   
 }
+
+
 ```
 
 ```{r hg_plots}

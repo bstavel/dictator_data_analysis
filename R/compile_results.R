@@ -29,9 +29,10 @@ compile_results <- function(regions, type, sub, path, spec_vars = c("*", "*"), a
       full_beta_tmp <- read.csv(path(path, not_abs_beta_file))
       # add beta col to temp df #
       temp$Beta <- full_beta_tmp$Beta
+      temp <- temp %>% select(-absBeta)
     }
     # remove absolute beta so it can be combined with other values
-    temp <- temp %>% select(-absBeta, -X)
+    temp <- temp %>% select(-X)
     combined_results <- rbind(combined_results, temp)
   }
   
