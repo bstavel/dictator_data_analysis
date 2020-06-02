@@ -1,0 +1,6 @@
+hg_gamma_file_prep_for_regressions_by_frequency('all_frequencies_wave_pres_IR39.mat', 'IR39')
+hg_gamma_file_prep_for_regressions_by_frequency('all_frequencies_wave_pres_IR19.mat', 'IR19')
+hg_gamma_file_prep_for_regressions_by_frequency('all_frequencies_wave_pres_IR28.mat', 'IR28')
+hg_gamma_file_prep_for_regressions_by_frequency('all_frequencies_wave_pres_IR16.mat', 'IR16')
+hg_gamma_file_prep_for_regressions_by_frequency('all_frequencies_wave_pres_IR10.mat', 'IR10')
+hg_gamma_file_prep_for_regressions_by_frequency('all_frequencies_wave_pres_IR57.mat', 'IR57')
