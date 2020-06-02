@@ -31,7 +31,6 @@ registerDoParallel(nCores)
 
 ## regression parameters ##
 # save info needed for regressions #
-nBins <- colnames(hg_behave %>% select(starts_with("bin_")))
 niter <- 10000
 
 ## electrodes ##
@@ -50,6 +49,8 @@ hfa_behave <-  read.csv(path_hg_clean)
 brain_behave_data <- hfa_behave %>%
   filter(grepl(paste(all_elecs$Electrode, collapse = "|"), electrodes))
 all_electrodes <- unique(brain_behave_data$electrodes)
+# bin names #
+nBins <- colnames(hg_behave %>% select(starts_with("bin_")))
 
 ## run regressions ##
 
@@ -83,6 +84,8 @@ theta_behave <-  read.csv(path_hg_clean)
 brain_behave_data <- theta_behave %>%
   filter(grepl(paste(all_elecs$Electrode, collapse = "|"), electrodes))
 all_electrodes <- unique(brain_behave_data$electrodes)
+# bin names #
+nBins <- colnames(hg_behave %>% select(starts_with("bin_")))
 
 ## run regressions ##
 
