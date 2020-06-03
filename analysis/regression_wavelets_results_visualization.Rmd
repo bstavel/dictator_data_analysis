@@ -1,7 +1,7 @@
 ---
-title: "Visualize Results - Hilbert"
+title: "Visualize Results - Wavelets"
 author: "Brooke Staveland"
-date: "4/7/2020"
+date: "6/3/2020"
 output: html_document
 ---
 

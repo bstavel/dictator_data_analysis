@@ -55,25 +55,25 @@ nBins <- colnames(hfa_behave %>% select(starts_with("time_")))
 ## run regressions ##
 
 # adv ineq #
-run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "ineq_advent", nBins, region_name =  "Insula", niter, sub = "IR19", tag = "pres-locked-wavelets")
+run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "ineq_advent", nBins, region_name =  "Insula", niter, sub = "IR19", tag = "hfa-pres-locked-wavelets")
 # disadv ineq #
-run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "ineq_disadvent", nBins, region_name =  "Insula", niter, sub = "IR19", tag = "pres-locked-wavelets")
+run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "ineq_disadvent", nBins, region_name =  "Insula", niter, sub = "IR19", tag = "hfa-pres-locked-wavelets")
 # self payoff #
-run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_payoff", nBins, region_name =  "Insula", niter, sub = "IR19", tag = "pres-locked-wavelets")
+run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_payoff", nBins, region_name =  "Insula", niter, sub = "IR19", tag = "hfa-pres-locked-wavelets")
 # other payoff #
-run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_payoff", nBins, region_name =  "Insula", niter, sub = "IR19", tag = "pres-locked-wavelets")
+run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_payoff", nBins, region_name =  "Insula", niter, sub = "IR19", tag = "hfa-pres-locked-wavelets")
 # self foregone #
-run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_foregone", nBins, region_name =  "Insula", niter, sub = "IR19", tag = "pres-locked-wavelets")
+run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_foregone", nBins, region_name =  "Insula", niter, sub = "IR19", tag = "hfa-pres-locked-wavelets")
 # other foregone #
-run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_foregone", nBins, region_name =  "Insula", niter, sub = "IR19", tag = "pres-locked-wavelets")
+run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_foregone", nBins, region_name =  "Insula", niter, sub = "IR19", tag = "hfa-pres-locked-wavelets")
 # self var paroff #
-run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff", nBins, region_name =  "Insula", niter, sub = "IR19", tag = "pres-locked-wavelets")
+run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff", nBins, region_name =  "Insula", niter, sub = "IR19", tag = "hfa-pres-locked-wavelets")
 # other var payoff #
-run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff", nBins, region_name =  "Insula", niter, sub = "IR19", tag = "pres-locked-wavelets")
+run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff", nBins, region_name =  "Insula", niter, sub = "IR19", tag = "hfa-pres-locked-wavelets")
 # # self diff #
-# run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_diff", nBins, region_name =  "Insula", niter, sub = "IR19", tag = "pres-locked-wavelets")
+# run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_diff", nBins, region_name =  "Insula", niter, sub = "IR19", tag = "hfa-pres-locked-wavelets")
 # # other diff #
-# run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_diff", nBins, region_name =  "Insula", niter, sub = "IR19", tag = "pres-locked-wavelets")
+# run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_diff", nBins, region_name =  "Insula", niter, sub = "IR19", tag = "hfa-pres-locked-wavelets")
 
 ### theta ###
 
@@ -90,23 +90,23 @@ nBins <- colnames(theta_behave %>% select(starts_with("time_")))
 ## run regressions ##
 
 # adv ineq #
-run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "ineq_advent", nBins, region_name =  "Insula", niter, sub = "IR19", tag = "pres-locked-wavelets")
+run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "ineq_advent", nBins, region_name =  "Insula", niter, sub = "IR19", tag = "theta-pres-locked-wavelets")
 # disadv ineq #
-run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "ineq_disadvent", nBins, region_name =  "Insula", niter, sub = "IR19", tag = "pres-locked-wavelets")
+run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "ineq_disadvent", nBins, region_name =  "Insula", niter, sub = "IR19", tag = "theta-pres-locked-wavelets")
 # self payoff #
-run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_payoff", nBins, region_name =  "Insula", niter, sub = "IR19", tag = "pres-locked-wavelets")
+run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_payoff", nBins, region_name =  "Insula", niter, sub = "IR19", tag = "theta-pres-locked-wavelets")
 # other payoff #
-run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_payoff", nBins, region_name =  "Insula", niter, sub = "IR19", tag = "pres-locked-wavelets")
+run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_payoff", nBins, region_name =  "Insula", niter, sub = "IR19", tag = "theta-pres-locked-wavelets")
 # self foregone #
-run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_foregone", nBins, region_name =  "Insula", niter, sub = "IR19", tag = "pres-locked-wavelets")
+run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_foregone", nBins, region_name =  "Insula", niter, sub = "IR19", tag = "theta-pres-locked-wavelets")
 # other foregone #
-run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_foregone", nBins, region_name =  "Insula", niter, sub = "IR19", tag = "pres-locked-wavelets")
+run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_foregone", nBins, region_name =  "Insula", niter, sub = "IR19", tag = "theta-pres-locked-wavelets")
 # self var paroff #
-run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff", nBins, region_name =  "Insula", niter, sub = "IR19", tag = "pres-locked-wavelets")
+run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff", nBins, region_name =  "Insula", niter, sub = "IR19", tag = "theta-pres-locked-wavelets")
 # other var payoff #
-run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff", nBins, region_name =  "Insula", niter, sub = "IR19", tag = "pres-locked-wavelets")
+run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff", nBins, region_name =  "Insula", niter, sub = "IR19", tag = "theta-pres-locked-wavelets")
 # # self diff #
-# run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_diff", nBins, region_name =  "Insula", niter, sub = "IR19", tag = "pres-locked-wavelets")
+# run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_diff", nBins, region_name =  "Insula", niter, sub = "IR19", tag = "theta-pres-locked-wavelets")
 # # other diff #
-# run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_diff", nBins, region_name =  "Insula", niter, sub = "IR19", tag = "pres-locked-wavelets")
+# run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_diff", nBins, region_name =  "Insula", niter, sub = "IR19", tag = "theta-pres-locked-wavelets")
 
