@@ -50,7 +50,7 @@ brain_behave_data <- hfa_behave %>%
   filter(grepl(paste(all_elecs$Electrode, collapse = "|"), electrodes))
 all_electrodes <- unique(brain_behave_data$electrodes)
 # bin names #
-nBins <- colnames(hfa_behave %>% select(starts_with("bin_")))
+nBins <- colnames(hfa_behave %>% select(starts_with("time_")))
 
 ## run regressions ##
 
@@ -85,7 +85,7 @@ brain_behave_data <- theta_behave %>%
   filter(grepl(paste(all_elecs$Electrode, collapse = "|"), electrodes))
 all_electrodes <- unique(brain_behave_data$electrodes)
 # bin names #
-nBins <- colnames(theta_behave %>% select(starts_with("bin_")))
+nBins <- colnames(theta_behave %>% select(starts_with("time_")))
 
 ## run regressions ##
 

@@ -21,21 +21,21 @@ num_elecs = size(TFwave.label, 1) ;
 freq_df = TFwave.powspctrm;
 freq_spec = TFwave.freq;
 
-for fIdx  = 1:size(freq_spec, 1)
+for fIdx  = 96:size(freq_spec, 2)
 % concactenate and cut hg %
-  for idx = 1:nTrials
+  for idx = 123:nTrials
     tIdx = TFwave.trialinfo(idx, 1); % since some trials are skipped, need to reindex
     % get indices between second 0 and 3 where, 0 is presentation time %
     indices_of_interest = (TFwave.time < post_trial_time & TFwave.time > pre_trial_time) ; % because there was iti included, and -.2 + .6 = .4
     % cut the extrad padding on each trial window %
-    temp_hg =  squeeze(freq_df(idx, 1:num_elecs, freq_spec(fIdx), indices_of_interest)) ;
+    temp_hg =  squeeze(freq_df(idx, 1:num_elecs, fIdx, indices_of_interest)) ;
     % sanity check to save elecs order %
     elecs_counter = size(temp_hg, 2);
     temp_hg(:, (elecs_counter + 1)) = 1:num_elecs ;
     temp_hg(:, (elecs_counter + 2)) = tIdx ;
     temp_hg(:, (elecs_counter + 3)) = freq_spec(fIdx) ;
     % concactenate across trials $
-    if idx == 1
+    if idx == 1 && fIdx == 1
       hg_prepped = temp_hg ;
     else
       hg_prepped = vertcat(hg_prepped, temp_hg) ;
