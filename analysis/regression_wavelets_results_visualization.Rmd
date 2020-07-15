@@ -81,11 +81,11 @@ regions_to_combine <- c("Insula")
 ## IR39 ##
 
 # combine different csvs #
-presentation_results_39 <- compile_results(regions = regions_to_combine,
-                                           type = "pres-locked",
+hfa_presentation_results_39 <- compile_results(regions = regions_to_combine,
+                                           type = "hfa-pres-locked-wavelets",
                                            sub = "IR39",
                                            spec_vars = spec_vars,
-                                           path = path(here(), "results", "IR39", "insula"),
+                                           path = path(here(), "results", "IR39", "wavelets", "insula"),
                                            absBeta = F)
 
 # # runa anova for inequity results #
@@ -109,11 +109,11 @@ presentation_results_39 <- compile_results(regions = regions_to_combine,
 ## IR35 ##
 
 # combine different csvs #
-presentation_results_35 <- compile_results(regions = regions_to_combine, 
-                                           type = "pres-locked", 
+hfa_presentation_results_35 <- compile_results(regions = regions_to_combine, 
+                                           type = "hfa-pres-locked-wavelets", 
                                            sub = "IR35", 
                                            spec_vars = spec_vars, 
-                                           path = path(here(), "results", "IR35", "insula"), 
+                                           path = path(here(), "results", "IR35", "wavelets", "insula"), 
                                            absBeta = abs_beta_val)
 
 # # runa anova for inequity results #
@@ -136,11 +136,11 @@ presentation_results_35 <- compile_results(regions = regions_to_combine,
 ## IR19 ##
 
 # combine different csvs #
-presentation_results_19 <- compile_results(regions = regions_to_combine, 
-                                           type = "pres-locked", 
+hfa_presentation_results_19 <- compile_results(regions = regions_to_combine, 
+                                           type = "hfa-pres-locked-wavelets", 
                                            sub = "IR19", 
                                            spec_vars = spec_vars, 
-                                           path = path(here(), "results", "IR19", "insula"), 
+                                           path = path(here(), "results", "IR19", "wavelets", "insula"), 
                                            absBeta = abs_beta_val)
 
 # # runa anova for inequity results #
@@ -165,7 +165,7 @@ presentation_results_19 <- compile_results(regions = regions_to_combine,
 
 # combine different csvs #
 presentation_results_16 <- compile_results(regions = regions_to_combine,
-                                           type = "pres-locked",
+                                           type = "pres-locked-wavelets",
                                            sub = "IR16",
                                            spec_vars = spec_vars,
                                            path = path(here(), "results", "IR16", "insula"),
@@ -193,7 +193,7 @@ presentation_results_16 <- compile_results(regions = regions_to_combine,
 
 # combine different csvs #
 presentation_results_57 <- compile_results(regions = regions_to_combine,
-                                           type = "pres-locked",
+                                           type = "pres-locked-wavelets",
                                            sub = "IR57",
                                            spec_vars = spec_vars,
                                            path = path(here(), "results", "IR57", "insula"),
@@ -379,107 +379,6 @@ choice_results_57 <- compile_results(regions = regions_to_combine,
 
 ```
 
-## Load Time- Warped
-
-Load and prep presentation-locked results for all subjects.
-
-```{r concatenate-results-time-warp}
-
-### any subject general vars ###
-spec_vars <- c("*", "*")
-abs_beta_val <- T
-reg_name_one <- "self_diff"
-reg_name_two <- "other_diff"
-regions_to_combine <- c("Insula")
-  
-## IR39 ##
-
-# combine different csvs #
-warped_results_39 <- compile_results(regions = regions_to_combine,
-                                           type = "time-warped",
-                                           sub = "IR39",
-                                           spec_vars = spec_vars,
-                                           path = path(here(), "results", "IR39", "insula"),
-                                           absBeta = abs_beta_val)
-
-warped_results_39 <- warped_results_39 %>% filter(electrode %in% insula_electrodes)
-
-# runa anova for inequity results #
-path_hg_clean <- path(here(), "munge", "IR39", "hg_behave_presentation_locked_extended_150_insula.csv")
-hg_behave <-  read.csv(path_hg_clean)
-run_filtered_anova(results = presentation_results_39,
-                   brain_behave_data = hg_behave,
-                   sub = "IR39",
-                   region_name = "All",
-                   reg_name_one = reg_name_one,
-                   reg_name_two = reg_name_two,
-                   all_results = T,
-                   type = "time-warped_insula")
-
-# read back in the results #
-region_name <- "All"
-adv_pres_results_for_plots_39 <- read.csv(fs::path(here(), "results", "IR39", paste0(region_name, "_time-warped_insula_anova_results_", reg_name_one, ".csv")))
-dis_pres_results_for_plots_39 <- read.csv(fs::path(here(), "results", "IR39", paste0(region_name, "_time-warped_insula_anova_results_", reg_name_two, ".csv")))
-
-
-## IR35 ##
-
-# combine different csvs #
-presentation_results_35 <- compile_results(regions = regions_to_combine, 
-                                           type = "pres-locked", 
-                                           sub = "IR35", 
-                                           spec_vars = spec_vars, 
-                                           path = path(here(), "results", "IR35", "insula"), 
-                                           absBeta = abs_beta_val)
-
-# runa anova for inequity results #
-path_hg_clean <- path(here(), "munge", "IR35", "hg_behave_presentation_locked_extended_150_insula.csv")
-hg_behave <-  read.csv(path_hg_clean)
-run_filtered_anova(results = presentation_results_35, 
-                   brain_behave_data = hg_behave, 
-                   sub = "IR35", 
-                   region_name = "All", 
-                   all_results = T, 
-                   reg_name_one = reg_name_one, 
-                   reg_name_two = reg_name_two,                    
-                   type = "pres-locked_insula")
-
-# read back in the results #
-region_name <- "All"
-adv_pres_results_for_plots_35 <- read.csv(fs::path(here(), "results", "IR35", paste0(region_name, "_pres-locked_insula_anova_results_", reg_name_one, ".csv")))
-dis_pres_results_for_plots_35 <- read.csv(fs::path(here(), "results", "IR35", paste0(region_name, "_pres-locked_insula_anova_results_", reg_name_two, ".csv")))
-
-## IR19 ##
-
-# combine different csvs #
-presentation_results_19 <- compile_results(regions = regions_to_combine, 
-                                           type = "pres-locked", 
-                                           sub = "IR19", 
-                                           spec_vars = spec_vars, 
-                                           path = path(here(), "results", "IR19", "insula"), 
-                                           absBeta = abs_beta_val)
-
-# runa anova for inequity results #
-path_hg_clean <- path(here(), "munge", "IR19", "hg_behave_presentation_locked_extended_150_insula.csv")
-hg_behave <-  read.csv(path_hg_clean)
-hg_behave <- hg_behave %>% mutate(electrodes = gsub("POL ", "", electrodes)) # IR19 has weird elec names
-run_filtered_anova(results = presentation_results_19, 
-                   brain_behave_data = hg_behave, 
-                   sub = "IR19", 
-                   region_name = "All", 
-                   reg_name_one = reg_name_one, 
-                   reg_name_two = reg_name_two,                    
-                   all_results = T, 
-                   type = "pres-locked_insula")
-
-# read back in the results #
-region_name <- "All"
-adv_pres_results_for_plots_19 <- read.csv(fs::path(here(), "results", "IR19", paste0(region_name, "_pres-locked_insula_anova_results_", reg_name_one, ".csv")))
-dis_pres_results_for_plots_19 <- read.csv(fs::path(here(), "results", "IR19", paste0(region_name, "_pres-locked_insula_anova_results_", reg_name_two, ".csv")))
-
-```
-
-
 ## plotting functions
 
 ```{r plotting-functions}
@@ -493,7 +392,7 @@ df %>%
     mutate(sig = if_else(perm_p < 0.05 & anova_p < 0.01, "Significant", "Insignificant")) %>%
     mutate_cond(sig == "Significant", sig = as.character(region)) %>%
     mutate(sig = relevel(factor(sig), ref = "Insignificant")) %>%
-    mutate(bin = as.numeric(gsub("bin_", "", bin))) %>%
+    mutate(bin = as.numeric(gsub("time_", "", bin))) %>%
     arrange(bin) %>%
     ggplot(., aes( x = bin, y = diff_adj_r2, color = sig, fill = sig)) +
     geom_col(alpha = .5) +
@@ -559,7 +458,7 @@ combined_active_plots <- function(df, subject, num_rows, sig_thresh){
     ungroup() %>%
     mutate(predictor = if_else(bin_sig == 0, "Insig", as.character(predictor))) %>%
     mutate(predictor = relevel(factor(predictor), ref = "Insig")) %>%
-    mutate(bin = as.numeric(gsub("bin_", "", bin))) %>%
+    mutate(bin = as.numeric(gsub("time_", "", bin))) %>%
     arrange(bin) %>%
     ggplot(., aes(x= bin, y = bin_sig, fill = predictor, color = predictor)) + 
     geom_col(alpha = .5) + 
@@ -612,7 +511,7 @@ combined_active_plots_for_talk <- function(df, subject, num_rows, sig_thresh){
     mutate(predictor_case = if_else(grepl("other|disadvent", predictor), "ther", "elf")) %>%
     mutate(predictor_case = if_else(bin_sig == 0, "Insig", as.character(predictor_case))) %>%
     mutate(predictor_case = relevel(factor(predictor_case), ref = "Insig")) %>%
-    mutate(bin = as.numeric(gsub("bin_", "", bin))) %>%
+    mutate(bin = as.numeric(gsub("time_", "", bin))) %>%
     arrange(bin) %>%
     ggplot(., aes(x= bin, y = bin_sig, fill = predictor_case, color = predictor_case)) + 
     geom_col(alpha = .5) + 
@@ -661,7 +560,7 @@ beta_plots_all_subjects <- function(df, sig_thresh, nrows, subject, vars = c("se
     mutate(bin_sig = if_else((p < .05 & perm_p < sig_thresh), 1, 0)) %>%
     mutate(predictor_sig = if_else(bin_sig == 0, "Insig", as.character(predictor))) %>%
     mutate(predictor_sig = relevel(factor(predictor_sig, levels = c("Insig", vars)), ref = "Insig")) %>%
-    mutate(bin = as.numeric(gsub("bin_", "", bin))) %>%
+    mutate(bin = as.numeric(gsub("time_", "", bin))) %>%
     arrange(bin) %>%
     ggplot(., aes(x = bin, y= Beta, group = predictor)) +
     geom_line(color = "grey", alpha = .3) +
@@ -706,12 +605,17 @@ beta_plots_all_subjects_choice <- function(df, sig_thresh, nrows, subject, vars 
 ```{r presentation-results}
 
 ## exclude mistaken regions!! ###
-presentation_results_35 <- presentation_results_35 %>% filter(electrode != "LAC10-LAC11" & electrode != "LAC9-LAC10" & electrode != "LIN9-LIN10")
-presentation_results_19 <- presentation_results_19 %>% filter(electrode != "LIN10-Ref-LIN11-Ref" & electrode != "LIN12-Ref-LIN13-Ref" & electrode != "LIN11-Ref-LIN12-Ref" & electrode != "LIN9-Ref-LIN10-Ref" & electrode != "RIN10-Ref-RIN11-Ref" & electrode != "RIN11-Ref-RIN12-Ref" & electrode != "RIN12-Ref-RIN13-Ref" & electrode != "RIN9-Ref-RIN10-Ref")
+hfa_presentation_results_35 <- hfa_presentation_results_35 %>% filter(electrode != "LAC10-LAC11" & electrode != "LAC9-LAC10" & electrode != "LIN9-LIN10")
+hfa_presentation_results_19 <- hfa_presentation_results_19 %>%
+  mutate(electrode = gsub("POL ", "", electrode)) %>%
+  mutate(electrode = gsub(" POL", "", electrode)) %>%
+  mutate(electrode = gsub("-Ref-", "-", electrode)) %>%
+  mutate(electrode = gsub("-Ref", "", electrode)) %>% 
+  filter(electrode != "LIN10-LIN11" & electrode != "LIN12-LIN13" & electrode != "LIN11-LIN12" & electrode != "LIN9-LIN10" & electrode != "RIN10-RIN11" & electrode != "RIN11-RIN12" & electrode != "RIN12-RIN13" & electrode != "RIN9-RIN10")
 
 plot_39_005 <- combined_active_plots(presentation_results_39, "IR39 ~ Presentation", 2, sig_thresh = 0.005)
-plot_35_005 <- combined_active_plots(presentation_results_35, "IR35 ~ Presentation", 2, sig_thresh = 0.005)
-plot_19_005 <- combined_active_plots(presentation_results_19, "IR19 ~ Presentation", 3, sig_thresh = 0.005)
+plot_35_005 <- combined_active_plots(hfa_presentation_results_35, "IR35 ~ Presentation", 2, sig_thresh = 0.01)
+plot_19_005 <- combined_active_plots(hfa_presentation_results_19, "IR19 ~ Presentation", 3, sig_thresh = 0.01)
 
 ggsave(filename = paste0(path(here(), './figures/plot_39_005.png')),
      device = "png",
@@ -737,7 +641,9 @@ ggsave(filename = paste0(path(here(), './figures/plot_19_05.png')),
      dpi = 200,
      plot =  print(plot(plot_19_05)) )
 
-
+plot_39_005
+plot_35_005
+plot_19_005
 ```
 
 ```{r pres-for-talk-results-combine-by-region}
@@ -839,11 +745,12 @@ presentation_results_16_with_elec_info <- presentation_results_16 %>%
 ```{r pres-results-combine-subject}
 
 # combine them #
-presentation_results_full <- rbind(presentation_results_19_with_elec_info, 
+presentation_results_full <- rbind(#presentation_results_19_with_elec_info, 
                                    presentation_results_35_with_elec_info, 
-                                   presentation_results_39_with_elec_info,
-                                   presentation_results_57_with_elec_info,
-                                   presentation_results_16_with_elec_info)
+                                   presentation_results_39_with_elec_info)
+                                 #  presentation_results_57_with_elec_info,
+                                  # presentation_results_16_with_elec_info)
+                                 
 
 
 beta_plots_all_subjects(presentation_results_full, 
@@ -895,7 +802,7 @@ pi_p <- beta_plots_all_subjects(pink_presentation,
                                vars = c("self_payoff", "self_foregone", "other_payoff", "other_foregone"))
 
 
-ggsave(filename = paste0(path(here(), './figures/purple_pres.png')),
+ggsave(filename = paste0(path(here(), './figures/wavelet/purple_pres.png')),
      device = "png",
      width = 25,
      height = 10,
@@ -903,7 +810,7 @@ ggsave(filename = paste0(path(here(), './figures/purple_pres.png')),
      dpi = 200,
      plot =  print(plot(purp_p)) )
 
-ggsave(filename = paste0(path(here(), './figures/pink_pres.png')),
+ggsave(filename = paste0(path(here(), './figures/wavelet/pink_pres.png')),
      device = "png",
      width = 25,
      height = 10,
@@ -911,7 +818,7 @@ ggsave(filename = paste0(path(here(), './figures/pink_pres.png')),
      dpi = 200,
      plot =  print(plot(pi_p)) )
 
-ggsave(filename = paste0(path(here(), './figures/green_pres.png')),
+ggsave(filename = paste0(path(here(), './figures/wavelet/green_pres.png')),
      device = "png",
      width = 25,
      height = 15,
@@ -919,7 +826,7 @@ ggsave(filename = paste0(path(here(), './figures/green_pres.png')),
      dpi = 200,
      plot =  print(plot(g_p)) )
 
-ggsave(filename = paste0(path(here(), './figures/yellow_pres.png')),
+ggsave(filename = paste0(path(here(), './figures/wavelet/yellow_pres.png')),
      device = "png",
      width = 25,
      height = 15,
@@ -928,7 +835,7 @@ ggsave(filename = paste0(path(here(), './figures/yellow_pres.png')),
      plot =  print(plot(y_p)) )
 
 
-ggsave(filename = paste0(path(here(), './figures/blue_pres.png')),
+ggsave(filename = paste0(path(here(), './figures/wavelet/blue_pres.png')),
      device = "png",
      width = 30,
      height = 15,
@@ -1190,81 +1097,3 @@ ggsave(filename = paste0(path(here(), './figures/blue_choice.png')),
 
 
 ```
-
-```{r more-choice-plots}
-## plot it ##
-
-combined_active_plots_choice(choice_results_39, "IR39-Choice", 2)
-combined_active_plots_choice(choice_results_35, "IR35-Choice", 2)
-combined_active_plots_choice(choice_results_19, "IR19-Choice", 3)
-
-combined_active_plots_choice(choice_results_35, "IR35 ~ Norm Deviance", 3, .01)
-```
-
-
-## Inequity Results
-
-### Presentation
-
-Summary:
-* IR34
- - Lin-3-4, adv, blue/green
-* IR39
- - Lin-1-2, dis, blue
- - Lof-5-6, dis, purple
- - Rin-1-2, dis, green/blue
-* IR19
- - Rin-1-2, adv, blue/green
- - Rin-1-2, dis, blue/green
- - Rin-1-2, dis, blue/green
- 
-
-
-```{r inequity-pres}
-
-## remove sneaky electrodes
-adv_pres_results_for_plots_35 <- adv_pres_results_for_plots_35 %>% filter(electrode != "LAC10-LAC11" & electrode != "LAC9-LAC10" & electrode != "LIN9-LIN10")
-dis_pres_results_for_plots_35 <- dis_pres_results_for_plots_35 %>% filter(electrode != "LAC10-LAC11" & electrode != "LAC9-LAC10" & electrode != "LIN9-LIN10")
-
-adv_pres_results_for_plots_19 <- adv_pres_results_for_plots_19 %>% filter(electrode != "LIN10-Ref-LIN11-Ref" & electrode != "LIN12-Ref-LIN13-Ref" & electrode != "LIN11-Ref-LIN12-Ref" & electrode != "LIN9-Ref-LIN10-Ref" & electrode != "RIN10-Ref-RIN11-Ref" & electrode != "RIN11-Ref-RIN12-Ref" & electrode != "RIN12-Ref-RIN13-Ref" & electrode != "RIN9-Ref-RIN10-Ref")
-dis_pres_results_for_plots_19 <- dis_pres_results_for_plots_19 %>% filter(electrode != "LIN10-Ref-LIN11-Ref" & electrode != "LIN12-Ref-LIN13-Ref" & electrode != "LIN11-Ref-LIN12-Ref" & electrode != "LIN9-Ref-LIN10-Ref" & electrode != "RIN10-Ref-RIN11-Ref" & electrode != "RIN11-Ref-RIN12-Ref" & electrode != "RIN12-Ref-RIN13-Ref" & electrode != "RIN9-Ref-RIN10-Ref")
-
-
-## Presentation ##
-
-ineq_plots(adv_pres_results_for_plots_35, "Advantageous Inequality Results: IR35")
-ineq_plots(dis_pres_results_for_plots_35, "Disdvantageous Inequality Results: IR35")
-
-ineq_plots(adv_pres_results_for_plots_39, "Advantageous Inequality Results: IR39")
-ineq_plots(dis_pres_results_for_plots_39, "Disdvantageous Inequality Results: IR39")
-
-ineq_plots(adv_pres_results_for_plots_19, "Advantageous Inequality Results: IR19")
-ineq_plots(dis_pres_results_for_plots_19, "Disdvantageous Inequality Results: IR19")
-
-ineq_plots(adv_pres_results_for_plots_19, "Advantageous Difference Results: IR19")
-ineq_plots(dis_pres_results_for_plots_19, "Disdvantageous Difference Results: IR19")
-
-ineq_plots(adv_pres_results_for_plots_35, "Advantageous Difference Results: IR35")
-ineq_plots(dis_pres_results_for_plots_35, "Disdvantageous Difference Results: IR35")
-
-
-```
-
-
-### Choice
-
-```{r inequity-choice}
-## Presentation ##
-
-ineq_plots_choice(adv_choice_results_for_plots_35, "Advantageous Difference Results: IR35")
-ineq_plots_choice(dis_choice_results_for_plots_35, "Disdvantageous Difference Results: IR35")
-
-ineq_plots_choice(adv_choice_results_for_plots_39, "Advantageous Difference Results: IR39")
-ineq_plots_choice(dis_choice_results_for_plots_39, "Disdvantageous Difference Results: IR39")
-
-ineq_plots_choice(adv_choice_results_for_plots_19, "Advantageous Difference Results: IR19")
-ineq_plots_choice(dis_choice_results_for_plots_19, "Disdvantageous Difference Results: IR19")
-
-```
-
-

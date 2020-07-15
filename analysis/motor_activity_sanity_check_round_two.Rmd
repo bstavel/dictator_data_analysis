@@ -1,0 +1,357 @@
+---
+title: "Is there motor activity?"
+author: "Brooke Staveland"
+date: "6/29/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo <- FALSE,  # don't print the code chunk
+  warning <- FALSE,  # don't print warnings
+  message <- FALSE,  # don't print messages
+  fig.width <- 12,  # set default width of figures
+  fig.height <- 6,  # set default height of figures
+  fig.align <- "center",  # always align figure in center
+  fig.pos <- "H",  # always plot figure at the exact location of the code chunk
+  cache <- TRUE)  # cache results
+
+## libraries ##
+library(tidyverse)
+library(ggplot2)
+library(magrittr)
+library(ggthemr)
+library(grid)
+library(gtable)
+library(gridExtra)
+library(wesanderson)
+library(ggsci)
+library(zoo)
+library(kableExtra)
+library(lme4)
+library(RColorBrewer)
+library(doParallel)
+library(parallel)
+library(foreach)
+library(here)
+library(fs)
+library(ggcorrplot)
+library(viridis)
+library(beepr)
+library(stringr)
+library(lmtest)
+
+## hand written functions ##
+source(path(here(), "R", "load_behave_data.R"))
+source(path(here(), "R", "prep_behave_data.R"))
+source(path(here(), "R", "stretch_start_end.R"))
+source(path(here(), "R", "load_tf_wave_data.R"))
+source(path(here(), "R", "load_high_gamma_data.R"))
+source(path(here(), "R", "load_all_freq_data.R"))
+source(path(here(), "R", "rolling_window_and_baseline.R"))
+source(path(here(), "R", "run_permuted_regressions.R"))
+source(path(here(), "R", "compile_results.R"))
+source(path(here(), "R", "run_filtered_anova.R"))
+source(path(here(), "R", "merge_stepped_anova_results.R"))
+source(path(here(), "R", 'mutate_cond.R'))
+
+## plotting helpers ##
+# ggthemr("solarized")
+
+# ## paralellization ##
+# nCores <- 2
+# registerDoParallel(nCores)
+
+```
+
+
+This file is looking for evidence of motor activity during our task, as a sanity check for our preprocessing scripts. I am looking at different methods of standardization, since our first pass did not have much stereotyped activity.
+
+The subject for which we have grid motor electrodes is `CP34`, who responded to the task bilaterally, where the key pressed with the left hand signaled the left option was chosen, and vice versa for the right hand. 
+
+```{r load-elec-locations}
+
+# load data #
+elec_locations <- read.csv(path(here(), "munge", "combined_electrode_info_cleaned.csv"))
+
+# filter and print via kable #
+motor_elecs <- elec_locations %>%
+  filter(subject == "CP34") %>%
+  filter(str_detect(`Loc.Meeting`, "M1|motor|Motor")) %>%
+  select(Electrode, `Loc.Meeting`)
+
+kable(motor_elecs) %>%
+  kable_styling(bootstrap_options = "striped", full_width = F)
+  
+
+```
+
+
+```{r behave-prep}
+
+# path to beahvioral files #
+path_to_raw_behave <- fs::path(here(), "../dg_behave_formatted")
+path_to_behave_munge <- fs::path(here(), "munge", "combined_behavioral_data.csv")
+path_to_behave_clean <- fs::path(here(), "munge", "clean_behavioral_data.csv")
+
+# concactenate behavioral data #
+load_behave_data(path_to_raw_behave)
+
+# prep behavioral data #
+prep_behave_data(path_to_behave_munge)
+
+# load clean data #
+behave_data <- read.csv(path_to_behave_clean)
+
+# filter to current subject #
+behave_data_08 <- behave_data %>% filter(SID == "DG_s08")
+behave_data_11 <- behave_data %>% filter(SID == "DG_s11")
+behave_data_12 <- behave_data %>% filter(SID == "DG_s12")
+behave_data_06 <- behave_data %>% filter(SID == "DG_s06")
+behave_data_13 <- behave_data %>% filter(SID == "DG_s13")
+behave_data_14 <- behave_data %>% filter(SID == "DG_s14")
+
+# table(behave_data$ineq_advent_choice)
+# table(behave_data_08$ineq_disadvent_choice)
+# table(behave_data_11$ineq_disadvent_choice)
+# table(behave_data_12$ineq_disadvent_choice)
+```
+
+```{r load-data-functions}
+
+load_power_data <- function(file_path_to_power_data, file_path_to_electrode_names) {
+  # load data #
+  power_data <- load_high_gamma_data(file_path_to_power_data, file_path_to_electrode_names)
+  elecs_to_use <- motor_elecs
+  
+  # add behavioral data, remove bad trials, remove behavioral data again #
+  power_data <- merge.data.frame(power_data, behave_data_14, by.x = "trial", by.y = "round", all.x = T, all.y = F)
+  power_data <- power_data %>% filter(!is.na(RT)) %>% filter(RT < 2)
+  
+  # filter to motor electrodes #
+  power_data <- power_data %>% filter(grepl(paste(elecs_to_use$Electrode, collapse = "|"), electrodes))
+  
+  # get the baseline #
+  baseline_df <- power_data %>% select(1:200)
+  baseline <- apply(baseline_df, 1, function(x) mean(x, na.rm = T))
+  
+  # subtract baseline #
+  power_data[, grepl("time_", colnames(power_data))] <- apply(power_data[, grepl("time_", colnames(power_data))], 2, function(col) t(as.vector(col - baseline)))
+
+  return(power_data)
+}
+```
+
+```{r plotting-functions}
+
+ggthemr::ggthemr("pale", layout = "plain")
+getPalette = colorRampPalette(brewer.pal(10, "Set1"))
+
+
+hilbert_raw_plots <- function(elec, df) {
+  df %>%
+    filter(electrodes == elec) %>%
+    arrange(desc(RT)) %>%
+    mutate(trial = factor(trial, levels = trial)) %>%
+    gather(key = "time", value = "power", starts_with("time")) %>%
+    mutate(time = (as.numeric(gsub("time_", "", time)) - 200)) %>%
+    ggplot(., aes(x = time, y = trial, color = power, fill = power)) +
+    geom_tile() + 
+    geom_point(aes(y = trial, x = RT*1000), color = "white", size = 1) +
+    geom_vline(xintercept = 0, color = "white") +
+    theme(axis.text.y = element_blank(), axis.ticks.y = element_blank()) +
+    scale_fill_viridis(limits = c(-6, 6), begin = 0, end = 1)   +
+    scale_color_viridis(limits = c(-6, 6), begin = 0, end = 1) +
+    ggtitle(paste0(elec))
+}
+
+hilbert_enevelope_plots <- function(elec, df) {
+df %>%
+    filter(electrodes == elec) %>%
+    gather(key = "time", value = "power", starts_with("time")) %>%
+    group_by(RT) %>%
+    mutate(time = round(((as.numeric(gsub("time_", "", time)) - (RT*1000)) - 200))) %>%
+    ungroup() %>%
+    # mutate(time_factor = as.factor(time)) %>%
+    group_by(time, stand_method) %>%
+    mutate(average_power = mean(power, na.rm = T)) %>%
+    distinct(time, average_power) %>%
+    ggplot(., aes(x = time, y = average_power, color = stand_method)) +
+    geom_line() + 
+    scale_color_manual(values = wes_palette("Darjeeling1")) +
+    ggtitle(paste0(elec))
+}
+
+```
+
+
+
+## Beta Power
+
+First, I am looking within the beta band, `13-30Hz`, calculated with the hilbert method. 
+
+```{r load-raw-beta-hilbert-data}
+
+## zscore each trial ##
+# necessary paths #
+file_path_to_electrode_names <- path(here(), "munge", "savio_cluster", "CP34-1_electrodes_presentation_locked_zscore.csv")
+file_path_to_beta_data <- path(here(), "munge", "savio_cluster", "CP34-1_beta_munge_presentation_locked_zscore.csv")
+# Load it #
+beta_zscore <- load_beta_data(file_path_to_beta_data, file_path_to_electrode_names)
+beta_zscore$stand_method <- "zscore"
+
+
+## zscore over all task ##
+# necessary paths #
+file_path_to_electrode_names <- path(here(), "munge", "savio_cluster", "CP34-1_electrodes_presentation_locked_zscore_over_all.csv")
+file_path_to_beta_data <- path(here(), "munge", "savio_cluster", "CP34-1_beta_munge_presentation_locked_zscore_over_all.csv")
+# Load it #
+beta_zscore_all <- load_beta_data(file_path_to_beta_data, file_path_to_electrode_names)
+beta_zscore_all$stand_method <- "zscore_all"
+
+
+
+## robustScaler each trial ##
+# necessary paths #
+file_path_to_electrode_names <- path(here(), "munge", "savio_cluster", "CP34-1_electrodes_presentation_locked_new.csv")
+file_path_to_beta_data <- path(here(), "munge", "savio_cluster", "CP34-1_beta_munge_presentation_locked_new.csv")
+# Load it #
+beta_rscaler <- load_beta_data(file_path_to_beta_data, file_path_to_electrode_names)
+beta_rscaler$stand_method <- "rscaler"
+
+
+## robustScaler over all task ##
+# necessary paths #
+file_path_to_electrode_names <- path(here(), "munge", "savio_cluster", "CP34-1_electrodes_presentation_locked_rsacler_over_all.csv")
+file_path_to_beta_data <- path(here(), "munge", "savio_cluster", "CP34-1_beta_munge_presentation_locked_rsacler_over_all.csv")
+# Load it #
+beta_rscaler_all <- load_beta_data(file_path_to_beta_data, file_path_to_electrode_names)
+beta_rscaler_all$stand_method <- "rscaler_all"
+
+beta_data <- rbind(beta_zscore, beta_rscaler)
+```
+
+
+### Beta Envelopes
+
+```{r plot-raw-hfa}
+
+beta_list <- as.list(as.character(unique(beta_data$electrodes)))
+
+
+lapply(plot_list, function(x) hilbert_enevelope_plots(x, beta_data))
+
+```
+
+### Raw Beta Data
+
+```{r plot-raw-hfa}
+
+beta_list <- as.list(as.character(unique(beta_data$electrodes)))
+
+lapply(plot_list, function(x) hilbert_raw_plots(x, beta_data))
+
+```
+
+### High Frequency Activity
+
+Next, I looked within the hfa band, `70-150Hz`, calculated with the hilbert method with a multitaper as follows: `[70 90; 80 100; 90 110; 100 120; 110 130; 120 140; 130 150];`
+
+
+```{r load-raw-hfa-hilbert-data}
+
+## zscore each trial ##
+# necessary paths #
+file_path_to_electrode_names <- path(here(), "munge", "savio_cluster", "CP34-1_electrodes_presentation_locked_zscore.csv")
+file_path_to_hfa_data <- path(here(), "munge", "savio_cluster", "CP34-1_hfa_munge_presentation_locked_zscore.csv")
+# Load it #
+hfa_zscore <- load_hfa_data(file_path_to_hfa_data, file_path_to_electrode_names)
+hfa_zscore$stand_method <- "zscore"
+
+
+## zscore over all task ##
+# necessary paths #
+file_path_to_electrode_names <- path(here(), "munge", "savio_cluster", "CP34-1_electrodes_presentation_locked_zscore_over_all.csv")
+file_path_to_hfa_data <- path(here(), "munge", "savio_cluster", "CP34-1_hfa_munge_presentation_locked_zscore_over_all.csv")
+# Load it #
+hfa_zscore_all <- load_hfa_data(file_path_to_hfa_data, file_path_to_electrode_names)
+hfa_zscore_all$stand_method <- "zscore_all"
+
+
+
+## robustScaler each trial ##
+# necessary paths #
+file_path_to_electrode_names <- path(here(), "munge", "savio_cluster", "CP34-1_electrodes_presentation_locked_new.csv")
+file_path_to_hfa_data <- path(here(), "munge", "savio_cluster", "CP34-1_hfa_munge_presentation_locked_new.csv")
+# Load it #
+hfa_rscaler <- load_hfa_data(file_path_to_hfa_data, file_path_to_electrode_names)
+hfa_rscaler$stand_method <- "rscaler"
+
+
+## robustScaler over all task ##
+# necessary paths #
+file_path_to_electrode_names <- path(here(), "munge", "savio_cluster", "CP34-1_electrodes_presentation_locked_rsacler_over_all.csv")
+file_path_to_hfa_data <- path(here(), "munge", "savio_cluster", "CP34-1_hfa_munge_presentation_locked_rsacler_over_all.csv")
+# Load it #
+hfa_rscaler_all <- load_hfa_data(file_path_to_hfa_data, file_path_to_electrode_names)
+hfa_rscaler_all$stand_method <- "rscaler_all"
+
+hfa_data <- rbind(hfa_zscore, hfa_rscaler)
+```
+
+
+###  HFA Envelopes
+```{r plot-raw-hfa}
+
+hfa_list <- as.list(as.character(unique(hg_data$electrodes)))
+
+lapply(plot_list, function(x) hilbert_raw_plots(x, hg_data))
+
+```
+
+
+
+### Raw HFA Data
+```{r plot-raw-hfa}
+
+hfa_list <- as.list(as.character(unique(hg_data$electrodes)))
+
+lapply(plot_list, function(x) hilbert_raw_plots(x, hg_data))
+
+```
+
+*Raw Hilbert HFA Activity - split by side chosen*
+
+This is the same data as the foru plots above, but split by side chosen. It is a little difficult to see, but I don't think there is any striking difference between the two.
+
+
+```{r plot-raw-hilbert-data-split}
+
+left_right_raw_plots <- function(elec, df) {
+  df %>%
+    filter(electrodes == elec) %>%
+    arrange(desc(RT)) %>%
+    mutate(trial = factor(trial, levels = trial)) %>%
+    gather(key = "time", value = "power", starts_with("time")) %>%
+    mutate(time = (as.numeric(gsub("time_", "", time)) - 200)) %>%
+    ggplot(., aes(x = time, y = trial, color = power, fill = power)) +
+    geom_tile() + 
+    geom_point(aes(y = trial, x = RT*1000), color = "black", size = 1) +
+    geom_vline(xintercept = 0, color = "white") +
+    theme_bw() +
+    theme(axis.text.y = element_blank(), axis.ticks.y = element_blank(), 
+          strip.background = element_rect(fill = "white", color = "black")) + 
+    theme(panel.border = element_rect(colour = "black"), panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) +
+    scale_fill_viridis(limits = c(-3, 3), begin = 0, end = 1)   +
+    scale_color_viridis(limits = c(-3, 3), begin = 0, end = 1) +
+    facet_wrap(~side_chosen) +
+    ggtitle(paste0(elec))
+}
+
+# lapply(plot_list, function(x) left_right_raw_plots(x, beta_data))
+
+
+# lapply(plot_list, function(x) left_right_raw_plots(x, hg_data))
+
+```

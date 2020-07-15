@@ -57,7 +57,7 @@ Subjects: IR9  IR10  IR14  IR16  IR17  IR19  IR26  IR28  IR35  IR39  IR57 ST40 G
 # Waiting List
 
 * GP51 -- missing behavioral and scans?
-* CP34 -- waiting on scans
+* CP34 -- Aquired!
 * DA7  -- waiting on scans
 
 # Exlude list
@@ -129,11 +129,19 @@ st40_notes$`Out of Brain` <- 0
 st40_notes$Epileptic <- 0
 st40_notes$subject <- "ST40"
 
+# CP34 #
+cp34_notes <- readxl::read_xlsx(path(here(), "munge", "CP34_Elec_Notes.xlsx"))
+cp34_notes$`Loc Meeting` <- cp34_notes$AAL # using AAL since it is a grid case
+cp34_notes$Discard <- 0
+cp34_notes$`Out of Brain` <- 0
+cp34_notes$Epileptic <- 0
+cp34_notes$subject <- "CP34"
+
 # GP51 #
 ## missing data ##
 
 # merge other data centers #
-elec_notes <- bind_rows(elec_notes, st40_notes)
+elec_notes <- bind_rows(elec_notes, st40_notes, cp34_notes)
 
 # save to munge file #
 write.csv(elec_notes, path(here(), "munge", "combined_electrode_info.csv"))
