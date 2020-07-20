@@ -20,7 +20,7 @@ knitr::opts_chunk$set(
 library(tidyverse)
 library(ggplot2)
 library(magrittr)
-# library(ggthemr)
+library(ggthemr)
 library(grid)
 library(gtable)
 library(gridExtra)
@@ -53,9 +53,9 @@ source(path(here(), "R", "merge_stepped_anova_results.R"))
 source(path(here(), "R", 'mutate_cond.R'))
 
 ## plotting helpers ##
-# ggthemr("solarized")
+ggthemr("solarized")
 
-## paralellization ##
+## parallelization ##
 nCores <- 2
 registerDoParallel(nCores)
 
@@ -73,7 +73,7 @@ Load and prep presentation-locked results for all subjects.
 
 ### any subject general vars ###
 spec_vars <- c("*", "*")
-abs_beta_val <- T
+abs_beta_val <- F
 reg_name_one <- "self_diff"
 reg_name_two <- "other_diff"
 regions_to_combine <- c("Insula")
@@ -136,11 +136,18 @@ presentation_results_35 <- compile_results(regions = regions_to_combine,
 ## IR19 ##
 
 # combine different csvs #
-presentation_results_19 <- compile_results(regions = regions_to_combine, 
-                                           type = "pres-locked", 
+theta_presentation_results_19 <- compile_results(regions = regions_to_combine, 
+                                           type = "theta-pres-locked-wavelets", 
                                            sub = "IR19", 
                                            spec_vars = spec_vars, 
-                                           path = path(here(), "results", "IR19", "insula"), 
+                                           path = path(here(), "results", "IR19", "hilbert", "savio"), 
+                                           absBeta = abs_beta_val)
+
+hfa_presentation_results_19 <- compile_results(regions = regions_to_combine, 
+                                           type = "hfa-pres-locked-wavelets", 
+                                           sub = "IR19", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR19", "hilbert", "savio"), 
                                            absBeta = abs_beta_val)
 
 # # runa anova for inequity results #
@@ -379,106 +386,6 @@ choice_results_57 <- compile_results(regions = regions_to_combine,
 
 ```
 
-## Load Time- Warped
-
-Load and prep presentation-locked results for all subjects.
-
-```{r concatenate-results-time-warp}
-
-### any subject general vars ###
-spec_vars <- c("*", "*")
-abs_beta_val <- T
-reg_name_one <- "self_diff"
-reg_name_two <- "other_diff"
-regions_to_combine <- c("Insula")
-  
-## IR39 ##
-
-# combine different csvs #
-warped_results_39 <- compile_results(regions = regions_to_combine,
-                                           type = "time-warped",
-                                           sub = "IR39",
-                                           spec_vars = spec_vars,
-                                           path = path(here(), "results", "IR39", "insula"),
-                                           absBeta = abs_beta_val)
-
-warped_results_39 <- warped_results_39 %>% filter(electrode %in% insula_electrodes)
-
-# runa anova for inequity results #
-path_hg_clean <- path(here(), "munge", "IR39", "hg_behave_presentation_locked_extended_150_insula.csv")
-hg_behave <-  read.csv(path_hg_clean)
-run_filtered_anova(results = presentation_results_39,
-                   brain_behave_data = hg_behave,
-                   sub = "IR39",
-                   region_name = "All",
-                   reg_name_one = reg_name_one,
-                   reg_name_two = reg_name_two,
-                   all_results = T,
-                   type = "time-warped_insula")
-
-# read back in the results #
-region_name <- "All"
-adv_pres_results_for_plots_39 <- read.csv(fs::path(here(), "results", "IR39", paste0(region_name, "_time-warped_insula_anova_results_", reg_name_one, ".csv")))
-dis_pres_results_for_plots_39 <- read.csv(fs::path(here(), "results", "IR39", paste0(region_name, "_time-warped_insula_anova_results_", reg_name_two, ".csv")))
-
-
-## IR35 ##
-
-# combine different csvs #
-presentation_results_35 <- compile_results(regions = regions_to_combine, 
-                                           type = "pres-locked", 
-                                           sub = "IR35", 
-                                           spec_vars = spec_vars, 
-                                           path = path(here(), "results", "IR35", "insula"), 
-                                           absBeta = abs_beta_val)
-
-# runa anova for inequity results #
-path_hg_clean <- path(here(), "munge", "IR35", "hg_behave_presentation_locked_extended_150_insula.csv")
-hg_behave <-  read.csv(path_hg_clean)
-run_filtered_anova(results = presentation_results_35, 
-                   brain_behave_data = hg_behave, 
-                   sub = "IR35", 
-                   region_name = "All", 
-                   all_results = T, 
-                   reg_name_one = reg_name_one, 
-                   reg_name_two = reg_name_two,                    
-                   type = "pres-locked_insula")
-
-# read back in the results #
-region_name <- "All"
-adv_pres_results_for_plots_35 <- read.csv(fs::path(here(), "results", "IR35", paste0(region_name, "_pres-locked_insula_anova_results_", reg_name_one, ".csv")))
-dis_pres_results_for_plots_35 <- read.csv(fs::path(here(), "results", "IR35", paste0(region_name, "_pres-locked_insula_anova_results_", reg_name_two, ".csv")))
-
-## IR19 ##
-
-# combine different csvs #
-presentation_results_19 <- compile_results(regions = regions_to_combine, 
-                                           type = "pres-locked", 
-                                           sub = "IR19", 
-                                           spec_vars = spec_vars, 
-                                           path = path(here(), "results", "IR19", "insula"), 
-                                           absBeta = abs_beta_val)
-
-# runa anova for inequity results #
-path_hg_clean <- path(here(), "munge", "IR19", "hg_behave_presentation_locked_extended_150_insula.csv")
-hg_behave <-  read.csv(path_hg_clean)
-hg_behave <- hg_behave %>% mutate(electrodes = gsub("POL ", "", electrodes)) # IR19 has weird elec names
-run_filtered_anova(results = presentation_results_19, 
-                   brain_behave_data = hg_behave, 
-                   sub = "IR19", 
-                   region_name = "All", 
-                   reg_name_one = reg_name_one, 
-                   reg_name_two = reg_name_two,                    
-                   all_results = T, 
-                   type = "pres-locked_insula")
-
-# read back in the results #
-region_name <- "All"
-adv_pres_results_for_plots_19 <- read.csv(fs::path(here(), "results", "IR19", paste0(region_name, "_pres-locked_insula_anova_results_", reg_name_one, ".csv")))
-dis_pres_results_for_plots_19 <- read.csv(fs::path(here(), "results", "IR19", paste0(region_name, "_pres-locked_insula_anova_results_", reg_name_two, ".csv")))
-
-```
-
 
 ## plotting functions
 
@@ -705,9 +612,44 @@ beta_plots_all_subjects_choice <- function(df, sig_thresh, nrows, subject, vars 
 
 ```{r presentation-results}
 
+presentation_results_19 <- presentation_results_19 %>%
+  mutate(electrode = gsub("POL ", "", electrode)) %>%
+  mutate(electrode = gsub(" POL", "", electrode)) %>%
+  mutate(electrode = gsub("-Ref", "", electrode)) %>%
+  mutate(electrode = gsub("-Ref-", "-", electrode)) 
+
+hfa_presentation_results_19 <- hfa_presentation_results_19 %>%
+  mutate(electrode = gsub("POL ", "", electrode)) %>%
+  mutate(electrode = gsub(" POL", "", electrode)) %>%
+  mutate(electrode = gsub("-Ref", "", electrode)) %>%
+  mutate(electrode = gsub("-Ref-", "-", electrode)) 
+
 ## exclude mistaken regions!! ###
 presentation_results_35 <- presentation_results_35 %>% filter(electrode != "LAC10-LAC11" & electrode != "LAC9-LAC10" & electrode != "LIN9-LIN10")
 presentation_results_19 <- presentation_results_19 %>% filter(electrode != "LIN10-Ref-LIN11-Ref" & electrode != "LIN12-Ref-LIN13-Ref" & electrode != "LIN11-Ref-LIN12-Ref" & electrode != "LIN9-Ref-LIN10-Ref" & electrode != "RIN10-Ref-RIN11-Ref" & electrode != "RIN11-Ref-RIN12-Ref" & electrode != "RIN12-Ref-RIN13-Ref" & electrode != "RIN9-Ref-RIN10-Ref")
+
+hfa_presentation_results_19 <- hfa_presentation_results_19 %>% filter(electrode != "LIN10-Ref-LIN11-Ref" & electrode != "LIN12-Ref-LIN13-Ref" & electrode != "LIN11-Ref-LIN12-Ref" & electrode != "LIN9-Ref-LIN10-Ref" & electrode != "RIN10-Ref-RIN11-Ref" & electrode != "RIN11-Ref-RIN12-Ref" & electrode != "RIN12-Ref-RIN13-Ref" & electrode != "RIN9-Ref-RIN10-Ref")
+
+
+
+l_19 <- presentation_results_19 %>% filter(grepl("^L", electrode))
+r_19 <- presentation_results_19 %>% filter(grepl("^R", electrode))
+
+combined_active_plots(l_19, "IR19 ~ Presentation ~ Left", 3, sig_thresh = 0.005)
+combined_active_plots(r_19, "IR19 ~ Presentation ~ Right", 3, sig_thresh = 0.005)
+
+combined_active_plots(presentation_results_19, "IR19 ~ Presentation ~ theta", 3, sig_thresh = 0.005)
+
+hfa_presentation_results_19 <- hfa_presentation_results_19 %>%
+  filter(predictor %in% c("self_foregone", "other_foregone", "self_payoff", "other_payoff"))
+
+combined_active_plots(hfa_presentation_results_19, "IR19 ~ Presentation ~ hfa", 3, sig_thresh = 0.005)
+
+```
+
+
+```{r }
+  
 
 plot_39_005 <- combined_active_plots(presentation_results_39, "IR39 ~ Presentation", 2, sig_thresh = 0.005)
 plot_35_005 <- combined_active_plots(presentation_results_35, "IR35 ~ Presentation", 2, sig_thresh = 0.005)
@@ -846,7 +788,7 @@ presentation_results_full <- rbind(presentation_results_19_with_elec_info,
                                    presentation_results_16_with_elec_info)
 
 
-beta_plots_all_subjects(presentation_results_full, 
+beta_plots_all_subjects(presentation_results_19, 
                                sig_thresh = 0.01, 
                                6, 
                                "Presentation ~ All Subjects", 
@@ -1050,14 +992,14 @@ choice_results_full <- rbind(choice_results_19_with_elec_info,
 left_39 <- choice_results_39_all %>% filter(grepl("^L", electrode))
 right_39 <- choice_results_39_all %>% filter(grepl("^R", electrode))
 
-left_19 <- choice_results_19_all %>%
+left_19 <- presentation_results_19 %>%
   mutate(electrode = gsub("POL ", "", electrode)) %>%
   mutate(electrode = gsub(" POL", "", electrode)) %>%
   mutate(electrode = gsub("-Ref", "", electrode)) %>%
   mutate(electrode = gsub("-Ref-", "-", electrode)) %>% 
   filter(grepl("^L", electrode))
 
-right_19 <- choice_results_19_all %>%
+right_19 <- presentation_results_19 %>%
   mutate(electrode = gsub("POL ", "", electrode)) %>%
   mutate(electrode = gsub(" POL", "", electrode)) %>%
   mutate(electrode = gsub("-Ref", "", electrode)) %>%
@@ -1070,7 +1012,7 @@ right_35 <- choice_results_35_all %>% filter(grepl("^R", electrode))
 beta_plots_all_subjects_choice(left_39, 
                                sig_thresh = 0.01, 
                                6, 
-                               "Choice ~ Left ~ IR39",
+                               "Presentation ~ Left ~ IR39",
                                vars = c("self_payoff", "self_foregone", "other_payoff", "other_foregone", "ineq_advent", "ineq_disadvent"))
 
 beta_plots_all_subjects_choice(right_39, 
@@ -1079,16 +1021,16 @@ beta_plots_all_subjects_choice(right_39,
                                "Choice ~ Right ~ IR39",
                                vars = c("self_payoff", "self_foregone", "other_payoff", "other_foregone", "ineq_advent", "ineq_disadvent"))
 
-beta_plots_all_subjects_choice(left_19, 
+beta_plots_all_subjects(left_19, 
                                sig_thresh = 0.01, 
                                6, 
-                               "Choice ~ Left ~ IR19",
+                               "Presentation ~ Left ~ IR19",
                                vars = c("self_payoff", "self_foregone", "other_payoff", "other_foregone", "ineq_advent", "ineq_disadvent"))
 
-beta_plots_all_subjects_choice(right_19, 
+beta_plots_all_subjects(right_19, 
                                sig_thresh = 0.01, 
                                6, 
-                               "Choice ~ Right ~ IR19",
+                               "Presentation ~ Right ~ IR19",
                                vars = c("self_payoff", "self_foregone", "other_payoff", "other_foregone", "ineq_advent", "ineq_disadvent"))
 
 beta_plots_all_subjects_choice(left_35, 
