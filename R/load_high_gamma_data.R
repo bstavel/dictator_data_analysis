@@ -5,8 +5,8 @@ load_high_gamma_data <- function(file_path_to_hg_data, file_path_to_electrode_na
   index2 <- colnames(hg_data)[ncol(hg_data)]
   index1 <- colnames(hg_data)[ncol(hg_data)-1]
   hg_data <- hg_data %>%
-    rename(index = index1) %>%
-    rename(trial = index2)
+    rename(index = all_of(index1)) %>%
+    rename(trial = all_of(index2))
   
   colnames(hg_data) <- gsub("^V", "time_", colnames(hg_data))
   
