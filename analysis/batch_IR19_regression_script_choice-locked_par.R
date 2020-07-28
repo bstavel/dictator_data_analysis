@@ -50,7 +50,7 @@ brain_behave_data <- power_behave %>%
   filter(grepl(paste(all_elecs$Electrode, collapse = "|"), electrodes))
 all_electrodes <- unique(brain_behave_data$electrodes)
 # bin names #
-nBins <- colnames(power_behave %>% select(starts_with("bin_")))
+nBins <- colnames(hg_behave %>% select(starts_with("pre_"), starts_with("post_")))
 
 ## run regressions ##
 
