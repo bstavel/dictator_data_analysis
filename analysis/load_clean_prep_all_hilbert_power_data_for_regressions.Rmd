@@ -420,39 +420,63 @@ beep(2)
 
 ```{r load-hg-data-choice-locked-35}
 
-# necessary paths #
-file_path_to_electrode_names <- path(here(), "munge", "IR35_electrodes_choice_locked_cut_fixation.csv")
-file_path_to_hg_data <- path(here(), "munge", "IR35_hg_munge_choice_locked_cut_fixation.csv")
-file_path_to_elecs_of_interest <- path(here(), "munge", "IR35_elecs_of_interest.csv")
-file_path_to_baseline <- path(here(), "munge", "baseline_IR35.csv")
+### IR35 ~ CHOICE ###
 
-# load data #
-hg_data <- load_high_gamma_data(file_path_to_hg_data, file_path_to_electrode_names)
-elecs_to_use <- read.csv(file_path_to_elecs_of_interest)
+## function to filter to ROI, baseline, compress, and c=merge within behvaioral data ##
+load_IR35_choice_data <- function(file_path_to_power_data, clean_name) {
+    
+    # necessary paths #
+    file_path_to_electrode_names <- path(here(), "munge", "savio_cluster", "IR35_electrodes_choice_locked_rscaler_2575.csv")
+    file_path_to_elecs_of_interest <- path(here(), "munge", "IR35_elecs_of_interest.csv")
+    file_path_to_baseline <- path(here(), "munge", "baseline_IR35.csv")
+    
+    # load data #
+    hg_data <- load_high_gamma_data(file_path_to_power_data, file_path_to_electrode_names)
+    elecs_to_use <- read.csv(file_path_to_elecs_of_interest)
+    
+    # filter to good electrodes #
+    hg_data <- hg_data %>% filter(grepl(paste(elecs_to_use$Electrode, collapse = "|"), electrodes))
+    
+    # save baseline #
+    baseline_data <- hg_data[, 1:200]
+    baseline_data <- cbind(baseline_data, hg_data$electrodes, hg_data$trial)
+    
+    # average and baseline #
+    hg_clean <- rolling_window_and_baseline(hg_data, baseline_csv = file_path_to_baseline, lWin = 150, lOver = 50, choice_locked = T)
+    
+    # with behavior #
+    hg_behave <- merge.data.frame(hg_clean, behave_data_11, by.x = "trial", by.y = "round", all.x = T, all.y = F)
+    # clean any missing RTs #
+    hg_behave <- hg_behave %>% filter(!is.na(RT))
+    # save it #
+    write.csv(hg_behave, clean_name)
+}
 
-# filter to good electrodes #
-hg_data <- hg_data %>% filter(grepl(paste(elecs_to_use$Electrode, collapse = "|"), electrodes))
+# delta #
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR35_delta_munge_choice_locked_rscaler_2575.csv")
+clean_name <- path(here(), "munge", "IR35", "delta_behave_choice_rscaler_2575_150.csv")
+load_IR35_choice_data(file_path_to_power_data, clean_name)
+# theta #
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR35_theta_munge_choice_locked_rscaler_2575.csv")
+clean_name <- path(here(), "munge", "IR35", "theta_behave_choice_rscaler_2575_150.csv")
+load_IR35_choice_data(file_path_to_power_data, clean_name)
+# alpha #
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR35_alpha_munge_choice_locked_rscaler_2575.csv")
+clean_name <- path(here(), "munge", "IR35", "alpha_behave_choice_rscaler_2575_150.csv")
+load_IR35_choice_data(file_path_to_power_data, clean_name)
+# beta #
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR35_beta_munge_choice_locked_rscaler_2575.csv")
+clean_name <- path(here(), "munge", "IR35", "beta_behave_choice_rscaler_2575_150.csv")
+load_IR35_choice_data(file_path_to_power_data, clean_name)
+# gamma #
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR35_gamma_munge_choice_locked_rscaler_2575.csv")
+clean_name <- path(here(), "munge", "IR35", "gamma_behave_choice_rscaler_2575_150.csv")
+load_IR35_choice_data(file_path_to_power_data, clean_name)
+# hfa #
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR35_hfa_munge_choice_locked_rscaler_2575.csv")
+clean_name <- path(here(), "munge", "IR35", "hfa_behave_choice_rscaler_2575_150.csv")
+load_IR35_choice_data(file_path_to_power_data, clean_name)
 
-# save baseline #
-baseline_data <- hg_data[, 1:200]
-baseline_data <- cbind(baseline_data, hg_data$electrodes, hg_data$trial)
-
-# average and baseline #
-hg_clean <- rolling_window_and_baseline(hg_data, baseline_csv = file_path_to_baseline, lWin = 150, lOver = 50, choice_locked = T)
-
-# create temp data for visualiztion #
-half_index <- sample(1:228, 114)
-hg_eda <- hg_clean %>% filter(trial %in% half_index)
-
-# modify norm behavior #
-# behave_data_11 <- behave_data_11 %>%
-#   mutate(norm_deviance = if_else( (chose_equality == "Advent") | (chose_equality == "Equal") |(chose_equality == "10-10" & self_foregone <= 10) , 0, 1))
-# with behavior #
-hg_behave <- merge.data.frame(hg_clean, behave_data_11, by.x = "trial", by.y = "round", all.x = T, all.y = F)
-# clean any missing RTs #
-hg_behave <- hg_behave %>% filter(!is.na(RT))
-# save it #
-write.csv(hg_behave, path(here(), "munge", "IR35", "hg_behave_choice_locked_cut_fixation_150.csv"))
 
 beep(2)
 ```
@@ -593,103 +617,63 @@ beep(2)
 
 ```{r load-hg-data-choice-locked-57}
 
-# necessary paths #
-file_path_to_electrode_names <- path(here(), "munge", "IR57_electrodes_choice_locked_cut_fixation.csv")
-file_path_to_hg_data <- path(here(), "munge", "IR57_hg_munge_choice_locked_cut_fixation.csv")
-file_path_to_elecs_of_interest <- path(here(), "munge", "IR57_elecs_of_interest.csv")
-file_path_to_baseline <- path(here(), "munge", "baseline_IR57.csv")
+### IR57 ~ CHOICE ###
 
-# load data #
-hg_data <- load_high_gamma_data(file_path_to_hg_data, file_path_to_electrode_names)
-elecs_to_use <- read.csv(file_path_to_elecs_of_interest)
+## function to filter to ROI, baseline, compress, and c=merge within behvaioral data ##
+load_IR57_choice_data <- function(file_path_to_power_data, clean_name) {
+    
+    # necessary paths #
+    file_path_to_electrode_names <- path(here(), "munge", "savio_cluster", "IR57_electrodes_choice_locked_rscaler_2575.csv")
+    file_path_to_elecs_of_interest <- path(here(), "munge", "IR57_elecs_of_interest.csv")
+    file_path_to_baseline <- path(here(), "munge", "baseline_IR57.csv")
+    
+    # load data #
+    hg_data <- load_high_gamma_data(file_path_to_power_data, file_path_to_electrode_names)
+    elecs_to_use <- read.csv(file_path_to_elecs_of_interest)
+    
+    # filter to good electrodes #
+    hg_data <- hg_data %>% filter(grepl(paste(elecs_to_use$Electrode, collapse = "|"), electrodes))
+    
+    # add behavioral data, remove bad trials, remove behavioral data again #
+    hg_data <- merge.data.frame(hg_data, behave_data_08, by.x = "trial", by.y = "round", all.x = T, all.y = F)
+    hg_data <- hg_data %>% filter(!is.na(RT)) %>% select(trial, electrodes, starts_with("time"))
+    hg_data <- hg_data %>% filter(trial != 105) # not in baseline data for some reason
 
-# filter to good electrodes #
-hg_data <- hg_data %>% filter(grepl(paste(elecs_to_use$Electrode, collapse = "|"), electrodes))
-
-# Exclude trials  due to misalignment with baseline #
-hg_data  <- hg_data %>% filter(trial != 105)
-
-# average and baseline #
-hg_clean <- rolling_window_and_baseline(hg_data, baseline_csv = file_path_to_baseline, lWin = 150, lOver = 50, choice_locked = T)
-
-# create temp data for visualiztion #
-half_index <- sample(1:228, 114)
-hg_eda <- hg_clean %>% filter(trial %in% half_index)
-
-
-# with behavior #
-hg_behave <- merge.data.frame(hg_clean, behave_data_13, by.x = "trial", by.y = "round", all.x = T, all.y = F)
-# clean any missing RTs #
-hg_behave <- hg_behave %>% filter(!is.na(RT))
-# save it #
-write.csv(hg_behave, path(here(), "munge", "IR57", "hg_behave_choice_locked_cut_fixation_150.csv"))
-
-beep(2)
-```
-
-# Time Warping 
-
-```{r look-at-other-bins}
-
-beep_on_error({
-  
-hg_behave <- merge.data.frame(hg_data, behave_data_11, by.x = "trial", by.y = "round", all.x = T, all.y = F)
-hg_behave <- hg_behave %>% select(starts_with("time"), RT, trial, electrodes)
-
-
-hg_behave_trial_parts <- hg_behave %>%
-  gather(key = "time", value = "gamma", -RT, -trial, -electrodes) %>%
-  mutate(time = as.numeric(gsub("time_", "", time))) %>%
-  group_by(trial) %>%
-  mutate(RT_cut = if_else(time < 200, "baseline", if_else(time < ( (RT*1000) + 200), "during", "post")))
-
-baseline_averaged <- hg_behave_trial_parts %>%
-  filter(RT_cut == "baseline") %>%
-  group_by(trial, electrodes) %>%
-  summarise_at(vars(gamma), mean) %>%
-  mutate(averaging_groups = 0)
-         
-averaged_trial_parts <- hg_behave_trial_parts %>%
-  filter(RT_cut == "during") %>%
-  mutate(length_of_bins = ceiling((RT*1000)/15)) %>% # must be ceiling for RTs < 1s
-  group_by(trial, electrodes) %>%
-  mutate(averaging_groups_size  = n()) %>%
-  mutate(averaging_groups = as.numeric(sapply(1:15, function(x) 
-                                      rep(x, unique(length_of_bins))))[1:unique(averaging_groups_size)]) %>%
-  group_by(trial, electrodes, averaging_groups) %>%
-  summarise_at(vars(gamma), mean) 
-
-
-ten_bin_data <- rbind(baseline_averaged, averaged_trial_parts)
-
-# remove extra information #
-cleaned_data <- ten_bin_data %>%
-  select(-RT, -time, -RT_cut, -gamma) %>%
-  rename(bins = averaging_groups) %>%
-  mutate(bins = paste0("bin_", bins)) %>%
-  pivot_wider(id_cols = c(electrodes, trial), names_from = bins, values_from = mean_gamma, values_fn = list(breaks = unique(.)))
-
-}, "shotgun")
-beep(2)
-
-for(elec in unique(ten_bin_data$electrodes)){
-  plot <- ten_bin_data %>%
-    filter(electrodes == elec) %>%
-    ggplot(., aes(x= averaging_groups, y = trial, fill = mean_gamma)) +
-    geom_tile() + 
-    scale_fill_viridis(limits = c(-.5, 1), begin = 0, end = 1) +
-    ggtitle(elec)
-  
-    ggsave(filename = path(here(), 'figures', 'IR35', 'insula', 'PRESENTATION', 'ten_bins', paste0(elec, ".png")),
-     device = "png",
-     width = 10,
-     height = 10,
-     units = "cm",
-     dpi = 200,
-     plot =  print(plot(plot)) ) 
-  
-  
+    # average and baseline #
+    hg_clean <- rolling_window_and_baseline(hg_data, baseline_csv = file_path_to_baseline, lWin = 150, lOver = 50, choice_locked = T)
+    
+    # with behavior #
+    hg_behave <- merge.data.frame(hg_clean, behave_data_13, by.x = "trial", by.y = "round", all.x = T, all.y = F)
+    # clean any missing RTs #
+    hg_behave <- hg_behave %>% filter(!is.na(RT))
+    # save it #
+    write.csv(hg_behave, clean_name)
 }
 
+# delta #
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR57_delta_munge_choice_locked_rscaler_2575.csv")
+clean_name <- path(here(), "munge", "IR57", "delta_behave_choice_rscaler_2575_150.csv")
+load_IR57_choice_data(file_path_to_power_data, clean_name)
+# theta #
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR57_theta_munge_choice_locked_rscaler_2575.csv")
+clean_name <- path(here(), "munge", "IR57", "theta_behave_choice_rscaler_2575_150.csv")
+load_IR57_choice_data(file_path_to_power_data, clean_name)
+# alpha #
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR57_alpha_munge_choice_locked_rscaler_2575.csv")
+clean_name <- path(here(), "munge", "IR57", "alpha_behave_choice_rscaler_2575_150.csv")
+load_IR57_choice_data(file_path_to_power_data, clean_name)
+# beta #
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR57_beta_munge_choice_locked_rscaler_2575.csv")
+clean_name <- path(here(), "munge", "IR57", "beta_behave_choice_rscaler_2575_150.csv")
+load_IR57_choice_data(file_path_to_power_data, clean_name)
+# gamma #
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR57_gamma_munge_choice_locked_rscaler_2575.csv")
+clean_name <- path(here(), "munge", "IR57", "gamma_behave_choice_rscaler_2575_150.csv")
+load_IR57_choice_data(file_path_to_power_data, clean_name)
+# hfa #
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR57_hfa_munge_choice_locked_rscaler_2575.csv")
+clean_name <- path(here(), "munge", "IR57", "hfa_behave_choice_rscaler_2575_150.csv")
+load_IR57_choice_data(file_path_to_power_data, clean_name)
 
+beep(2)
 ```

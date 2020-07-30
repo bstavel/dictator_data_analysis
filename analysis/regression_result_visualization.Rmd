@@ -243,6 +243,18 @@ theta_presentation_results_57 <- compile_results(regions = regions_to_combine,
 
 ```
 
+```{r test-fstat-values}
+
+all_pres_regressions <- rbind(hfa_presentation_results_35, hfa_presentation_results_57, hfa_presentation_results_19, theta_presentation_results_57, theta_presentation_results_35, theta_choice_results_19)
+
+test <- all_pres_regressions %>%
+  filter(fstretch < 7) %>%
+ggplot(., aes(x = perm_p)) +
+  geom_histogram(binwidth = .05) +
+  geom_vline(xintercept = .05)
+  
+
+```
 
 ## Load Choice
 
@@ -255,7 +267,7 @@ spec_vars <- c("*", "*")
 abs_beta_val <- F
 reg_name_one <- "self_diff"
 reg_name_two <- "other_diff"
-regions_to_combine <- c("All_Regions")
+regions_to_combine <- c("All")
   
 ## IR39 ##
 
@@ -316,13 +328,12 @@ choice_results_35_all <- compile_results(regions = regions_to_combine,
 ## IR19 ##
 
 # combine different csvs #
-regions_to_combine <- c("All_Regions")
-choice_results_19_all <- compile_results(regions = regions_to_combine, 
-                                     type = "choice-locked", 
-                                     sub = "IR19", 
-                                     spec_vars = spec_vars, 
-                                     path = path(here(), "results", "IR19"), 
-                                     absBeta = F)
+theta_choice_results_19 <- compile_results(regions = regions_to_combine, 
+                                           type = "theta-choice-locked-hilbertRS", 
+                                           sub = "IR19", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR19", "all", "choice"), 
+                                           absBeta = abs_beta_val)
 
 # # runa anova for inequity results #
 # path_hg_clean <- path(here(), "munge", "IR19", "hg_behave_choice_locked_cut_fixation_150_insula.csv")
@@ -600,7 +611,7 @@ beta_plots_all_subjects <- function(df, subject, sig_thresh, nrows, vars = c("se
     ggtitle(paste0(subject, " ~ thresh @ ", sig_thresh))
 }
 
-beta_plots_all_subjects_choice <- function(df, sig_thresh, nrows, subject, vars = c("self_payoff", "self_foregone", "other_payoff", "other_foregone")){
+beta_plots_all_subjects_choice <- function(df, subject, sig_thresh, nrows, vars = c("self_payoff", "self_foregone", "other_payoff", "other_foregone")){
   df %>%
     filter(predictor %in% vars) %>%
     mutate(bin_sig = if_else((p < .05 & perm_p < sig_thresh), 1, 0)) %>%
@@ -613,14 +624,15 @@ beta_plots_all_subjects_choice <- function(df, sig_thresh, nrows, subject, vars 
     geom_line(color = "grey", alpha = .3) +
     geom_point(aes(color = predictor_sig)) + 
     geom_vline(xintercept = 0, color = "black") +
+    geom_vline(xintercept = 20, color = "black") +
     theme(axis.text.x = element_text(angle = 90),
           # axis.ticks.x = element_blank(),
           panel.background = element_rect(fill = "white")) +
       scale_fill_manual(values = c("grey", getPalette(9)), drop = F) +
       scale_color_manual(values = c("grey", getPalette(9)), drop = F) +
       labs(y = "Beta", x = "Bins",  color = "Regressor") +
-    facet_wrap(~electrode, nrow = nrows) +
-    ggtitle(paste0(subject))
+    facet_wrap(~ROI, nrow = nrows) +
+    ggtitle(paste0(subject, " ~ thresh @ ", sig_thresh))
 }
 ```
 
@@ -741,6 +753,54 @@ beta_plots_all_subjects(left_theta_presentation_cleaned_results_19, "IR19 ~ Left
 beta_plots_all_subjects(right_theta_presentation_cleaned_results_19, "IR19 ~ Right ~ Theta ~ Pres", 8, sig_thresh = 0.01)
 
 ```
+
+
+```{r clean-choice}
+
+### clean data ###
+theta_choice_cleaned_results_19 <- merge_with_elec_info(theta_choice_results_19, localizations_19)
+hfa_choice_cleaned_results_19 <- merge_with_elec_info(hfa_choice_results_19, localizations_19)
+
+theta_choice_cleaned_results_35 <- merge_with_elec_info(theta_choice_results_35, localizations_35)
+hfa_choice_cleaned_results_35 <- merge_with_elec_info(hfa_choice_results_35, localizations_35)
+
+theta_choice_cleaned_results_57 <- merge_with_elec_info(theta_choice_results_57, localizations_57)
+hfa_choice_cleaned_results_57 <- merge_with_elec_info(hfa_choice_results_57, localizations_57)
+
+## split left and right for plotting ##
+left_theta_choice_cleaned_results_19 <- theta_choice_cleaned_results_19 %>% filter(grepl("^L", electrode))
+right_theta_choice_cleaned_results_19 <- theta_choice_cleaned_results_19 %>% filter(grepl("^R", electrode))
+
+left_hfa_choice_cleaned_results_19 <- hfa_choice_cleaned_results_19 %>% filter(grepl("^L", electrode))
+right_hfa_choice_cleaned_results_19 <- hfa_choice_cleaned_results_19 %>% filter(grepl("^R", electrode))
+
+left_theta_choice_cleaned_results_35 <- theta_choice_cleaned_results_35 %>% filter(grepl("^L", electrode))
+right_theta_choice_cleaned_results_35 <- theta_choice_cleaned_results_35 %>% filter(grepl("^R", electrode))
+
+left_hfa_choice_cleaned_results_35 <- hfa_choice_cleaned_results_35 %>% filter(grepl("^L", electrode))
+right_hfa_choice_cleaned_results_35 <- hfa_choice_cleaned_results_35 %>% filter(grepl("^R", electrode))
+
+
+left_theta_choice_cleaned_results_57 <- theta_choice_cleaned_results_57 %>% filter(grepl("^L", electrode))
+right_theta_choice_cleaned_results_57 <- theta_choice_cleaned_results_57 %>% filter(grepl("^R", electrode))
+
+left_hfa_choice_cleaned_results_57 <- hfa_choice_cleaned_results_57 %>% filter(grepl("^L", electrode))
+right_hfa_choice_cleaned_results_57 <- hfa_choice_cleaned_results_57 %>% filter(grepl("^R", electrode))
+
+
+
+```
+
+
+```{r theta-choice}
+
+beta_plots_all_subjects_choice(left_theta_choice_cleaned_results_19, "IR19 ~ Left ~ Theta ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_theta_choice_cleaned_results_19, "IR19 ~ Right ~ Theta ~ Choice", 8, sig_thresh = 0.01)
+
+
+```
+
+### Old PLotting
 
 ```{r }
   
