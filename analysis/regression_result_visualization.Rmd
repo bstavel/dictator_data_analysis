@@ -269,16 +269,16 @@ reg_name_one <- "self_diff"
 reg_name_two <- "other_diff"
 regions_to_combine <- c("All")
   
-## IR39 ##
-
-# combine different csvs #
-choice_results_39_all <- compile_results(regions = regions_to_combine,
-                                           type = "choice-locked",
-                                           sub = "IR39",
-                                           spec_vars = spec_vars,
-                                           path = path(here(), "results", "IR39"),
-                                           absBeta = F)
-
+# ## IR39 ##
+# 
+# # combine different csvs #
+# choice_results_39_all <- compile_results(regions = regions_to_combine,
+#                                            type = "choice-locked",
+#                                            sub = "IR39",
+#                                            spec_vars = spec_vars,
+#                                            path = path(here(), "results", "IR39"),
+#                                            absBeta = F)
+# 
 # # runa anova for inequity results #
 # path_hg_clean <- path(here(), "munge", "IR39", "hg_behave_choice_locked_cut_fixation_150_insula.csv")
 # hg_behave <-  read.csv(path_hg_clean)
@@ -300,13 +300,47 @@ choice_results_39_all <- compile_results(regions = regions_to_combine,
 ## IR35 ##
 
 # combine different csvs #
-regions_to_combine <- c("All_Regions")
-choice_results_35_all <- compile_results(regions = regions_to_combine, 
-                                     type = "choice-locked", 
-                                     sub = "IR35", 
-                                     spec_vars = spec_vars, 
-                                     path = path(here(), "results", "IR35"), 
-                                     absBeta = F)
+delta_choice_results_35 <- compile_results(regions = regions_to_combine, 
+                                           type = "delta-choice-locked-hilbertRS", 
+                                           sub = "IR35", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR35", "all", "choice"), 
+                                           absBeta = abs_beta_val)
+
+theta_choice_results_35 <- compile_results(regions = regions_to_combine, 
+                                           type = "theta-choice-locked-hilbertRS", 
+                                           sub = "IR35", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR35", "all", "choice"), 
+                                           absBeta = abs_beta_val)
+alpha_choice_results_35 <- compile_results(regions = regions_to_combine, 
+                                           type = "alpha-choice-locked-hilbertRS", 
+                                           sub = "IR35", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR35", "all", "choice"), 
+                                           absBeta = abs_beta_val)
+
+beta_choice_results_35 <- compile_results(regions = regions_to_combine, 
+                                           type = "beta-choice-locked-hilbertRS", 
+                                           sub = "IR35", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR35", "all", "choice"), 
+                                           absBeta = abs_beta_val)
+
+gamma_choice_results_35 <- compile_results(regions = regions_to_combine, 
+                                           type = "gamma-choice-locked-hilbertRS", 
+                                           sub = "IR35", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR35", "all", "choice"), 
+                                           absBeta = abs_beta_val)
+
+hfa_choice_results_35 <- compile_results(regions = regions_to_combine, 
+                                           type = "hfa-choice-locked-hilbertRS", 
+                                           sub = "IR35", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR35", "all", "choice"), 
+                                           absBeta = abs_beta_val)
+
 
 # # runa anova for inequity results #
 # path_hg_clean <- path(here(), "munge", "IR35", "hg_behave_choice_locked_cut_fixation_150_insula.csv")
@@ -328,8 +362,42 @@ choice_results_35_all <- compile_results(regions = regions_to_combine,
 ## IR19 ##
 
 # combine different csvs #
+delta_choice_results_19 <- compile_results(regions = regions_to_combine, 
+                                           type = "delta-choice-locked-hilbertRS", 
+                                           sub = "IR19", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR19", "all", "choice"), 
+                                           absBeta = abs_beta_val)
+
 theta_choice_results_19 <- compile_results(regions = regions_to_combine, 
                                            type = "theta-choice-locked-hilbertRS", 
+                                           sub = "IR19", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR19", "all", "choice"), 
+                                           absBeta = abs_beta_val)
+alpha_choice_results_19 <- compile_results(regions = regions_to_combine, 
+                                           type = "alpha-choice-locked-hilbertRS", 
+                                           sub = "IR19", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR19", "all", "choice"), 
+                                           absBeta = abs_beta_val)
+
+beta_choice_results_19 <- compile_results(regions = regions_to_combine, 
+                                           type = "beta-choice-locked-hilbertRS", 
+                                           sub = "IR19", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR19", "all", "choice"), 
+                                           absBeta = abs_beta_val)
+
+gamma_choice_results_19 <- compile_results(regions = regions_to_combine, 
+                                           type = "gamma-choice-locked-hilbertRS", 
+                                           sub = "IR19", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR19", "all", "choice"), 
+                                           absBeta = abs_beta_val)
+
+hfa_choice_results_19 <- compile_results(regions = regions_to_combine, 
+                                           type = "hfa-choice-locked-hilbertRS", 
                                            sub = "IR19", 
                                            spec_vars = spec_vars, 
                                            path = path(here(), "results", "IR19", "all", "choice"), 
@@ -353,17 +421,17 @@ theta_choice_results_19 <- compile_results(regions = regions_to_combine,
 # adv_choice_results_for_plots_19 <- read.csv(fs::path(here(), "results", "IR19", paste0(region_name, "_choice-locked_insula_anova_results_", reg_name_one, ".csv")))
 # dis_choice_results_for_plots_19 <- read.csv(fs::path(here(), "results", "IR19", paste0(region_name, "_choice-locked_insula_anova_results_", reg_name_two, ".csv")))
 
-## IR16 ##
-
-# combine different csvs #
-regions_to_combine <- c("Insula")
-choice_results_16 <- compile_results(regions = regions_to_combine, 
-                                     type = "choice-locked", 
-                                     sub = "IR16", 
-                                     spec_vars = spec_vars, 
-                                     path = path(here(), "results", "IR16", "insula"), 
-                                     absBeta = abs_beta_val)
-
+# ## IR16 ##
+# 
+# # combine different csvs #
+# regions_to_combine <- c("Insula")
+# choice_results_16 <- compile_results(regions = regions_to_combine, 
+#                                      type = "choice-locked", 
+#                                      sub = "IR16", 
+#                                      spec_vars = spec_vars, 
+#                                      path = path(here(), "results", "IR16", "insula"), 
+#                                      absBeta = abs_beta_val)
+# 
 # # runa anova for inequity results #
 # path_hg_clean <- path(here(), "munge", "IR16", "hg_behave_choice_locked_cut_fixation_150_insula.csv")
 # hg_behave <-  read.csv(path_hg_clean)
@@ -385,14 +453,46 @@ choice_results_16 <- compile_results(regions = regions_to_combine,
 ## IR57 ##
 
 # combine different csvs #
-regions_to_combine <- c("Insula")
-choice_results_57 <- compile_results(regions = regions_to_combine, 
-                                     type = "choice-locked", 
-                                     sub = "IR57", 
-                                     spec_vars = spec_vars, 
-                                     path = path(here(), "results", "IR57", "insula"), 
-                                     absBeta = abs_beta_val)
+delta_choice_results_57 <- compile_results(regions = regions_to_combine, 
+                                           type = "delta-choice-locked-hilbertRS", 
+                                           sub = "IR57", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR57", "all", "choice"), 
+                                           absBeta = abs_beta_val)
 
+theta_choice_results_57 <- compile_results(regions = regions_to_combine, 
+                                           type = "theta-choice-locked-hilbertRS", 
+                                           sub = "IR57", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR57", "all", "choice"), 
+                                           absBeta = abs_beta_val)
+alpha_choice_results_57 <- compile_results(regions = regions_to_combine, 
+                                           type = "alpha-choice-locked-hilbertRS", 
+                                           sub = "IR57", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR57", "all", "choice"), 
+                                           absBeta = abs_beta_val)
+
+beta_choice_results_57 <- compile_results(regions = regions_to_combine, 
+                                           type = "beta-choice-locked-hilbertRS", 
+                                           sub = "IR57", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR57", "all", "choice"), 
+                                           absBeta = abs_beta_val)
+
+gamma_choice_results_57 <- compile_results(regions = regions_to_combine, 
+                                           type = "gamma-choice-locked-hilbertRS", 
+                                           sub = "IR57", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR57", "all", "choice"), 
+                                           absBeta = abs_beta_val)
+
+hfa_choice_results_57 <- compile_results(regions = regions_to_combine, 
+                                           type = "hfa-choice-locked-hilbertRS", 
+                                           sub = "IR57", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR57", "all", "choice"), 
+                                           absBeta = abs_beta_val)
 # # runa anova for inequity results #
 # path_hg_clean <- path(here(), "munge", "IR57", "hg_behave_choice_locked_cut_fixation_150_insula.csv")
 # hg_behave <-  read.csv(path_hg_clean)
@@ -611,9 +711,10 @@ beta_plots_all_subjects <- function(df, subject, sig_thresh, nrows, vars = c("se
     ggtitle(paste0(subject, " ~ thresh @ ", sig_thresh))
 }
 
-beta_plots_all_subjects_choice <- function(df, subject, sig_thresh, nrows, vars = c("self_payoff", "self_foregone", "other_payoff", "other_foregone")){
-  df %>%
+beta_plots_all_subjects_choice <- function(df, subject, sig_thresh, nrows, vars = c("self_payoff", "self_foregone", "other_payoff", "other_foregone"), regions = c("*")){
+df %>%
     filter(predictor %in% vars) %>%
+    filter(grepl(paste(regions, collapse = "|"), ROI)) %>%
     mutate(bin_sig = if_else((p < .05 & perm_p < sig_thresh), 1, 0)) %>%
     mutate(predictor_sig = if_else(bin_sig == 0, "Insig", as.character(predictor))) %>%
     mutate(predictor_sig = relevel(factor(predictor_sig, levels = c("Insig", vars)), ref = "Insig")) %>%
@@ -758,36 +859,115 @@ beta_plots_all_subjects(right_theta_presentation_cleaned_results_19, "IR19 ~ Rig
 ```{r clean-choice}
 
 ### clean data ###
+# IR19 #
+delta_choice_cleaned_results_19 <- merge_with_elec_info(delta_choice_results_19, localizations_19)
 theta_choice_cleaned_results_19 <- merge_with_elec_info(theta_choice_results_19, localizations_19)
+alpha_choice_cleaned_results_19 <- merge_with_elec_info(alpha_choice_results_19, localizations_19)
+beta_choice_cleaned_results_19 <- merge_with_elec_info(beta_choice_results_19, localizations_19)
+gamma_choice_cleaned_results_19 <- merge_with_elec_info(gamma_choice_results_19, localizations_19)
 hfa_choice_cleaned_results_19 <- merge_with_elec_info(hfa_choice_results_19, localizations_19)
-
+# IR35 #
+delta_choice_cleaned_results_35 <- merge_with_elec_info(delta_choice_results_35, localizations_35)
 theta_choice_cleaned_results_35 <- merge_with_elec_info(theta_choice_results_35, localizations_35)
+alpha_choice_cleaned_results_35 <- merge_with_elec_info(alpha_choice_results_35, localizations_35)
+beta_choice_cleaned_results_35 <- merge_with_elec_info(beta_choice_results_35, localizations_35)
+gamma_choice_cleaned_results_35 <- merge_with_elec_info(gamma_choice_results_35, localizations_35)
 hfa_choice_cleaned_results_35 <- merge_with_elec_info(hfa_choice_results_35, localizations_35)
-
+# IR57#
+delta_choice_cleaned_results_57 <- merge_with_elec_info(delta_choice_results_57, localizations_57)
 theta_choice_cleaned_results_57 <- merge_with_elec_info(theta_choice_results_57, localizations_57)
+alpha_choice_cleaned_results_57 <- merge_with_elec_info(alpha_choice_results_57, localizations_57)
+beta_choice_cleaned_results_57 <- merge_with_elec_info(beta_choice_results_57, localizations_57)
+gamma_choice_cleaned_results_57 <- merge_with_elec_info(gamma_choice_results_57, localizations_57)
 hfa_choice_cleaned_results_57 <- merge_with_elec_info(hfa_choice_results_57, localizations_57)
 
-## split left and right for plotting ##
+### split left and right for plotting ###
+## IR19 ##
+# delta #
+left_delta_choice_cleaned_results_19 <- delta_choice_cleaned_results_19 %>% filter(grepl("^L", electrode))
+right_delta_choice_cleaned_results_19 <- delta_choice_cleaned_results_19 %>% filter(grepl("^R", electrode))
+# theta #
 left_theta_choice_cleaned_results_19 <- theta_choice_cleaned_results_19 %>% filter(grepl("^L", electrode))
 right_theta_choice_cleaned_results_19 <- theta_choice_cleaned_results_19 %>% filter(grepl("^R", electrode))
-
+# alpha #
+left_alpha_choice_cleaned_results_19 <- alpha_choice_cleaned_results_19 %>% filter(grepl("^L", electrode))
+right_alpha_choice_cleaned_results_19 <- alpha_choice_cleaned_results_19 %>% filter(grepl("^R", electrode))
+# beta #
+left_beta_choice_cleaned_results_19 <- beta_choice_cleaned_results_19 %>% filter(grepl("^L", electrode))
+right_beta_choice_cleaned_results_19 <- beta_choice_cleaned_results_19 %>% filter(grepl("^R", electrode))
+# gamma #
+left_gamma_choice_cleaned_results_19 <- gamma_choice_cleaned_results_19 %>% filter(grepl("^L", electrode))
+right_gamma_choice_cleaned_results_19 <- gamma_choice_cleaned_results_19 %>% filter(grepl("^R", electrode))
+# hfa #
 left_hfa_choice_cleaned_results_19 <- hfa_choice_cleaned_results_19 %>% filter(grepl("^L", electrode))
 right_hfa_choice_cleaned_results_19 <- hfa_choice_cleaned_results_19 %>% filter(grepl("^R", electrode))
 
+## IR35 ##
+# delta #
+left_delta_choice_cleaned_results_35 <- delta_choice_cleaned_results_35 %>% filter(grepl("^L", electrode))
+right_delta_choice_cleaned_results_35 <- delta_choice_cleaned_results_35 %>% filter(grepl("^R", electrode))
+# theta #
 left_theta_choice_cleaned_results_35 <- theta_choice_cleaned_results_35 %>% filter(grepl("^L", electrode))
 right_theta_choice_cleaned_results_35 <- theta_choice_cleaned_results_35 %>% filter(grepl("^R", electrode))
-
+# alpha #
+left_alpha_choice_cleaned_results_35 <- alpha_choice_cleaned_results_35 %>% filter(grepl("^L", electrode))
+right_alpha_choice_cleaned_results_35 <- alpha_choice_cleaned_results_35 %>% filter(grepl("^R", electrode))
+# beta #
+left_beta_choice_cleaned_results_35 <- beta_choice_cleaned_results_35 %>% filter(grepl("^L", electrode))
+right_beta_choice_cleaned_results_35 <- beta_choice_cleaned_results_35 %>% filter(grepl("^R", electrode))
+# gamma #
+left_gamma_choice_cleaned_results_35 <- gamma_choice_cleaned_results_35 %>% filter(grepl("^L", electrode))
+right_gamma_choice_cleaned_results_35 <- gamma_choice_cleaned_results_35 %>% filter(grepl("^R", electrode))
+# hfa #
 left_hfa_choice_cleaned_results_35 <- hfa_choice_cleaned_results_35 %>% filter(grepl("^L", electrode))
 right_hfa_choice_cleaned_results_35 <- hfa_choice_cleaned_results_35 %>% filter(grepl("^R", electrode))
 
-
+## IR57 ##
+# delta #
+left_delta_choice_cleaned_results_57 <- delta_choice_cleaned_results_57 %>% filter(grepl("^L", electrode))
+right_delta_choice_cleaned_results_57 <- delta_choice_cleaned_results_57 %>% filter(grepl("^R", electrode))
+# theta #
 left_theta_choice_cleaned_results_57 <- theta_choice_cleaned_results_57 %>% filter(grepl("^L", electrode))
 right_theta_choice_cleaned_results_57 <- theta_choice_cleaned_results_57 %>% filter(grepl("^R", electrode))
-
+# alpha #
+left_alpha_choice_cleaned_results_57 <- alpha_choice_cleaned_results_57 %>% filter(grepl("^L", electrode))
+right_alpha_choice_cleaned_results_57 <- alpha_choice_cleaned_results_57 %>% filter(grepl("^R", electrode))
+# beta #
+left_beta_choice_cleaned_results_57 <- beta_choice_cleaned_results_57 %>% filter(grepl("^L", electrode))
+right_beta_choice_cleaned_results_57 <- beta_choice_cleaned_results_57 %>% filter(grepl("^R", electrode))
+# gamma #
+left_gamma_choice_cleaned_results_57 <- gamma_choice_cleaned_results_57 %>% filter(grepl("^L", electrode))
+right_gamma_choice_cleaned_results_57 <- gamma_choice_cleaned_results_57 %>% filter(grepl("^R", electrode))
+# hfa #
 left_hfa_choice_cleaned_results_57 <- hfa_choice_cleaned_results_57 %>% filter(grepl("^L", electrode))
 right_hfa_choice_cleaned_results_57 <- hfa_choice_cleaned_results_57 %>% filter(grepl("^R", electrode))
 
 
+
+```
+
+```{r delta-choice}
+# whole brain #
+beta_plots_all_subjects_choice(left_delta_choice_cleaned_results_19, "IR19 ~ OFC ~ delta ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_delta_choice_cleaned_results_19, "IR19 ~ Right ~ delta ~ Choice", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_delta_choice_cleaned_results_35, "IR35 ~ Left ~ delta ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_delta_choice_cleaned_results_35, "IR35 ~ Right ~ delta ~ Choice", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_delta_choice_cleaned_results_57, "IR57 ~ Left ~ delta ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_delta_choice_cleaned_results_57, "IR57 ~ Right ~ delta ~ Choice", 8, sig_thresh = 0.01)
+
+# By region #
+beta_plots_all_subjects_choice(delta_choice_cleaned_results_19, "IR19 ~ STS ~ delta ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("STS", "sts"))
+beta_plots_all_subjects_choice(delta_choice_cleaned_results_35, "IR35 ~ STS ~ delta ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("STS", "sts"))
+beta_plots_all_subjects_choice(delta_choice_cleaned_results_57, "IR57 ~ STS ~ delta ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("STS", "sts"))
+
+beta_plots_all_subjects_choice(delta_choice_cleaned_results_19, "IR19 ~ mfg ~ delta ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("MFG", "mfg"))
+beta_plots_all_subjects_choice(delta_choice_cleaned_results_35, "IR35 ~ mfg ~ delta ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("MFG", "mfg"))
+beta_plots_all_subjects_choice(delta_choice_cleaned_results_57, "IR57 ~ mfg ~ delta ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("MFG", "mfg"))
+
+
+beta_plots_all_subjects_choice(delta_choice_cleaned_results_19, "IR19 ~ Amyg ~ delta ~ Choice", 8, sig_thresh = 0.01, regions = c("amyg", "Amyg"))
 
 ```
 
@@ -796,6 +976,116 @@ right_hfa_choice_cleaned_results_57 <- hfa_choice_cleaned_results_57 %>% filter(
 
 beta_plots_all_subjects_choice(left_theta_choice_cleaned_results_19, "IR19 ~ Left ~ Theta ~ Choice", 8, sig_thresh = 0.01)
 beta_plots_all_subjects_choice(right_theta_choice_cleaned_results_19, "IR19 ~ Right ~ Theta ~ Choice", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_theta_choice_cleaned_results_35, "IR35 ~ Left ~ Theta ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_theta_choice_cleaned_results_35, "IR35 ~ Right ~ Theta ~ Choice", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_theta_choice_cleaned_results_57, "IR57 ~ Left ~ Theta ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_theta_choice_cleaned_results_57, "IR57 ~ Right ~ Theta ~ Choice", 8, sig_thresh = 0.01)
+
+# By region #
+beta_plots_all_subjects_choice(theta_choice_cleaned_results_19, "IR19 ~ STS ~ theta ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("STS", "sts"))
+beta_plots_all_subjects_choice(theta_choice_cleaned_results_35, "IR35 ~ STS ~ theta ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("STS", "sts"))
+beta_plots_all_subjects_choice(theta_choice_cleaned_results_57, "IR57 ~ STS ~ theta ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("STS", "sts"))
+
+
+# By region #
+beta_plots_all_subjects_choice(theta_choice_cleaned_results_19, "IR19 ~ MFG ~ theta ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("MFG", "mfg"))
+beta_plots_all_subjects_choice(theta_choice_cleaned_results_35, "IR35 ~ MFG ~ theta ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("MFG", "mfg"))
+beta_plots_all_subjects_choice(theta_choice_cleaned_results_57, "IR57 ~ MFG ~ theta ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("MFG", "mfg"))
+
+```
+
+
+```{r alpha-choice}
+
+beta_plots_all_subjects_choice(left_alpha_choice_cleaned_results_19, "IR19 ~ Left ~ alpha ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_alpha_choice_cleaned_results_19, "IR19 ~ Right ~ alpha ~ Choice", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_alpha_choice_cleaned_results_35, "IR35 ~ Left ~ alpha ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_alpha_choice_cleaned_results_35, "IR35 ~ Right ~ alpha ~ Choice", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_alpha_choice_cleaned_results_57, "IR57 ~ Left ~ alpha ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_alpha_choice_cleaned_results_57, "IR57 ~ Right ~ alpha ~ Choice", 8, sig_thresh = 0.01)
+
+# By region #
+beta_plots_all_subjects_choice(alpha_choice_cleaned_results_19, "IR19 ~ STS ~ alpha ~ Choice", 8, sig_thresh = 0.01, regions = c("STS", "sts"))
+beta_plots_all_subjects_choice(alpha_choice_cleaned_results_35, "IR35 ~ STS ~ alpha ~ Choice", 8, sig_thresh = 0.01, regions = c("STS", "sts"))
+beta_plots_all_subjects_choice(alpha_choice_cleaned_results_57, "IR57 ~ STS ~ alpha ~ Choice", 8, sig_thresh = 0.01, regions = c("STS", "sts"))
+
+beta_plots_all_subjects_choice(alpha_choice_cleaned_results_19, "IR19 ~ MFG ~ alpha ~ Choice", 8, sig_thresh = 0.01, regions = c("MFG", "mfg"))
+beta_plots_all_subjects_choice(alpha_choice_cleaned_results_35, "IR35 ~ MFG ~ alpha ~ Choice", 8, sig_thresh = 0.01, regions = c("MFG", "mfg"))
+beta_plots_all_subjects_choice(alpha_choice_cleaned_results_57, "IR57 ~ MFG ~ alpha ~ Choice", 8, sig_thresh = 0.01, regions = c("MFG", "mfg"))
+
+
+```
+
+```{r beta-choice}
+
+beta_plots_all_subjects_choice(left_beta_choice_cleaned_results_19, "IR19 ~ Left ~ beta ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_beta_choice_cleaned_results_19, "IR19 ~ Right ~ beta ~ Choice", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_beta_choice_cleaned_results_35, "IR35 ~ Left ~ beta ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_beta_choice_cleaned_results_35, "IR35 ~ Right ~ beta ~ Choice", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_beta_choice_cleaned_results_57, "IR57 ~ Left ~ beta ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_beta_choice_cleaned_results_57, "IR57 ~ Right ~ beta ~ Choice", 8, sig_thresh = 0.01)
+
+# By region #
+beta_plots_all_subjects_choice(beta_choice_cleaned_results_19, "IR19 ~ STS ~ beta ~ Choice", 8, sig_thresh = 0.01, regions = c("STS", "sts"))
+beta_plots_all_subjects_choice(beta_choice_cleaned_results_35, "IR35 ~ STS ~ beta ~ Choice", 8, sig_thresh = 0.01, regions = c("STS", "sts"))
+beta_plots_all_subjects_choice(beta_choice_cleaned_results_57, "IR57 ~ STS ~ beta ~ Choice", 8, sig_thresh = 0.01, regions = c("STS", "sts"))
+
+beta_plots_all_subjects_choice(beta_choice_cleaned_results_19, "IR19 ~ MFG ~ beta ~ Choice", 8, sig_thresh = 0.01, regions = c("MFG", "mfg"))
+beta_plots_all_subjects_choice(beta_choice_cleaned_results_35, "IR35 ~ MFG ~ beta ~ Choice", 8, sig_thresh = 0.01, regions = c("MFG", "mfg"))
+beta_plots_all_subjects_choice(beta_choice_cleaned_results_57, "IR57 ~ MFG ~ beta ~ Choice", 8, sig_thresh = 0.01, regions = c("MFG", "mfg"))
+
+
+```
+
+```{r gamma-choice}
+
+beta_plots_all_subjects_choice(left_gamma_choice_cleaned_results_19, "IR19 ~ Left ~ gamma ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_gamma_choice_cleaned_results_19, "IR19 ~ Right ~ gamma ~ Choice", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_gamma_choice_cleaned_results_35, "IR35 ~ Left ~ gamma ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_gamma_choice_cleaned_results_35, "IR35 ~ Right ~ gamma ~ Choice", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_gamma_choice_cleaned_results_57, "IR57 ~ Left ~ gamma ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_gamma_choice_cleaned_results_57, "IR57 ~ Right ~ gamma ~ Choice", 8, sig_thresh = 0.01)
+
+# By region #
+beta_plots_all_subjects_choice(gamma_choice_cleaned_results_19, "IR19 ~ STS ~ gamma ~ Choice", 8, sig_thresh = 0.01, regions = c("STS", "sts"))
+beta_plots_all_subjects_choice(gamma_choice_cleaned_results_35, "IR35 ~ STS ~ gamma ~ Choice", 8, sig_thresh = 0.01, regions = c("STS", "sts"))
+beta_plots_all_subjects_choice(gamma_choice_cleaned_results_57, "IR57 ~ STS ~ gamma ~ Choice", 8, sig_thresh = 0.01, regions = c("STS", "sts"))
+
+beta_plots_all_subjects_choice(gamma_choice_cleaned_results_19, "IR19 ~ MFG ~ gamma ~ Choice", 8, sig_thresh = 0.01, regions = c("MFG", "mfg"))
+beta_plots_all_subjects_choice(gamma_choice_cleaned_results_35, "IR35 ~ MFG ~ gamma ~ Choice", 8, sig_thresh = 0.01, regions = c("MFG", "mfg"))
+beta_plots_all_subjects_choice(gamma_choice_cleaned_results_57, "IR57 ~ MFG ~ gamma ~ Choice", 8, sig_thresh = 0.01, regions = c("MFG", "mfg"))
+
+```
+
+```{r hfa-choice}
+
+beta_plots_all_subjects_choice(left_hfa_choice_cleaned_results_19, "IR19 ~ Left ~ hfa ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_hfa_choice_cleaned_results_19, "IR19 ~ Right ~ hfa ~ Choice", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_hfa_choice_cleaned_results_35, "IR35 ~ Left ~ hfa ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_hfa_choice_cleaned_results_35, "IR35 ~ Right ~ hfa ~ Choice", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_hfa_choice_cleaned_results_57, "IR57 ~ Left ~ hfa ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_hfa_choice_cleaned_results_57, "IR57 ~ Right ~ hfa ~ Choice", 8, sig_thresh = 0.01)
+
+
+# By region #
+beta_plots_all_subjects_choice(hfa_choice_cleaned_results_19, "IR19 ~ HFA ~ gamma ~ Choice", 8, sig_thresh = 0.01, regions = c("STS", "sts"))
+beta_plots_all_subjects_choice(hfa_choice_cleaned_results_35, "IR35 ~ HFA ~ gamma ~ Choice", 8, sig_thresh = 0.01, regions = c("STS", "sts"))
+beta_plots_all_subjects_choice(hfa_choice_cleaned_results_57, "IR57 ~ HFA ~ gamma ~ Choice", 8, sig_thresh = 0.01, regions = c("STS", "sts"))
+
+
+beta_plots_all_subjects_choice(hfa_choice_cleaned_results_19, "IR19 ~ HFA ~ MFG ~ Choice", 8, sig_thresh = 0.01, regions = c("MFG", "mfg"))
+beta_plots_all_subjects_choice(hfa_choice_cleaned_results_35, "IR35 ~ HFA ~ MFG ~ Choice", 8, sig_thresh = 0.01, regions = c("MFG", "mfg"))
+beta_plots_all_subjects_choice(hfa_choice_cleaned_results_57, "IR57 ~ HFA ~ MFG ~ Choice", 8, sig_thresh = 0.01, regions = c("MFG", "mfg"))
 
 
 ```
