@@ -74,7 +74,7 @@ run_filtered_anova_permuted <- function(results, brain_behave_data, sub, region_
     # split the vector into groups where the num of zeros does not change #
     stretch_list <- split(chi_values[chi_values!=0], cum_sum_chi[chi_values!=0])
     # sum values in the list #
-    chi_sums <- unlist(lapply(stretch_list, sum))
+    chi_sums <- unlist(lapply(stretch_list, length))
     
     # get all the sums and fill in sig bins with the appropriate sum #
     for(sum in seq_along(chi_sums)){

@@ -45,7 +45,7 @@ stretch_start_end <- function(stretch) {
       
       # throw error if not 1 or 0 #
       } else {
-        print("Ther")
+        print("issue not binary vec")
       }
     }  
   }

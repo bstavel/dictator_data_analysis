@@ -1,0 +1,1445 @@
+---
+title: "Beta ~ Group Stats"
+output: html_document
+author: "Brooke Staveland"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo <- FALSE,  # don't print the code chunk
+  warning <- FALSE,  # don't print warnings
+  message <- FALSE,  # don't print messages
+  fig.width <- 12,  # set default width of figures
+  fig.height <- 6,  # set default height of figures
+  fig.align <- "center",  # always align figure in center
+  fig.pos <- "H",  # always plot figure at the exact location of the code chunk
+  cache <- TRUE)  # cache results
+
+## libraries ##
+library(tidyverse)
+library(ggplot2)
+library(magrittr)
+library(ggthemr)
+library(grid)
+library(gtable)
+library(gridExtra)
+library(wesanderson)
+library(ggsci)
+library(zoo)
+library(kableExtra)
+library(lme4)
+library(RColorBrewer)
+library(doParallel)
+library(parallel)
+library(foreach)
+library(here)
+library(fs)
+library(ggcorrplot)
+library(viridis)
+library(lmtest)
+library(janitor)
+
+## hand written functions ##
+source(path(here(), "R", "load_behave_data.R"))
+source(path(here(), "R", "prep_behave_data.R"))
+source(path(here(), "R", "stretch_start_end.R"))
+source(path(here(), "R", "load_high_gamma_data.R"))
+source(path(here(), "R", "rolling_window_and_baseline.R"))
+source(path(here(), "R", "run_permuted_regressions.R"))
+source(path(here(), "R", "compile_results.R"))
+source(path(here(), "R", "run_filtered_anova.R"))
+source(path(here(), "R", "merge_stepped_anova_results.R"))
+# source('~/Projects/nice_r_functions/ggpaired_pretty.R')
+source(path(here(), "R", 'mutate_cond.R'))
+
+## plotting helpers ##
+ggthemr("solarized")
+solarized_palette <- c(
+        '#073642', '#E1965D',
+        '#268bd2', '#dc322f', 
+        '#2aa198', '#b58900',
+       '#6c71c4', '#d33682')
+
+## parallelization ##
+nCores <- 4
+registerDoParallel(nCores)
+
+```
+
+
+```{r behave-prep, echo = F}
+
+# path to beahvioral files #
+path_to_raw_behave <- fs::path(here(), "../dg_behave_formatted")
+path_to_behave_munge <- fs::path(here(), "munge", "combined_behavioral_data.csv")
+path_to_behave_clean <- fs::path(here(), "munge", "clean_behavioral_data.csv")
+
+# concactenate behavioral data #
+load_behave_data(path_to_raw_behave)
+
+# prep behavioral data #
+prep_behave_data(path_to_behave_munge)
+
+# load clean data #
+behave_data <- read.csv(path_to_behave_clean)
+
+# table(behave_data$ineq_advent_choice)
+# table(behave_data_08$ineq_disadvent_choice)
+# table(behave_data_11$ineq_disadvent_choice)
+# table(behave_data_12$ineq_disadvent_choice)
+```
+
+
+```{r trial-types, echo = F}
+
+behave_data %>%
+  filter(self_var_payoff == other_var_payoff) %>%
+  mutate(greater_than_ten = if_else(self_var_payoff < 10, "less", "more")) %>%
+  select(SID, chose_equality, greater_than_ten) %>%
+  group_by(SID) %>%
+  tabyl(SID, chose_equality, greater_than_ten) %>%
+  kable(.) %>%
+  kable_styling()
+
+# There are three types of trials, trials without equality, trials where the advantage is in the dictator's favor and the reverse
+
+behave_data <- behave_data %>%
+  mutate(trial_type = if_else(self_var_payoff == other_var_payoff, "equality",
+                              if_else(self_var_payoff > other_var_payoff, 
+                                      "Advantageous", "Disadvantageous"))) %>%
+  mutate(other_choice_type = if_else(self_payoff > 10  & other_payoff > 10, "other_gain", 
+                                     if_else(self_payoff > 10 & other_payoff < 10,
+                                             "other_loss", "NA")))
+
+# How many of each
+behave_data %>%
+  filter(SID == "DG_s11") %>%
+  tabyl(trial_type) %>%
+  kable(.) %>%
+  kable_styling()
+
+behave_data %>%
+  filter(SID == "DG_s13") %>%
+  tabyl(trial_type) %>%
+  kable(.) %>%
+  kable_styling()
+
+behave_data %>%
+  filter(SID == "DG_s08") %>%
+  tabyl(trial_type) %>%
+  kable(.) %>%
+  kable_styling()
+
+behave_data %>%
+  filter(SID == "DG_s04") %>%
+  tabyl(trial_type) %>%
+  kable(.) %>%
+  kable_styling()
+
+behave_data %>%
+  filter(SID == "DG_s06") %>%
+  tabyl(trial_type) %>%
+  kable(.) %>%
+  kable_styling()
+
+behave_data %>%
+  filter(SID == "DG_s10") %>%
+  tabyl(trial_type) %>%
+  kable(.) %>%
+  kable_styling()
+
+
+# filter to current subject #
+behave_data_19 <- behave_data %>% filter(SID == "DG_s08")
+behave_data_35 <- behave_data %>% filter(SID == "DG_s11")
+behave_data_28 <- behave_data %>% filter(SID == "DG_s10")
+behave_data_39 <- behave_data %>% filter(SID == "DG_s12")
+behave_data_16 <- behave_data %>% filter(SID == "DG_s06")
+behave_data_10 <- behave_data %>% filter(SID == "DG_s04")
+behave_data_57 <- behave_data %>% filter(SID == "DG_s13")
+```
+
+
+```{r load-high-gamma-data, echo = F}
+
+### IR35 ###
+# necessary paths #
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR35_beta_munge_presentation_locked_rscaler_2575.csv")
+file_path_to_electrode_names <- path(here(), "munge", "savio_cluster", "IR35_electrodes_presentation_locked_rscaler_2575.csv")
+file_path_to_elecs_of_interest <- path(here(), "munge", "IR35_elecs_of_interest.csv")
+
+# load data #
+hg_data_35 <- load_high_gamma_data_clean(file_path_to_power_data, 
+                                file_path_to_electrode_names,
+                                file_path_to_elecs_of_interest)
+
+### IR57 ###
+# necessary paths #
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR57_beta_munge_presentation_locked_rscaler_2575.csv")
+file_path_to_electrode_names <- path(here(), "munge", "savio_cluster", "IR57_electrodes_presentation_locked_rscaler_2575.csv")
+file_path_to_elecs_of_interest <- path(here(), "munge", "IR57_elecs_of_interest.csv")
+
+# load data #
+hg_data_57 <- load_high_gamma_data_clean(file_path_to_power_data,
+                                file_path_to_electrode_names,
+                                file_path_to_elecs_of_interest)
+
+
+### IR19 ###
+# necessary paths #
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR19_beta_munge_presentation_locked_rscaler_2575.csv")
+file_path_to_electrode_names <- path(here(), "munge", "savio_cluster", "IR19_electrodes_presentation_locked_rscaler_2575.csv")
+file_path_to_elecs_of_interest <- path(here(), "munge", "IR19_elecs_of_interest.csv")
+
+# load data #
+hg_data_19 <- load_high_gamma_data_clean(file_path_to_power_data,
+                                file_path_to_electrode_names,
+                                file_path_to_elecs_of_interest)
+
+### IR39 ###
+# necessary paths #
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR39_beta_munge_presentation_locked_rscaler_2575.csv")
+file_path_to_electrode_names <- path(here(), "munge", "savio_cluster", "IR39_electrodes_presentation_locked_rscaler_2575.csv")
+file_path_to_elecs_of_interest <- path(here(), "munge", "IR39_elecs_of_interest.csv")
+
+# load data #
+hg_data_39 <- load_high_gamma_data_clean(file_path_to_power_data,
+                                file_path_to_electrode_names,
+                                file_path_to_elecs_of_interest)
+
+### IR28 ###
+# necessary paths #
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR28_beta_munge_presentation_locked_rscaler_2575.csv")
+file_path_to_electrode_names <- path(here(), "munge", "savio_cluster", "IR28_electrodes_presentation_locked_rscaler_2575.csv")
+file_path_to_elecs_of_interest <- path(here(), "munge", "IR28_elecs_of_interest.csv")
+
+# load data #
+hg_data_28 <- load_high_gamma_data_clean(file_path_to_power_data,
+                                file_path_to_electrode_names,
+                                file_path_to_elecs_of_interest)
+
+### IR10 ###
+# necessary paths #
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR10_beta_munge_presentation_locked_rscaler_2575.csv")
+file_path_to_electrode_names <- path(here(), "munge", "savio_cluster", "IR10_electrodes_presentation_locked_rscaler_2575.csv")
+file_path_to_elecs_of_interest <- path(here(), "munge", "IR10_elecs_of_interest.csv")
+
+# load data #
+hg_data_10 <- load_high_gamma_data_clean(file_path_to_power_data,
+                                file_path_to_electrode_names,
+                                file_path_to_elecs_of_interest)
+
+### IR16 ###
+# necessary paths #
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR16_beta_munge_presentation_locked_rscaler_2575.csv")
+file_path_to_electrode_names <- path(here(), "munge", "savio_cluster", "IR16_electrodes_presentation_locked_rscaler_2575.csv")
+file_path_to_elecs_of_interest <- path(here(), "munge", "IR16_elecs_of_interest.csv")
+
+# load data #
+hg_data_16 <- load_high_gamma_data_clean(file_path_to_power_data,
+                                file_path_to_electrode_names,
+                                file_path_to_elecs_of_interest)
+
+
+
+```
+
+```{r load-high-gamma-data-choice, echo = F}
+
+### IR35 ###
+# necessary paths #
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR35_beta_munge_choice_locked_rscaler_2575.csv")
+file_path_to_electrode_names <- path(here(), "munge", "savio_cluster", "IR35_electrodes_choice_locked_rscaler_2575.csv")
+file_path_to_elecs_of_interest <- path(here(), "munge", "IR35_elecs_of_interest.csv")
+
+# load data #
+hg_choice_data_35 <- load_high_gamma_data_clean(file_path_to_power_data, 
+                                file_path_to_electrode_names,
+                                file_path_to_elecs_of_interest)
+
+### IR57 ###
+# necessary paths #
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR57_beta_munge_choice_locked_rscaler_2575.csv")
+file_path_to_electrode_names <- path(here(), "munge", "savio_cluster", "IR57_electrodes_choice_locked_rscaler_2575.csv")
+file_path_to_elecs_of_interest <- path(here(), "munge", "IR57_elecs_of_interest.csv")
+
+# load data #
+hg_choice_data_57 <- load_high_gamma_data_clean(file_path_to_power_data,
+                                file_path_to_electrode_names,
+                                file_path_to_elecs_of_interest)
+
+
+### IR19 ###
+# necessary paths #
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR19_beta_munge_choice_locked_rscaler_2575.csv")
+file_path_to_electrode_names <- path(here(), "munge", "savio_cluster", "IR19_electrodes_choice_locked_rscaler_2575.csv")
+file_path_to_elecs_of_interest <- path(here(), "munge", "IR19_elecs_of_interest.csv")
+
+# load data #
+hg_choice_data_19 <- load_high_gamma_data_clean(file_path_to_power_data,
+                                file_path_to_electrode_names,
+                                file_path_to_elecs_of_interest)
+
+### IR39 ###
+# necessary paths #
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR39_beta_munge_choice_locked_rscaler_2575.csv")
+file_path_to_electrode_names <- path(here(), "munge", "savio_cluster", "IR39_electrodes_choice_locked_rscaler_2575.csv")
+file_path_to_elecs_of_interest <- path(here(), "munge", "IR39_elecs_of_interest.csv")
+
+# load data #
+hg_choice_data_39 <- load_high_gamma_data_clean(file_path_to_power_data,
+                                file_path_to_electrode_names,
+                                file_path_to_elecs_of_interest)
+
+### IR28 ###
+# necessary paths #
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR28_beta_munge_choice_locked_rscaler_2575.csv")
+file_path_to_electrode_names <- path(here(), "munge", "savio_cluster", "IR28_electrodes_choice_locked_rscaler_2575.csv")
+file_path_to_elecs_of_interest <- path(here(), "munge", "IR28_elecs_of_interest.csv")
+
+# load data #
+hg_choice_data_28 <- load_high_gamma_data_clean(file_path_to_power_data,
+                                file_path_to_electrode_names,
+                                file_path_to_elecs_of_interest)
+
+### IR10 ###
+# necessary paths #
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR10_beta_munge_choice_locked_rscaler_2575.csv")
+file_path_to_electrode_names <- path(here(), "munge", "savio_cluster", "IR10_electrodes_choice_locked_rscaler_2575.csv")
+file_path_to_elecs_of_interest <- path(here(), "munge", "IR10_elecs_of_interest.csv")
+
+# load data #
+hg_choice_data_10 <- load_high_gamma_data_clean(file_path_to_power_data,
+                                file_path_to_electrode_names,
+                                file_path_to_elecs_of_interest)
+
+### IR16 ###
+# necessary paths #
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR16_beta_munge_choice_locked_rscaler_2575.csv")
+file_path_to_electrode_names <- path(here(), "munge", "savio_cluster", "IR16_electrodes_choice_locked_rscaler_2575.csv")
+file_path_to_elecs_of_interest <- path(here(), "munge", "IR16_elecs_of_interest.csv")
+
+# load data #
+hg_choice_data_16 <- load_high_gamma_data_clean(file_path_to_power_data,
+                                file_path_to_electrode_names,
+                                file_path_to_elecs_of_interest)
+
+
+beepr::beep(2)
+```
+
+
+```{r active-electrodes, echo= F}
+
+test_for_sig_above_baseline <- function(col, elec_baseline) {
+    # t test against baseline
+    result <- t.test(elec_baseline$baseline_mean, col)
+    return(result$p.value)
+  }
+
+only_keep_sig_stretches <- function(pvals, hg_values) {
+    # zero out all non sig values #
+    hg_values[pvals >= 0.05] <- 0
+    # cumulative sum number of 0 chi sq vals #
+    cum_sum_chi <- cumsum(hg_values == 0)
+    # split the vector into groups where the num of zeros does not change #
+    stretch_list <- split(hg_values[hg_values!=0], cum_sum_chi[hg_values!=0])
+    # get the lenght of the stretch in the list #
+    sig_lengths <- unlist(lapply(stretch_list, length))
+    
+    # get all the sums and fill in sig bins with the appropriate length #
+    stretch_vec <- hg_values
+    for(lengthIdx in seq_along(sig_lengths)){
+      stretch_vec <- replace(stretch_vec, 
+                         which(cum_sum_chi == 
+                                 as.numeric(names(sig_lengths)[lengthIdx])),
+                         sig_lengths[lengthIdx])
+    }
+    
+    # zero out the no sig pvals again (one extra value always added based on summing non zeros)
+    hg_values[stretch_vec < 100] <- 0
+    hg_values[pvals >= 0.05] <- 0
+    
+    sig_bins <- as.numeric(hg_values) != 0
+    
+    return(as.numeric(sig_bins))
+      
+}
+
+mean_sig_stretches <- function(pvals, hg_values, sig_bins) {
+    # zero out all non sig values #
+    hg_values[pvals >= 0.05] <- 0
+    # cumulative sum number of 0 chi sq vals #
+    cum_sum_chi <- cumsum(hg_values == 0)
+    # split the vector into groups where the num of zeros does not change #
+    stretch_list <- split(hg_values[hg_values!=0], cum_sum_chi[hg_values!=0])
+   # get the lenght of the stretch in the list #
+    sig_means <- unlist(lapply(stretch_list, mean))
+    # get all the sums and fill in sig bins with the appropriate length #
+    for(meanIdx in seq_along(sig_means)){
+      hg_values <- replace(hg_values, 
+                  which(cum_sum_chi == as.numeric(names(sig_means)[meanIdx])),
+                  sig_means[meanIdx])
+    }
+    
+    # zero out the no sig pvals again (one extra value always added based on summing non zeros)
+    hg_values[sig_bins == 0] <- 0
+    
+    return(hg_values)
+      
+}
+
+
+
+# function to get electrodes with at least 20% bins have different hfa from baseline
+get_active_electrodes <- function(hg_data,
+                                  subject,
+                                  behave_data,
+                                  t_type = c("Disadvantageous", "equality", "Advantageous"),
+                                  choice = FALSE) {
+  
+  # calculate trials to use
+  trials_to_use <- behave_data %>% 
+    filter(trial_type == t_type) %>% 
+    filter(!is.na(RT)) %>%
+    select(round)
+
+  if(choice == FALSE) {
+    # grab and clean baseline #
+    baseline_data <- hg_data %>% select(1:200, trial)
+    hg_data <- hg_data %>% 
+      select(201:ncol(hg_data)) %>%
+      filter(trial %in% trials_to_use$round) 
+    
+    baseline_data_clean <- baseline_data %>%
+      filter(trial %in% trials_to_use$round) 
+    
+    # calculate baseline mean #
+    baseline_mean <- baseline_data_clean %>% 
+      select(starts_with("time")) %>% 
+      apply(., 1, function(x) mean(x))
+    
+    # format baseline #
+    baseline_mean <- data.frame(baseline_mean)
+    baseline_mean <- cbind(baseline_mean, "electrodes" = hg_data$electrodes, 
+                           "trial" = hg_data$trial)
+    
+    # if specific type, append t_type to name
+    if(length(t_type) == 1){
+      # write baseline csv for choice
+      write_csv(baseline_mean, 
+                path(here(), "munge", "EDA", 
+                     paste(subject, t_type, "eda_baseline_mean.csv", sep = "_")))
+    } else {
+    # write baseline csv for choice
+      write_csv(baseline_mean, 
+                path(here(), "munge", "EDA", paste(subject, "eda_baseline_mean.csv", sep = "_")))
+    }
+    
+  } else {
+    # if specific type, grab t_type specific baseline
+    if(length(t_type) == 1){
+      # write baseline csv for choice
+      baseline_mean <- read_csv(path(here(), "munge", "EDA", 
+                                     paste(subject, t_type, "eda_baseline_mean.csv", sep = "_")),
+                                col_types = cols())
+    } else {
+    # write baseline csv for choice
+       baseline_mean <- read_csv(path(here(), "munge", "EDA", 
+                                      paste(subject, "eda_baseline_mean.csv", sep = "_")),
+                                 col_types = cols())
+    }
+    
+  }
+  
+  
+  # prep df
+  matrix_ncols <-  hg_data %>% select(starts_with("time")) %>% ncol(.) + 1
+  active_electrodes <- matrix(nrow = length( unique(hg_data$electrodes)), ncol = matrix_ncols)
+  rownames(active_electrodes) <- unique(hg_data$electrodes)
+  for(elec in unique(hg_data$electrodes)) {
+    
+    # filter to elecs of interest #
+    elec_hg <- hg_data %>% 
+      filter(electrodes == elec) %>% 
+      filter(trial %in% trials_to_use$round) %>%
+      select(starts_with("time"))
+    elec_baseline <- baseline_mean %>% 
+      filter(electrodes == elec) %>%
+      filter(trial %in% trials_to_use$round)
+    
+    # run t test between baseline and each time bin during the trial #
+    p_vals <- apply(elec_hg, 2, function(x) test_for_sig_above_baseline(x, elec_baseline))
+    
+    # grab percentage if sig bins #
+    sig_bins <- p_vals < .05
+    sig_bins_filtered <- only_keep_sig_stretches(p_vals, elec_hg[1, ])
+    hg_means <- apply(elec_hg, 2, mean)
+    sig_means <- mean_sig_stretches(p_vals, hg_means, sig_bins_filtered)
+    
+    # 10% increase #
+    base_mean <- mean(elec_baseline$baseline_mean)
+    ten_percent <- c(base_mean + .1 * base_mean, base_mean - .1* base_mean)
+    
+    # sig_bins == TRUE iff 10% diff in signal
+    sig_bins_final <- sig_bins_filtered == 1 &
+      (sig_means > ten_percent[1] | sig_means < ten_percent[2])
+    
+    
+    # if 100 consecutive bins are sig & increase in 10% over baseline  mark as active
+    if(any(sig_bins_final == 1)) {
+      active_electrodes[elec, 1] <- "active"
+      active_electrodes[elec, 2:matrix_ncols] <- sig_bins_final
+    } else {
+      active_electrodes[elec, 1] <- "inactive"
+      active_electrodes[elec, 2:matrix_ncols] <- FALSE
+    }
+    
+    
+    
+  }
+  
+  active_electrodes_df <- as_data_frame(active_electrodes)
+  colnames(active_electrodes_df) <- c("active", 
+                                        colnames(hg_data %>% select(starts_with("time"))))
+  active_electrodes_df$electrodes <- rownames(active_electrodes)
+
+  return(active_electrodes_df)
+}
+
+
+
+
+
+
+merge_with_elec_info_active <- function(df, localizations_sub) {
+## merge df with elec info, stored in localizations_sub
+## creates new var of form ROI1-ROI2  
+## also cleans elec names
+  
+  # clean the names
+  df <- df %>%
+    mutate(electrodes = gsub("POL ", "", electrodes)) %>%
+    mutate(electrodes = gsub(" POL", "", electrodes)) %>%
+    mutate(electrodes = gsub("-Ref", "", electrodes)) %>%
+    mutate(electrodes = gsub("-Ref-", "-", electrodes)) 
+  
+  # separate two electrodess
+  df <- df %>%
+    mutate(first_elec= gsub("-.*", "", electrodes)) %>%
+    mutate(second_elec = gsub(".*-", "", electrodes))
+  # join on first electrode
+  df <- left_join(df,
+                 localizations_sub,
+                 by = c("first_elec" = "Electrode"))
+  # rename to `first_region`
+  df <- df %>%
+    rename(first_region = `Loc Meeting`)
+  # join on second electrode and rename
+  df <-  left_join(df,
+             localizations_sub,
+             by = c("second_elec" = "Electrode")) %>%
+    rename(second_region = `Loc Meeting`) 
+  # paste into useful format
+  df <- df %>% mutate(ROI = paste0(first_region, "-", second_region))
+  
+  return(df)
+
+}
+
+## get localization data ##
+localizations <- read_csv(path(here(), "munge", "combined_electrode_info_cleaned.csv"))
+localizations_19 <- localizations %>% filter(subject == "IR19") %>% select(Electrode, `Loc Meeting`)
+localizations_35 <- localizations %>% filter(subject == "IR35") %>% select(Electrode, `Loc Meeting`)
+localizations_57 <- localizations %>% filter(subject == "IR57") %>% select(Electrode, `Loc Meeting`)
+localizations_39 <- localizations %>% filter(subject == "IR39") %>% select(Electrode, `Loc Meeting`)
+localizations_16 <- localizations %>% filter(subject == "IR16") %>% select(Electrode, `Loc Meeting`)
+localizations_10 <- localizations %>% filter(subject == "IR10") %>% select(Electrode, `Loc Meeting`)
+localizations_10 <- localizations_10 %>%
+  rename(electrodes = Electrode)
+localizations_10 <- clean_electrode_names(localizations_10)
+localizations_10 <- localizations_10 %>%
+  rename(Electrode = electrodes)
+localizations_28 <- localizations %>% filter(subject == "IR28") %>% select(Electrode, `Loc Meeting`)
+
+
+
+```
+
+
+```{r hfa-trial-type, echo = F}
+
+plots_power_envelope_by_trial_type <- function(hg_data,
+                                              behave_data, 
+                                              active_data_adv,
+                                              active_data_dis,
+                                              elec,
+                                              choice = FALSE,
+                                              equality = FALSE) {
+
+  behave_hg_data <- merge.data.frame(hg_data, behave_data, by.x = "trial", by.y = "round")
+  
+  ## prep for plotting ##
+  # Advantageous #
+  elec_behave_hg_adv <- behave_hg_data %>% 
+    filter(electrodes == elec) %>%
+    filter(trial_type == "Advantageous") %>%
+    gather(key = "time", value = "hfa", starts_with("time")) %>%
+    group_by(time) %>%
+    mutate(lower_sem = mean(hfa) - 2*(sd(hfa)/n())) %>%
+    mutate(upper_sem = mean(hfa) + 2*(sd(hfa)/n())) %>%
+    mutate(mean = mean(hfa)) %>%
+    mutate(time = as.numeric(gsub("time_", "", time)))
+  
+  active_only_to_merge_adv <- active_data_adv %>%
+    filter(electrodes == elec) %>%
+    gather(key = "time", value = "significant", starts_with("time")) %>%
+    mutate(time = as.numeric(gsub("time_", "", time))) %>% 
+    select(time, significant)
+  
+  elec_behave_hg_adv <- full_join(elec_behave_hg_adv, active_only_to_merge_adv, by = "time") 
+
+  # Disadvantageous #
+  elec_behave_hg_dis <- behave_hg_data %>% 
+    filter(electrodes == elec) %>%
+    filter(trial_type == "Disadvantageous") %>%
+    gather(key = "time", value = "hfa", starts_with("time")) %>%
+    group_by(time) %>%
+    mutate(lower_sem = mean(hfa) - 2*(sd(hfa)/n())) %>%
+    mutate(upper_sem = mean(hfa) + 2*(sd(hfa)/n())) %>%
+    mutate(mean = mean(hfa)) %>%
+    mutate(time = as.numeric(gsub("time_", "", time)))
+  
+  active_only_to_merge_dis <- active_data_dis %>%
+    filter(electrodes == elec) %>%
+    gather(key = "time", value = "significant", starts_with("time")) %>%
+    mutate(time = as.numeric(gsub("time_", "", time))) %>% 
+    mutate(sig_labels = if_else(significant == TRUE, "Sig", "Insig")) %>%
+    select(time, significant, sig_labels)
+  
+  elec_behave_hg_dis <- full_join(elec_behave_hg_dis, active_only_to_merge_dis, by = "time") 
+
+  # grab elec name #
+  elec_name <- active_data_adv %>% filter(electrodes == elec) %>% select(ROI)
+  if(choice == FALSE) {
+      ## Presentation ##
+    
+      elec_behave_hg_adv <- elec_behave_hg_adv %>%
+        mutate(plot_sig = mean) %>%
+        mutate(lower_sem_sig = lower_sem) %>%
+        mutate(upper_sem_sig = upper_sem) %>%
+        mutate_cond(!is.na(significant) & significant == FALSE, 
+                    plot_sig = NA, lower_sem_sig = NA, upper_sem_sig = NA) %>%
+        mutate(plot_non_sig = mean) %>%
+        mutate(lower_sem_non_sig = lower_sem) %>%
+        mutate(upper_sem_non_sig = upper_sem) %>%
+        mutate_cond(!is.na(significant) & significant == TRUE, 
+                    plot_non_sig = NA, lower_sem_non_sig = NA, upper_sem_non_sig = NA) %>%
+        mutate(time = as.numeric(time) - 200) %>%
+        mutate_cond(time < 0, 
+                    plot_sig = NA, lower_sem_sig = NA, upper_sem_sig = NA)
+  
+      elec_behave_hg_dis <- elec_behave_hg_dis %>%
+        mutate(plot_sig = mean) %>%
+        mutate(lower_sem_sig = lower_sem) %>%
+        mutate(upper_sem_sig = upper_sem) %>%
+        mutate_cond(!is.na(significant) & significant == FALSE, 
+                    plot_sig = NA, lower_sem_sig = NA, upper_sem_sig = NA) %>%
+        mutate(plot_non_sig = mean) %>%
+        mutate(lower_sem_non_sig = lower_sem) %>%
+        mutate(upper_sem_non_sig = upper_sem) %>%
+        mutate_cond(!is.na(significant) & significant == TRUE, 
+                    plot_non_sig = NA, lower_sem_non_sig = NA, upper_sem_non_sig = NA) %>%
+        mutate(time = as.numeric(time) - 200) %>%
+        mutate_cond(time < 0, 
+                    plot_sig = NA, lower_sem_sig = NA, upper_sem_sig = NA)
+      
+      colors_for_legend <- c("Advantageous" =  "#5BA6D6", "Disadvantageous" = "#E4635C")
+  
+      p <- elec_behave_hg_adv %>%
+        ggplot(., aes(x = time)) +
+        geom_line(aes(y = plot_sig, color = "Advantageous")) +
+        geom_line(aes(y = plot_non_sig), color = "#5BA6D6", alpha = .5) +
+        geom_ribbon(aes(ymin = lower_sem_sig, ymax = upper_sem_sig), 
+                    fill = "#5BA6D6", alpha = .7) +
+        geom_ribbon(aes(ymin = lower_sem_non_sig, ymax = upper_sem_non_sig), 
+                    fill = "grey", alpha = .2) +
+        # plot disadvant data #
+        geom_line(data = elec_behave_hg_dis, aes(y = plot_sig, color = "Disadvantageous")) +
+        geom_line(data = elec_behave_hg_dis, aes(y = plot_non_sig), color = "#E4635C", alpha = .5) +
+        geom_ribbon(data = elec_behave_hg_dis, 
+                    aes(ymin = lower_sem_sig, ymax = upper_sem_sig), 
+                    fill = "#E4635C", alpha = .7) +
+        geom_ribbon(data = elec_behave_hg_dis,
+                    aes(ymin = lower_sem_non_sig, ymax = upper_sem_non_sig), 
+                    fill = "grey", alpha = .2) +
+        geom_vline(xintercept = 0, color = "black") +
+        geom_vline(xintercept = 750, color = "black", linetype = "dashed") +
+        theme(panel.background = element_rect(fill = "white"),
+              legend.position = "none") +
+        ggtitle(elec_name$ROI) +
+        ylim(-.2, .6) +
+        labs(subtitle = paste0("Presentation ~ ", elec), 
+             y = "Mean HFA", 
+             color = "Trial Type") +
+        scale_color_manual(values = colors_for_legend) 
+      
+      return(p)
+      
+  } else {
+      ## Choice ##
+    
+ elec_behave_hg_adv <- elec_behave_hg_adv %>%
+        mutate(plot_sig = mean) %>%
+        mutate(lower_sem_sig = lower_sem) %>%
+        mutate(upper_sem_sig = upper_sem) %>%
+        mutate_cond(!is.na(significant) & significant == FALSE, 
+                    plot_sig = NA, lower_sem_sig = NA, upper_sem_sig = NA) %>%
+        mutate(plot_non_sig = mean) %>%
+        mutate(lower_sem_non_sig = lower_sem) %>%
+        mutate(upper_sem_non_sig = upper_sem) %>%
+        mutate_cond(!is.na(significant) & significant == TRUE, 
+                    plot_non_sig = NA, lower_sem_non_sig = NA, upper_sem_non_sig = NA) %>%
+        mutate(time = as.numeric(time) - 750)
+  
+      elec_behave_hg_dis <- elec_behave_hg_dis %>%
+        mutate(plot_sig = mean) %>%
+        mutate(lower_sem_sig = lower_sem) %>%
+        mutate(upper_sem_sig = upper_sem) %>%
+        mutate_cond(!is.na(significant) & significant == FALSE, 
+                    plot_sig = NA, lower_sem_sig = NA, upper_sem_sig = NA) %>%
+        mutate(plot_non_sig = mean) %>%
+        mutate(lower_sem_non_sig = lower_sem) %>%
+        mutate(upper_sem_non_sig = upper_sem) %>%
+        mutate_cond(!is.na(significant) & significant == TRUE, 
+                    plot_non_sig = NA, lower_sem_non_sig = NA, upper_sem_non_sig = NA) %>%
+        mutate(time = as.numeric(time) - 750) 
+      
+      colors_for_legend <- c("Advantageous" =  "#5BA6D6", "Disadvantageous" = "#E4635C")
+  
+      p <- elec_behave_hg_adv %>%
+        ggplot(., aes(x = time)) +
+        geom_line(aes(y = plot_sig, color = "Advantageous")) +
+        geom_line(aes(y = plot_non_sig), color = "#5BA6D6", alpha = .5) +
+        geom_ribbon(aes(ymin = lower_sem_sig, ymax = upper_sem_sig), 
+                    fill = "#5BA6D6", alpha = .7) +
+        geom_ribbon(aes(ymin = lower_sem_non_sig, ymax = upper_sem_non_sig), 
+                    fill = "grey", alpha = .2) +
+        # plot disadvant data #
+        geom_line(data = elec_behave_hg_dis, aes(y = plot_sig, color = "Disadvantageous")) +
+        geom_line(data = elec_behave_hg_dis, aes(y = plot_non_sig), color = "#E4635C", alpha = .5) +
+        geom_ribbon(data = elec_behave_hg_dis, 
+                    aes(ymin = lower_sem_sig, ymax = upper_sem_sig), 
+                    fill = "#E4635C", alpha = .7) +
+        geom_ribbon(data = elec_behave_hg_dis,
+                    aes(ymin = lower_sem_non_sig, ymax = upper_sem_non_sig), 
+                    fill = "grey", alpha = .2) +
+        geom_vline(xintercept = 0, color = "black") +
+        geom_vline(xintercept = 1000, color = "black", linetype = "dashed") +
+        theme(panel.background = element_rect(fill = "white"), 
+              legend.position = "bottom") +
+        # ggtitle(elec_name$ROI) +
+        ylim(-.2, .6) +
+        labs(subtitle = paste0("Choice ~ ", elec), 
+             y = "Mean HFA", 
+             color = "Trial Type") +
+        scale_color_manual(values = colors_for_legend)
+      
+      return(p)
+    
+  }
+
+}
+
+# get plot to show if electrode is not active #
+rects <- data.frame("x" = 1, "text" = "Electrode Not Active")
+ns_plot <- ggplot(rects, aes(x = x, y = 0, label = text)) +
+  geom_tile(width = .9, height = .9, fill = "white") + # make square tiles
+  geom_text(color = "black") + # add white text in the middle
+  scale_fill_identity(guide = "none") + # color the tiles with the colors in the data frame
+  theme_void() # remove any axis markings
+
+
+# function to sort by ofc and mfg electrodes #
+
+sort_active_elec_by_ofc_mfg <- function(active_all_elec_list, localizations) {
+  
+  df_to_sort_elecs <- data.frame("electrodes" = active_all_elec_list)
+  df_to_sort_elecs <- merge_with_elec_info_active(df_to_sort_elecs,
+                                                    localizations)
+  df_to_sort_elecs <- df_to_sort_elecs %>%
+    gather(key = "elec_num", value = "elec_name", first_region, second_region) %>%
+    mutate(ofc = if_else(grepl("ofc", elec_name, ignore.case = T), 1, 
+                         if_else(grepl("polar", elec_name, ignore.case = T), 1, 0))) %>%
+    mutate(mfg = if_else(grepl("mfg", elec_name, ignore.case = T), 1, 
+                         if_else(grepl("medial frontal", elec_name, ignore.case = T), 1, 0))) %>%
+    arrange(desc(ofc), desc(mfg))
+  
+  active_all_elec_list <- unique(df_to_sort_elecs$electrodes)  
+  
+  return(active_all_elec_list)
+  
+}
+```
+
+
+## IR35
+
+```{r IR35-get-active-elecs-presentation, echo=F, fig.height=10, fig.width = 8, warning=F}
+### IR35 HFA Results ###
+
+## Presentation ##
+# grab electrodes
+active_electrodes_IR35 <- get_active_electrodes(hg_data_35,
+                                                subject = "IR35",
+                                                behave_data_35,
+                                                choice = FALSE)
+
+
+## get region names ##
+active_pres_data_35 <- merge_with_elec_info_active(active_electrodes_IR35, localizations_35)
+active_only_pres_data_35 <- active_pres_data_35 %>% filter(active == "active")
+active_pres_data_35$epoch <- "Presentation"
+
+
+## Choice ##
+# grab electrodes
+active_choice_electrodes_IR35 <- get_active_electrodes(hg_choice_data_35,
+                                                subject = "IR35",
+                                                behave_data_35,
+                                                choice = TRUE)
+
+
+## get region names ##
+active_choice_data_35 <- merge_with_elec_info_active(active_choice_electrodes_IR35,
+                                                  localizations_35)
+active_choice_only_data_35 <- active_choice_data_35 %>% filter(active == "active")
+active_choice_data_35$epoch <- "Choice"
+
+
+## combine for later ##
+active_data_35 <- rbind(active_pres_data_35 %>% select(!starts_with("time")),
+                             active_choice_data_35 %>% select(!starts_with("time")))
+
+## combine active presentation and choice lists ##
+active_all_elec_list_35 <- unique(c(active_only_pres_data_35$electrodes, active_choice_only_data_35$electrodes))
+active_all_elec_list_35 <- sort_active_elec_by_ofc_mfg(active_all_elec_list_35,
+                                                       localizations_35)
+
+
+```
+
+## IR57
+
+```{r IR57-get-active-elecs-presentation, eval=T, fig.height=10, fig.width = 8, echo=F, warning=F}
+### IR57 HFA Results ###
+
+## Presentation ##
+# grab electrodes
+active_electrodes_57 <- get_active_electrodes(hg_data_57,
+                                                subject = "IR57",
+                                                behave_data_57,
+                                                choice = FALSE)
+
+## get region names ##
+active_pres_data_57 <- merge_with_elec_info_active(active_electrodes_57, localizations_57)
+active_only_pres_data_57 <- active_pres_data_57 %>% filter(active == "active")
+active_pres_data_57$epoch <- "Presentation"
+
+
+## Choice ##
+# grab electrodes
+active_choice_electrodes_IR57 <- get_active_electrodes(hg_choice_data_57,
+                                                subject = "IR57",
+                                                behave_data_57,
+                                                choice = TRUE)
+
+## get region names ##
+active_choice_data_57 <- merge_with_elec_info_active(active_choice_electrodes_IR57, localizations_57)
+active_choice_only_data_57 <- active_choice_data_57 %>% filter(active == "active")
+active_choice_data_57$epoch <- "Choice"
+
+
+## combine for later ##
+active_data_57 <- rbind(active_pres_data_57 %>% select(!starts_with("time")),
+                             active_choice_data_57 %>% select(!starts_with("time")))
+
+## combine active presentation and choice lists ##
+active_all_elec_list_57 <- unique(c(active_only_pres_data_57$electrodes, active_choice_only_data_57$electrodes))
+active_all_elec_list_57 <- sort_active_elec_by_ofc_mfg(active_all_elec_list_57,
+                                                       localizations_57)
+
+beepr::beep(2)
+```
+
+## IR19
+
+```{r IR19-get-active-elecs-presentation,  eval=T, echo=F, fig.height=10, fig.width = 8, warning=F}
+### IR19 HFA Results ###
+
+
+## Presentation ##
+# grab electrodes
+active_electrodes_19 <- get_active_electrodes(hg_data_19,
+                                                subject = "IR19",
+                                                behave_data_19,
+                                                choice = FALSE)
+
+## get region names ##
+active_pres_data_19 <- merge_with_elec_info_active(active_electrodes_19, localizations_19)
+active_only_pres_data_19 <- active_pres_data_19 %>% filter(active == "active")
+active_pres_data_19$epoch <- "Presentation"
+
+
+## Choice ##
+# grab electrodes
+active_choice_electrodes_IR19 <- get_active_electrodes(hg_choice_data_19,
+                                                subject = "IR19",
+                                                behave_data_19,
+                                                choice = TRUE)
+
+## get region names ##
+active_choice_data_19 <- merge_with_elec_info_active(active_choice_electrodes_IR19, localizations_19)
+active_choice_only_data_19 <- active_choice_data_19 %>% filter(active == "active")
+active_choice_data_19$epoch <- "Choice"
+
+
+## combine for later ##
+active_data_19 <- rbind(active_pres_data_19 %>% select(!starts_with("time")),
+                             active_choice_data_19 %>% select(!starts_with("time")))
+
+## combine active presentation and choice lists ##
+active_all_elec_list_19 <- unique(c(active_only_pres_data_19$electrodes, active_choice_only_data_19$electrodes))
+active_all_elec_list_19 <- sort_active_elec_by_ofc_mfg(active_all_elec_list_19,
+                                                       localizations_19)
+
+
+beepr::beep(2)
+```
+
+## IR39
+
+```{r IR39-get-active-elecs-presentation,  eval=T, fig.height=10, fig.width = 8, echo=F, warning=F}
+### IR39 HFA Results ###
+
+## Presentation ##
+# grab electrodes
+active_electrodes_39 <- get_active_electrodes(hg_data_39,
+                                                subject = "IR39",
+                                                behave_data_39,
+                                                choice = FALSE)
+
+## get region names ##
+active_pres_data_39 <- merge_with_elec_info_active(active_electrodes_39, localizations_39)
+active_only_pres_data_39 <- active_pres_data_39 %>% filter(active == "active")
+active_pres_data_39$epoch <- "Presentation"
+
+
+## Choice ##
+# grab electrodes
+active_choice_electrodes_IR39 <- get_active_electrodes(hg_choice_data_39,
+                                                subject = "IR39",
+                                                behave_data_39,
+                                                choice = TRUE)
+
+## get region names ##
+active_choice_data_39 <- merge_with_elec_info_active(active_choice_electrodes_IR39, localizations_39)
+active_choice_only_data_39 <- active_choice_data_39 %>% filter(active == "active")
+active_choice_data_39$epoch <- "Choice"
+
+
+## combine for later ##
+active_data_39 <- rbind(active_pres_data_39 %>% select(!starts_with("time")),
+                             active_choice_data_39 %>% select(!starts_with("time")))
+
+## combine active presentation and choice lists ##
+active_all_elec_list_39 <- unique(c(active_only_pres_data_39$electrodes, active_choice_only_data_39$electrodes))
+active_all_elec_list_39 <- sort_active_elec_by_ofc_mfg(active_all_elec_list_39,
+                                                       localizations_39)
+
+
+beepr::beep(2)
+```
+
+## IR28
+
+```{r IR28-get-active-elecs-presentation,  eval=T, fig.height=10, fig.width = 8, echo=F, warning=F}
+### IR28 HFA Results ###
+
+## Presentation ##
+# grab electrodes
+active_electrodes_28 <- get_active_electrodes(hg_data_28,
+                                                subject = "IR28",
+                                                behave_data_28,
+                                                choice = FALSE)
+
+## get region names ##
+active_pres_data_28 <- merge_with_elec_info_active(active_electrodes_28, localizations_28)
+active_only_pres_data_28 <- active_pres_data_28 %>% filter(active == "active")
+active_pres_data_28$epoch <- "Presentation"
+
+
+## Choice ##
+# grab electrodes
+active_choice_electrodes_IR28 <- get_active_electrodes(hg_choice_data_28,
+                                                subject = "IR28",
+                                                behave_data_28,
+                                                choice = TRUE)
+
+## get region names ##
+active_choice_data_28 <- merge_with_elec_info_active(active_choice_electrodes_IR28, localizations_28)
+active_choice_only_data_28 <- active_choice_data_28 %>% filter(active == "active")
+active_choice_data_28$epoch <- "Choice"
+
+
+## combine for later ##
+active_data_28 <- rbind(active_pres_data_28 %>% select(!starts_with("time")),
+                             active_choice_data_28 %>% select(!starts_with("time")))
+
+## combine active presentation and choice lists ##
+active_all_elec_list_28 <- unique(c(active_only_pres_data_28$electrodes, active_choice_only_data_28$electrodes))
+active_all_elec_list_28 <- sort_active_elec_by_ofc_mfg(active_all_elec_list_28,
+                                                       localizations_28)
+
+beepr::beep(2)
+```
+
+## IR10
+
+```{r IR10-get-active-elecs-presentation,  eval=T, fig.height=10, fig.width = 8, echo=F, warning=F}
+### IR10 HFA Results ###
+
+
+## Presentation ##
+# grab electrodes
+active_electrodes_10 <- get_active_electrodes(hg_data_10,
+                                                subject = "IR10",
+                                                behave_data_10,
+                                                choice = FALSE)
+
+## get region names ##
+active_pres_data_10 <- merge_with_elec_info_active(active_electrodes_10, localizations_10)
+active_only_pres_data_10 <- active_pres_data_10 %>% filter(active == "active")
+active_pres_data_10$epoch <- "Presentation"
+
+
+## Choice ##
+# grab electrodes
+active_choice_electrodes_IR10 <- get_active_electrodes(hg_choice_data_10,
+                                                subject = "IR10",
+                                                behave_data_10,
+                                                choice = TRUE)
+
+## get region names ##
+active_choice_data_10 <- merge_with_elec_info_active(active_choice_electrodes_IR10, localizations_10)
+active_choice_only_data_10 <- active_choice_data_10 %>% filter(active == "active")
+active_choice_data_10$epoch <- "Choice"
+
+
+## combine for later ##
+active_data_10 <- rbind(active_pres_data_10 %>% select(!starts_with("time")),
+                             active_choice_data_10 %>% select(!starts_with("time")))
+
+## combine active presentation and choice lists ##
+active_all_elec_list_10 <- unique(c(active_only_pres_data_10$electrodes, active_choice_only_data_10$electrodes))
+active_all_elec_list_10 <- sort_active_elec_by_ofc_mfg(active_all_elec_list_10,
+                                                       localizations_10)
+
+
+beepr::beep(2)
+```
+
+
+## IR16
+
+```{r IR16-get-active-elecs-presentation,  eval=T, fig.height=10, fig.width = 8, echo=F, warning=F}
+### IR16 HFA Results ###
+
+## Presentation ##
+# grab electrodes
+active_electrodes_16 <- get_active_electrodes(hg_data_16,
+                                                subject = "IR16",
+                                                behave_data_16,
+                                                choice = FALSE)
+
+## get region names ##
+active_pres_data_16 <- merge_with_elec_info_active(active_electrodes_16, localizations_16)
+active_only_pres_data_16 <- active_pres_data_16 %>% filter(active == "active")
+active_pres_data_16$epoch <- "Presentation"
+
+
+## Choice ##
+# grab electrodes
+active_choice_electrodes_IR16 <- get_active_electrodes(hg_choice_data_16,
+                                                subject = "IR16",
+                                                behave_data_16,
+                                                choice = TRUE)
+
+## get region names ##
+active_choice_data_16 <- merge_with_elec_info_active(active_choice_electrodes_IR16, localizations_16)
+active_choice_only_data_16 <- active_choice_data_16 %>% filter(active == "active")
+active_choice_data_16$epoch <- "Choice"
+
+
+## combine for later ##
+active_data_16 <- rbind(active_pres_data_16 %>% select(!starts_with("time")),
+                             active_choice_data_16 %>% select(!starts_with("time")))
+
+## combine active presentation and choice lists ##
+active_all_elec_list_16 <- unique(c(active_only_pres_data_16$electrodes, active_choice_only_data_16$electrodes))
+active_all_elec_list_16 <- sort_active_elec_by_ofc_mfg(active_all_elec_list_16,
+                                                       localizations_16)
+
+
+beepr::beep(2)
+```
+
+
+## Table totals
+
+```{r table-of-active-electrodes, eval = T, echo = F}
+
+active_data_57$sub <- "IR57"
+active_data_35$sub <- "IR35"
+active_data_19$sub <- "IR19"
+active_data_39$sub <- "IR39"
+active_data_16$sub <- "IR16"
+active_data_28$sub <- "IR28"
+active_data_10$sub <- "IR10"
+
+active_data <- rbind(active_data_57 %>% select(!starts_with("time")), 
+                          active_data_35 %>% select(!starts_with("time")), 
+                          active_data_19 %>% select(!starts_with("time")),
+                          active_data_16 %>% select(!starts_with("time")),
+                          active_data_28 %>% select(!starts_with("time")), 
+                          active_data_10 %>% select(!starts_with("time")),
+                          active_data_39 %>% select(!starts_with("time")))
+
+active_only_data <- active_data %>% filter(active == "active")
+
+## save ##
+write_csv(active_data, 
+          path(here(), "results", "active_elecs", "all_beta_electrode_tests.csv"))
+write_csv(active_only_data, 
+          path(here(), "results", "active_elecs", "active_beta_electrode_tests.csv"))
+
+```
+
+
+```{r overview-table, echo = F}
+
+active_data_table <- active_data %>%
+  gather(key = "elec_num", value = "elec_name", first_region, second_region) %>%
+  mutate(ofc = if_else(grepl("ofc", elec_name, ignore.case = T), 1, 
+                             if_else(grepl("orbit", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(frontopolar = if_else(grepl("polar", elec_name, ignore.case = T), 1, 
+                             if_else(grepl("frontopolar", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(insula = if_else(grepl("insula", elec_name, ignore.case = T), 1, 
+                           if_else(grepl("insular", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(mfg = if_else(grepl("mfg", elec_name, ignore.case = T), 1, 
+                     if_else(grepl("medial frontal", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(cingulate = if_else(grepl("CC", elec_name, ignore.case = T), 1, 
+                           if_else(grepl("cing", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(sts = if_else(grepl("sts", elec_name, ignore.case = T), 1, 
+                 if_else(grepl("superior temporal", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(hipp_formation = if_else(grepl("hinal", elec_name, ignore.case = T), 1, 
+                           if_else(grepl("ca1", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(amyg = if_else(grepl("amyg", elec_name, ignore.case = T), 1, 
+                           if_else(grepl("ca1", elec_name, ignore.case = T), 1, 0))) %>%
+  select(ofc, frontopolar, insula, mfg, cingulate, sts, hipp_formation, amyg) %>%
+  gather(key = "region", value = "count") %>%
+  group_by(region) %>%
+  filter(count == 1) %>%
+  summarise(total_elecs = n())
+
+active_only_data_table <- active_only_data %>%
+  gather(key = "elec_num", value = "elec_name", first_region, second_region) %>%
+  mutate(ofc = if_else(grepl("ofc", elec_name, ignore.case = T), 1, 
+                             if_else(grepl("orbit", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(frontopolar = if_else(grepl("polar", elec_name, ignore.case = T), 1, 
+                             if_else(grepl("frontopolar", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(insula = if_else(grepl("insula", elec_name, ignore.case = T), 1, 
+                           if_else(grepl("insular", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(mfg = if_else(grepl("mfg", elec_name, ignore.case = T), 1, 
+                     if_else(grepl("medial frontal", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(cingulate = if_else(grepl("CC", elec_name, ignore.case = T), 1, 
+                           if_else(grepl("cing", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(sts = if_else(grepl("sts", elec_name, ignore.case = T), 1, 
+                 if_else(grepl("superior temporal", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(hipp_formation = if_else(grepl("hinal", elec_name, ignore.case = T), 1, 
+                           if_else(grepl("ca1", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(amyg = if_else(grepl("amyg", elec_name, ignore.case = T), 1, 
+                           if_else(grepl("ca1", elec_name, ignore.case = T), 1, 0))) %>%
+  select(ofc, frontopolar, insula, mfg, cingulate, sts, hipp_formation, amyg) %>%
+  gather(key = "region", value = "count") %>%
+  group_by(region) %>%
+  filter(count == 1) %>%
+  summarise(active_elecs = n())
+
+  
+over_all_table <- merge.data.frame(active_only_data_table, active_data_table, by = "region")
+
+over_all_table %>%
+  mutate(percentage_active = active_elecs/total_elecs) %>%
+  arrange(desc(percentage_active)) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = "striped")
+
+
+```
+
+
+
+```{r detailed-table, echo = F}
+
+active_data_table <- active_data %>%
+  gather(key = "elec_num", value = "elec_name", first_region, second_region) %>%
+  mutate(ofc = if_else(grepl("ofc", elec_name, ignore.case = T), 1, 
+                             if_else(grepl("polar", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(insula = if_else(grepl("insula", elec_name, ignore.case = T), 1, 
+                           if_else(grepl("insular", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(mfg = if_else(grepl("mfg", elec_name, ignore.case = T), 1, 
+                     if_else(grepl("medial frontal", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(cingulate = if_else(grepl("CC", elec_name, ignore.case = T), 1, 
+                           if_else(grepl("cing", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(sts = if_else(grepl("sts", elec_name, ignore.case = T), 1, 
+                 if_else(grepl("superior temporal", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(hipp_formation = if_else(grepl("hinal", elec_name, ignore.case = T), 1, 
+                           if_else(grepl("ca1", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(amyg = if_else(grepl("amyg", elec_name, ignore.case = T), 1, 
+                           if_else(grepl("ca1", elec_name, ignore.case = T), 1, 0))) %>%
+  select(sub, epoch, ofc, insula, mfg, cingulate, sts, hipp_formation, amyg) %>%
+  gather(key = "region", value = "count", -sub, -epoch) %>%
+  group_by(region, sub, epoch) %>%
+  filter(count == 1) %>%
+  summarise(total_elecs = n())
+
+active_only_data_table <- active_only_data %>%
+  gather(key = "elec_num", value = "elec_name", first_region, second_region) %>%
+  mutate(ofc = if_else(grepl("ofc", elec_name, ignore.case = T), 1, 
+                             if_else(grepl("polar", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(insula = if_else(grepl("insula", elec_name, ignore.case = T), 1, 
+                           if_else(grepl("insular", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(mfg = if_else(grepl("mfg", elec_name, ignore.case = T), 1, 
+                     if_else(grepl("medial frontal", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(cingulate = if_else(grepl("CC", elec_name, ignore.case = T), 1, 
+                           if_else(grepl("cing", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(sts = if_else(grepl("sts", elec_name, ignore.case = T), 1, 
+                 if_else(grepl("superior temporal", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(hipp_formation = if_else(grepl("hinal", elec_name, ignore.case = T), 1, 
+                           if_else(grepl("ca1", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(amyg = if_else(grepl("amyg", elec_name, ignore.case = T), 1, 
+                           if_else(grepl("ca1", elec_name, ignore.case = T), 1, 0))) %>%
+  select(sub, epoch, ofc, insula, mfg, cingulate, sts, hipp_formation, amyg) %>%
+  gather(key = "region", value = "count", -sub, -epoch) %>%
+  group_by(region, sub, epoch) %>%
+  filter(count == 1) %>%
+  summarise(active_elecs = n())
+
+  
+over_all_table <- merge.data.frame(active_only_data_table, 
+                                   active_data_table, 
+                                   by = c("region", "sub", "epoch"))
+
+over_all_table %>%
+  mutate(percentage_active = active_elecs/total_elecs) %>%
+  arrange(region, sub) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = "striped")
+
+
+```
+
+
+```{r create-summary-plots}
+
+labeled_active_data <- active_only_data %>%
+  gather(key = "elec_num", value = "elec_name", first_region, second_region) %>%
+  mutate(ofc = if_else(grepl("ofc", elec_name, ignore.case = T), 1, 
+                             if_else(grepl("orbit", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(frontopolar = if_else(grepl("polar", elec_name, ignore.case = T), 1, 
+                             if_else(grepl("frontopolar", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(insula = if_else(grepl("insula", elec_name, ignore.case = T), 1, 
+                           if_else(grepl("insular", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(mfg = if_else(grepl("mfg", elec_name, ignore.case = T), 1, 
+                     if_else(grepl("medial frontal", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(cingulate = if_else(grepl("CC", elec_name, ignore.case = T), 1, 
+                           if_else(grepl("cing", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(sts = if_else(grepl("sts", elec_name, ignore.case = T), 1, 
+                 if_else(grepl("superior temporal", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(hipp_formation = if_else(grepl("hinal", elec_name, ignore.case = T), 1, 
+                           if_else(grepl("ca1", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(amyg = if_else(grepl("amyg", elec_name, ignore.case = T), 1, 
+                           if_else(grepl("ca1", elec_name, ignore.case = T), 1, 0))) 
+```
+
+
+```{r combine-it-all}
+roi_pres_data <- labeled_active_data %>%
+  filter(ofc == 1 | frontopolar == 1 | insula == 1 | mfg == 1 | cingulate == 1 | sts == 1 | hipp_formation == 1 | amyg == 1) %>%
+  filter(epoch == "Presentation") 
+
+roi_choice_data <- labeled_active_data %>%
+  filter(ofc == 1 | frontopolar == 1 | insula == 1 | mfg == 1 | cingulate == 1 | sts == 1 | hipp_formation == 1 | amyg == 1) %>%
+  filter(epoch == "Choice")  
+
+## presentation ##
+# IR10 #
+hg_data_10 <- hg_data_10 %>%
+  select(1:1999, trial, electrodes) %>%
+  mutate(subject = "IR10")
+
+
+hg_data_behave_10 <- merge.data.frame(hg_data_10,
+                                      behave_data_10,
+                                      by.x = "trial",
+                                      by.y = "round")
+
+# IR16 #
+hg_data_16 <- hg_data_16 %>%
+  select(1:1999, trial, electrodes) %>%
+  mutate(subject = "IR16")
+
+
+hg_data_behave_16 <- merge.data.frame(hg_data_16,
+                                      behave_data_16,
+                                      by.x = "trial",
+                                      by.y = "round")
+
+# IR19 #
+hg_data_19 <- hg_data_19 %>%
+  select(1:1999, trial, electrodes) %>%
+  mutate(subject = "IR19")
+
+hg_data_behave_19 <- merge.data.frame(hg_data_19,
+                                      behave_data_19,
+                                      by.x = "trial",
+                                      by.y = "round")
+# IR28 #
+hg_data_28 <- hg_data_28 %>%
+  select(1:1999, trial, electrodes) %>%
+  mutate(subject = "IR28")
+
+hg_data_behave_28 <- merge.data.frame(hg_data_28,
+                                      behave_data_28,
+                                      by.x = "trial",
+                                      by.y = "round")
+
+# IR35 #
+hg_data_35 <- hg_data_35 %>%
+  select(1:1999, trial, electrodes) %>%
+  mutate(subject = "IR35")
+
+hg_data_behave_35 <- merge.data.frame(hg_data_35,
+                                      behave_data_35,
+                                      by.x = "trial",
+                                      by.y = "round")
+
+# IR39 #
+hg_data_39 <- hg_data_39 %>%
+  select(1:1999, trial, electrodes) %>%
+  mutate(subject = "IR39")
+
+hg_data_behave_39 <- merge.data.frame(hg_data_39,
+                                      behave_data_39,
+                                      by.x = "trial",
+                                      by.y = "round")
+
+# IR57 #
+hg_data_57 <- hg_data_57 %>%
+  select(1:1999, trial, electrodes) %>%
+  mutate(subject = "IR57")
+
+hg_data_behave_57 <- merge.data.frame(hg_data_57,
+                                      behave_data_57,
+                                      by.x = "trial",
+                                      by.y = "round")
+
+hg_data <- rbind(hg_data_behave_10, hg_data_behave_16, hg_data_behave_19, hg_data_behave_28,
+                  hg_data_behave_35, hg_data_behave_39, hg_data_behave_57)
+
+write_csv(hg_data, path(here(), "results", "active_elecs", "combined_beta_behave_data.csv"))
+
+## choice ##
+# IR10 #
+hg_choice_data_10 <- hg_choice_data_10 %>%
+  select(1:1999, trial, electrodes) %>%
+  mutate(subject = "IR10")
+
+
+hg_choice_data_behave_10 <- merge.data.frame(hg_choice_data_10,
+                                      behave_data_10,
+                                      by.x = "trial",
+                                      by.y = "round")
+# IR16 #
+hg_choice_data_16 <- hg_choice_data_16 %>%
+  select(1:1999, trial, electrodes) %>%
+  mutate(subject = "IR16")
+
+hg_choice_data_behave_16 <- merge.data.frame(hg_choice_data_16,
+                                      behave_data_16,
+                                      by.x = "trial",
+                                      by.y = "round")
+
+# IR19 #
+hg_choice_data_19 <- hg_choice_data_19 %>%
+  select(1:1999, trial, electrodes) %>%
+  mutate(subject = "IR19")
+
+hg_choice_data_behave_19 <- merge.data.frame(hg_choice_data_19,
+                                      behave_data_19,
+                                      by.x = "trial",
+                                      by.y = "round")
+
+# IR28 #
+hg_choice_data_28 <- hg_choice_data_28 %>%
+  select(1:1999, trial, electrodes) %>%
+  mutate(subject = "IR28")
+
+hg_choice_data_behave_28 <- merge.data.frame(hg_choice_data_28,
+                                      behave_data_28,
+                                      by.x = "trial",
+                                      by.y = "round")
+
+# IR35 #
+hg_choice_data_35 <- hg_choice_data_35 %>%
+  select(1:1999, trial, electrodes) %>%
+  mutate(subject = "IR35")
+
+hg_choice_data_behave_35 <- merge.data.frame(hg_choice_data_35,
+                                      behave_data_35,
+                                      by.x = "trial",
+                                      by.y = "round")
+
+# IR39 #
+
+hg_choice_data_39 <- hg_choice_data_39 %>%
+  select(1:1999, trial, electrodes) %>%
+  mutate(subject = "IR39")
+
+hg_choice_data_behave_39 <- merge.data.frame(hg_choice_data_39,
+                                      behave_data_39,
+                                      by.x = "trial",
+                                      by.y = "round")
+
+# IR57 #
+hg_choice_data_57 <- hg_choice_data_57 %>%
+  select(1:1999, trial, electrodes) %>%
+  mutate(subject = "IR57")
+
+hg_choice_data_behave_57 <- merge.data.frame(hg_choice_data_57,
+                                      behave_data_57,
+                                      by.x = "trial",
+                                      by.y = "round")
+
+hg_choice_data <- rbind(hg_choice_data_behave_10, hg_choice_data_behave_16,
+                        hg_choice_data_behave_19, hg_choice_data_behave_28,
+                        hg_choice_data_behave_35, hg_choice_data_behave_39,
+                        hg_choice_data_behave_57)
+
+write_csv(hg_choice_data, 
+          path(here(), "results", "active_elecs", "combined_beta_behave_choice_data.csv"))
+```
+

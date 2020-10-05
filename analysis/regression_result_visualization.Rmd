@@ -712,29 +712,38 @@ beta_plots_all_subjects <- function(df, subject, sig_thresh, nrows, vars = c("se
 }
 
 beta_plots_all_subjects_choice <- function(df, subject, sig_thresh, nrows, vars = c("self_payoff", "self_foregone", "other_payoff", "other_foregone"), regions = c("*")){
-df %>%
-    filter(predictor %in% vars) %>%
-    filter(grepl(paste(regions, collapse = "|"), ROI)) %>%
-    mutate(bin_sig = if_else((p < .05 & perm_p < sig_thresh), 1, 0)) %>%
-    mutate(predictor_sig = if_else(bin_sig == 0, "Insig", as.character(predictor))) %>%
-    mutate(predictor_sig = relevel(factor(predictor_sig, levels = c("Insig", vars)), ref = "Insig")) %>%
-    mutate(bin = gsub("pre_", "-", bin)) %>%
-    mutate(bin = as.numeric(gsub("post_", "", bin))) %>%
-    arrange(bin) %>%
-    ggplot(., aes(x = bin, y= Beta, group = predictor_sig)) +
-    geom_line(color = "grey", alpha = .3) +
-    geom_point(aes(color = predictor_sig)) + 
-    geom_vline(xintercept = 0, color = "black") +
-    geom_vline(xintercept = 20, color = "black") +
-    theme(axis.text.x = element_text(angle = 90),
-          # axis.ticks.x = element_blank(),
-          panel.background = element_rect(fill = "white")) +
-      scale_fill_manual(values = c("grey", getPalette(9)), drop = F) +
-      scale_color_manual(values = c("grey", getPalette(9)), drop = F) +
-      labs(y = "Beta", x = "Bins",  color = "Regressor") +
-    facet_wrap(~ROI, nrow = nrows) +
-    ggtitle(paste0(subject, " ~ thresh @ ", sig_thresh))
+      
+    plot_df <- df %>%
+        filter(predictor %in% vars) %>%
+        filter(grepl(paste(regions, collapse = "|"), ROI)) %>%
+        mutate(bin_sig = if_else((p < .05 & perm_p < sig_thresh), 1, 0)) %>%
+        mutate(predictor_sig = if_else(bin_sig == 0, "Insig", as.character(predictor))) %>%
+        mutate(predictor_sig = relevel(factor(predictor_sig, levels = c("Insig", vars)), ref = "Insig")) %>%
+        mutate(bin = gsub("pre_", "-", bin)) %>%
+        mutate(bin = as.numeric(gsub("post_", "", bin))) %>%
+        arrange(bin)
+    
+    # create labeler for ROIs
+    roi_labels <- plot_df$ROI
+    names(roi_labels) <- plot_df$electrode
+      
+    plot_df %>%  
+        ggplot(., aes(x = bin, y= Beta, group = predictor_sig)) +
+        geom_line(aes(group = predictor), color = "grey", alpha = .3) +
+        geom_point(aes(color = predictor_sig)) + 
+        geom_vline(xintercept = 0, color = "black") +
+        geom_vline(xintercept = 20, color = "black") +
+        theme(axis.text.x = element_text(angle = 90),
+              # axis.ticks.x = element_blank(),
+              panel.background = element_rect(fill = "white")) +
+          scale_fill_manual(values = c("grey", getPalette(9)), drop = F) +
+          scale_color_manual(values = c("grey", getPalette(9)), drop = F) +
+          labs(y = "Beta", x = "Bins",  color = "Regressor") +
+        facet_wrap(~electrode, nrow = nrows, labeller = as_labeller(roi_labels)) +
+        ggtitle(paste0(subject, " ~ thresh @ ", sig_thresh))
 }
+
+
 ```
 
 ## Presentation Results
@@ -839,6 +848,27 @@ beta_plots_all_subjects(right_hfa_presentation_cleaned_results_19, "IR19 ~ Right
 
 ```
 
+```{r plots-for-ming}
+ggthemr("solarized")
+left_hfa_presentation_cleaned_results_19 %>%
+  filter(electrode == "LIN11-LIN12") %>%
+  filter(predictor == "other_payoff") %>%
+  mutate(time_numeric = 50* as.integer(gsub("bin_", "", bin))) %>%
+  mutate(sig = .05 > p) %>%
+  select(time_numeric, Beta, Fstat, R2, sig) %>%
+  gather(key = "Metric", value = "value", -time_numeric, -sig) %>%
+  group_by(Metric) %>%
+  mutate(value_scaled = scale(value)) %>%
+  ggplot(., aes(x = time_numeric, y = value)) + 
+  geom_line(color = "grey", alpha = .7) +
+  geom_point(aes(color = sig), size = 2) +
+  scale_color_manual(values = c("grey", "#E4635C")) +
+  theme(panel.background = element_rect(fill = "white")) +
+  labs(x = "time", subtitle = "LIN11-LIN12,   Perm P ~= 0", title = "MGF-MFG ~ Other Payoff") +
+  facet_wrap(~Metric, scales = "free")
+
+
+```
 
 ```{r theta-presentation}
 
@@ -946,6 +976,8 @@ right_hfa_choice_cleaned_results_57 <- hfa_choice_cleaned_results_57 %>% filter(
 
 ```
 
+## Choice 
+
 ```{r delta-choice}
 # whole brain #
 beta_plots_all_subjects_choice(left_delta_choice_cleaned_results_19, "IR19 ~ OFC ~ delta ~ Choice", 8, sig_thresh = 0.01)
@@ -957,17 +989,38 @@ beta_plots_all_subjects_choice(right_delta_choice_cleaned_results_35, "IR35 ~ Ri
 beta_plots_all_subjects_choice(left_delta_choice_cleaned_results_57, "IR57 ~ Left ~ delta ~ Choice", 8, sig_thresh = 0.01)
 beta_plots_all_subjects_choice(right_delta_choice_cleaned_results_57, "IR57 ~ Right ~ delta ~ Choice", 8, sig_thresh = 0.01)
 
-# By region #
+### By region ###
+## STS ##
 beta_plots_all_subjects_choice(delta_choice_cleaned_results_19, "IR19 ~ STS ~ delta ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("STS", "sts"))
 beta_plots_all_subjects_choice(delta_choice_cleaned_results_35, "IR35 ~ STS ~ delta ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("STS", "sts"))
 beta_plots_all_subjects_choice(delta_choice_cleaned_results_57, "IR57 ~ STS ~ delta ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("STS", "sts"))
 
+## STG ##
+beta_plots_all_subjects_choice(delta_choice_cleaned_results_19, "IR19 ~ STG ~ delta ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("STG", "stg"))
+beta_plots_all_subjects_choice(delta_choice_cleaned_results_35, "IR35 ~ STG ~ delta ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("STG", "stg"))
+beta_plots_all_subjects_choice(delta_choice_cleaned_results_57, "IR57 ~ STG ~ delta ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("STG", "stg"))
+
+
+## MFG ##
 beta_plots_all_subjects_choice(delta_choice_cleaned_results_19, "IR19 ~ mfg ~ delta ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("MFG", "mfg"))
 beta_plots_all_subjects_choice(delta_choice_cleaned_results_35, "IR35 ~ mfg ~ delta ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("MFG", "mfg"))
 beta_plots_all_subjects_choice(delta_choice_cleaned_results_57, "IR57 ~ mfg ~ delta ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("MFG", "mfg"))
 
+## OFC ##
+# beta_plots_all_subjects_choice(delta_choice_cleaned_results_19, "IR19 ~ OFC ~ delta ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("OFC", "ofc"))
+beta_plots_all_subjects_choice(delta_choice_cleaned_results_35, "IR35 ~ OFC ~ delta ~ Choice", 3, sig_thresh = 0.01, regions = c("OFC", "ofc", "polar"))
+beta_plots_all_subjects_choice(delta_choice_cleaned_results_57, "IR57 ~ OFC ~ delta ~ Choice", 2, sig_thresh = 0.01, regions = c("OFC", "ofc", "polar"))
 
-beta_plots_all_subjects_choice(delta_choice_cleaned_results_19, "IR19 ~ Amyg ~ delta ~ Choice", 8, sig_thresh = 0.01, regions = c("amyg", "Amyg"))
+## Amygdala ##
+beta_plots_all_subjects_choice(delta_choice_cleaned_results_19, "IR19 ~ Amyg ~ delta ~ Choice", 8, sig_thresh = 0.01,  regions = c("Amyg", "amyg"))
+# beta_plots_all_subjects_choice(delta_choice_cleaned_results_35, "IR35 ~ Amyg ~ delta ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("Amyg", "amyg"))
+beta_plots_all_subjects_choice(delta_choice_cleaned_results_57, "IR57 ~ Amyg ~ delta ~ Choice", 8, sig_thresh = 0.01,  regions = c("Amyg", "amyg"))
+
+
+## Insula ##
+beta_plots_all_subjects_choice(delta_choice_cleaned_results_19, "IR19 ~ Imsula ~ delta ~ Choice", 4, sig_thresh = 0.01,  regions = c("Insula", "insula"))
+beta_plots_all_subjects_choice(delta_choice_cleaned_results_35, "IR35 ~ Insula ~ delta ~ Choice", 3, sig_thresh = 0.01,  regions = c("Insula", "insula"))
+beta_plots_all_subjects_choice(delta_choice_cleaned_results_57, "IR57 ~ Insula ~ delta ~ Choice", 3, sig_thresh = 0.01,  regions = c("Insula", "insula"))
 
 ```
 
@@ -983,16 +1036,36 @@ beta_plots_all_subjects_choice(right_theta_choice_cleaned_results_35, "IR35 ~ Ri
 beta_plots_all_subjects_choice(left_theta_choice_cleaned_results_57, "IR57 ~ Left ~ Theta ~ Choice", 8, sig_thresh = 0.01)
 beta_plots_all_subjects_choice(right_theta_choice_cleaned_results_57, "IR57 ~ Right ~ Theta ~ Choice", 8, sig_thresh = 0.01)
 
-# By region #
-beta_plots_all_subjects_choice(theta_choice_cleaned_results_19, "IR19 ~ STS ~ theta ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("STS", "sts"))
-beta_plots_all_subjects_choice(theta_choice_cleaned_results_35, "IR35 ~ STS ~ theta ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("STS", "sts"))
-beta_plots_all_subjects_choice(theta_choice_cleaned_results_57, "IR57 ~ STS ~ theta ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("STS", "sts"))
+### By region ###
+## STS ##
+beta_plots_all_subjects_choice(theta_choice_cleaned_results_19, "IR19 ~ STS ~ theta ~ Choice", 3, sig_thresh = 0.01,  regions = c("STS", "sts"))
+beta_plots_all_subjects_choice(theta_choice_cleaned_results_35, "IR35 ~ STS ~ theta ~ Choice", 3, sig_thresh = 0.01,  regions = c("STS", "sts"))
+beta_plots_all_subjects_choice(theta_choice_cleaned_results_57, "IR57 ~ STS ~ theta ~ Choice", 8, sig_thresh = 0.01,  regions = c("STS", "sts"))
 
+## STG ##
+beta_plots_all_subjects_choice(theta_choice_cleaned_results_19, "IR19 ~ STG ~ theta ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("STG", "stg"))
+beta_plots_all_subjects_choice(theta_choice_cleaned_results_35, "IR35 ~ STG ~ theta ~ Choice", 2, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("STG", "stg"))
+beta_plots_all_subjects_choice(theta_choice_cleaned_results_57, "IR57 ~ STG ~ theta ~ Choice", 2, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("STG", "stg"))
 
-# By region #
+## MFG ##
 beta_plots_all_subjects_choice(theta_choice_cleaned_results_19, "IR19 ~ MFG ~ theta ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("MFG", "mfg"))
 beta_plots_all_subjects_choice(theta_choice_cleaned_results_35, "IR35 ~ MFG ~ theta ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("MFG", "mfg"))
 beta_plots_all_subjects_choice(theta_choice_cleaned_results_57, "IR57 ~ MFG ~ theta ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("MFG", "mfg"))
+
+## OFC ##
+# beta_plots_all_subjects_choice(theta_choice_cleaned_results_19, "IR19 ~ OFC ~ theta ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("OFC", "ofc", "polar"))
+beta_plots_all_subjects_choice(theta_choice_cleaned_results_35, "IR35 ~ OFC ~ theta ~ Choice", 3, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("OFC", "ofc", "polar"))
+beta_plots_all_subjects_choice(theta_choice_cleaned_results_57, "IR57 ~ OFC ~ theta ~ Choice", 2, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("OFC", "ofc", "polar"))
+
+## Amygdala ##
+beta_plots_all_subjects_choice(theta_choice_cleaned_results_19, "IR19 ~ Amyg ~ theta ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("Amyg", "amyg"))
+# beta_plots_all_subjects_choice(theta_choice_cleaned_results_35, "IR35 ~ Amyg ~ theta ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("Amyg", "amyg"))
+beta_plots_all_subjects_choice(theta_choice_cleaned_results_57, "IR57 ~ Amyg ~ theta ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("Amyg", "amyg"))
+
+## Insula ##
+beta_plots_all_subjects_choice(theta_choice_cleaned_results_19, "IR19 ~ Insula ~ theta ~ Choice", 4, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("Insula", "insula"))
+beta_plots_all_subjects_choice(theta_choice_cleaned_results_35, "IR35 ~ Insula ~ theta ~ Choice", 3, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("Insula", "insula"))
+beta_plots_all_subjects_choice(theta_choice_cleaned_results_57, "IR57 ~ Insula ~ theta ~ Choice", 3, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("Insula", "insula"))
 
 ```
 
@@ -1017,6 +1090,16 @@ beta_plots_all_subjects_choice(alpha_choice_cleaned_results_19, "IR19 ~ MFG ~ al
 beta_plots_all_subjects_choice(alpha_choice_cleaned_results_35, "IR35 ~ MFG ~ alpha ~ Choice", 8, sig_thresh = 0.01, regions = c("MFG", "mfg"))
 beta_plots_all_subjects_choice(alpha_choice_cleaned_results_57, "IR57 ~ MFG ~ alpha ~ Choice", 8, sig_thresh = 0.01, regions = c("MFG", "mfg"))
 
+# beta_plots_all_subjects_choice(alpha_choice_cleaned_results_19, "IR19 ~ OFC ~ alpha ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("OFC", "ofc", "polar"))
+beta_plots_all_subjects_choice(alpha_choice_cleaned_results_35, "IR35 ~ OFC ~ alpha ~ Choice", 3, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("OFC", "ofc", "polar"))
+beta_plots_all_subjects_choice(alpha_choice_cleaned_results_57, "IR57 ~ OFC ~ alpha ~ Choice", 2, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("OFC", "ofc", "polar"))
+
+
+
+beta_plots_all_subjects_choice(alpha_choice_cleaned_results_19, "IR19 ~ Amyg ~ alpha ~ Choice", 8, sig_thresh = 0.01, regions = c("Amyg", "amyg"))
+# beta_plots_all_subjects_choice(alpha_choice_cleaned_results_35, "IR35 ~ Amyg ~ alpha ~ Choice", 8, sig_thresh = 0.01, regions = c("Amyg", "amyg"))
+beta_plots_all_subjects_choice(alpha_choice_cleaned_results_57, "IR57 ~ Amyg ~ alpha ~ Choice", 8, sig_thresh = 0.01, regions = c("Amyg", "amyg"))
+
 
 ```
 
@@ -1031,16 +1114,36 @@ beta_plots_all_subjects_choice(right_beta_choice_cleaned_results_35, "IR35 ~ Rig
 beta_plots_all_subjects_choice(left_beta_choice_cleaned_results_57, "IR57 ~ Left ~ beta ~ Choice", 8, sig_thresh = 0.01)
 beta_plots_all_subjects_choice(right_beta_choice_cleaned_results_57, "IR57 ~ Right ~ beta ~ Choice", 8, sig_thresh = 0.01)
 
-# By region #
-beta_plots_all_subjects_choice(beta_choice_cleaned_results_19, "IR19 ~ STS ~ beta ~ Choice", 8, sig_thresh = 0.01, regions = c("STS", "sts"))
-beta_plots_all_subjects_choice(beta_choice_cleaned_results_35, "IR35 ~ STS ~ beta ~ Choice", 8, sig_thresh = 0.01, regions = c("STS", "sts"))
+### By region ###
+## STS ##
+beta_plots_all_subjects_choice(beta_choice_cleaned_results_19, "IR19 ~ STS ~ beta ~ Choice", 3, sig_thresh = 0.01, regions = c("STS", "sts"))
+beta_plots_all_subjects_choice(beta_choice_cleaned_results_35, "IR35 ~ STS ~ beta ~ Choice", 3, sig_thresh = 0.01, regions = c("STS", "sts"))
 beta_plots_all_subjects_choice(beta_choice_cleaned_results_57, "IR57 ~ STS ~ beta ~ Choice", 8, sig_thresh = 0.01, regions = c("STS", "sts"))
 
+## STG ##
+beta_plots_all_subjects_choice(beta_choice_cleaned_results_19, "IR19 ~ STG ~ beta ~ Choice", 8, sig_thresh = 0.01, regions = c("STG", "stg"))
+beta_plots_all_subjects_choice(beta_choice_cleaned_results_35, "IR35 ~ STG ~ beta ~ Choice", 3, sig_thresh = 0.01, regions = c("STG", "stg"))
+beta_plots_all_subjects_choice(beta_choice_cleaned_results_57, "IR57 ~ STG ~ beta ~ Choice", 2, sig_thresh = 0.01, regions = c("STG", "stg"))
+
+## MFG ##
 beta_plots_all_subjects_choice(beta_choice_cleaned_results_19, "IR19 ~ MFG ~ beta ~ Choice", 8, sig_thresh = 0.01, regions = c("MFG", "mfg"))
 beta_plots_all_subjects_choice(beta_choice_cleaned_results_35, "IR35 ~ MFG ~ beta ~ Choice", 8, sig_thresh = 0.01, regions = c("MFG", "mfg"))
 beta_plots_all_subjects_choice(beta_choice_cleaned_results_57, "IR57 ~ MFG ~ beta ~ Choice", 8, sig_thresh = 0.01, regions = c("MFG", "mfg"))
 
+## OFC ##
+# beta_plots_all_subjects_choice(beta_choice_cleaned_results_19, "IR19 ~ OFC ~ beta ~ Choice", 8, sig_thresh = 0.01, regions = c("OFC", "ofc", "polar"))
+beta_plots_all_subjects_choice(beta_choice_cleaned_results_35, "IR35 ~ OFC ~ beta ~ Choice", 8, sig_thresh = 0.01, regions = c("OFC", "ofc", "polar"))
+beta_plots_all_subjects_choice(beta_choice_cleaned_results_57, "IR57 ~ OFC ~ beta ~ Choice", 8, sig_thresh = 0.01, regions = c("OFC", "ofc", "polar"))
 
+## Amygdala ##
+beta_plots_all_subjects_choice(beta_choice_cleaned_results_19, "IR19 ~ Amyg ~ beta ~ Choice", 3, sig_thresh = 0.01, regions = c("Amyg", "amyg"))
+# beta_plots_all_subjects_choice(beta_choice_cleaned_results_35, "IR35 ~ Amyg ~ beta ~ Choice", 8, sig_thresh = 0.01, regions = c("Amyg", "amyg"))
+beta_plots_all_subjects_choice(beta_choice_cleaned_results_57, "IR57 ~ Amyg ~ beta ~ Choice", 8, sig_thresh = 0.01, regions = c("Amyg", "amyg"))
+
+## Insula ##
+beta_plots_all_subjects_choice(beta_choice_cleaned_results_19, "IR19 ~ Insula ~ beta ~ Choice", 4, sig_thresh = 0.01, regions = c("Insula", "insula"))
+beta_plots_all_subjects_choice(beta_choice_cleaned_results_35, "IR35 ~ Insula ~ beta ~ Choice", 3, sig_thresh = 0.01, regions = c("Insula", "insula"))
+beta_plots_all_subjects_choice(beta_choice_cleaned_results_57, "IR57 ~ Insula ~ beta ~ Choice", 3, sig_thresh = 0.01, regions = c("Insula", "insula"))
 ```
 
 ```{r gamma-choice}
@@ -1054,14 +1157,36 @@ beta_plots_all_subjects_choice(right_gamma_choice_cleaned_results_35, "IR35 ~ Ri
 beta_plots_all_subjects_choice(left_gamma_choice_cleaned_results_57, "IR57 ~ Left ~ gamma ~ Choice", 8, sig_thresh = 0.01)
 beta_plots_all_subjects_choice(right_gamma_choice_cleaned_results_57, "IR57 ~ Right ~ gamma ~ Choice", 8, sig_thresh = 0.01)
 
-# By region #
-beta_plots_all_subjects_choice(gamma_choice_cleaned_results_19, "IR19 ~ STS ~ gamma ~ Choice", 8, sig_thresh = 0.01, regions = c("STS", "sts"))
-beta_plots_all_subjects_choice(gamma_choice_cleaned_results_35, "IR35 ~ STS ~ gamma ~ Choice", 8, sig_thresh = 0.01, regions = c("STS", "sts"))
-beta_plots_all_subjects_choice(gamma_choice_cleaned_results_57, "IR57 ~ STS ~ gamma ~ Choice", 8, sig_thresh = 0.01, regions = c("STS", "sts"))
+### By region ###
+## STS ##
+beta_plots_all_subjects_choice(gamma_choice_cleaned_results_19, "IR19 ~ STS ~ gamma ~ Choice", 3, sig_thresh = 0.01,  regions = c("STS", "sts"))
+beta_plots_all_subjects_choice(gamma_choice_cleaned_results_35, "IR35 ~ STS ~ gamma ~ Choice", 3, sig_thresh = 0.01,  regions = c("STS", "sts"))
+beta_plots_all_subjects_choice(gamma_choice_cleaned_results_57, "IR57 ~ STS ~ gamma ~ Choice", 8, sig_thresh = 0.01,  regions = c("STS", "sts"))
 
-beta_plots_all_subjects_choice(gamma_choice_cleaned_results_19, "IR19 ~ MFG ~ gamma ~ Choice", 8, sig_thresh = 0.01, regions = c("MFG", "mfg"))
-beta_plots_all_subjects_choice(gamma_choice_cleaned_results_35, "IR35 ~ MFG ~ gamma ~ Choice", 8, sig_thresh = 0.01, regions = c("MFG", "mfg"))
-beta_plots_all_subjects_choice(gamma_choice_cleaned_results_57, "IR57 ~ MFG ~ gamma ~ Choice", 8, sig_thresh = 0.01, regions = c("MFG", "mfg"))
+## STG ##
+beta_plots_all_subjects_choice(gamma_choice_cleaned_results_19, "IR19 ~ STG ~ gamma ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("STG", "stg"))
+beta_plots_all_subjects_choice(gamma_choice_cleaned_results_35, "IR35 ~ STG ~ gamma ~ Choice", 2, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("STG", "stg"))
+beta_plots_all_subjects_choice(gamma_choice_cleaned_results_57, "IR57 ~ STG ~ gamma ~ Choice", 2, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("STG", "stg"))
+
+## MFG ##
+beta_plots_all_subjects_choice(gamma_choice_cleaned_results_19, "IR19 ~ MFG ~ gamma ~ Choice", 8, sig_thresh = 0.01,  regions = c("MFG", "mfg"))
+beta_plots_all_subjects_choice(gamma_choice_cleaned_results_35, "IR35 ~ MFG ~ gamma ~ Choice", 8, sig_thresh = 0.01,  regions = c("MFG", "mfg"))
+beta_plots_all_subjects_choice(gamma_choice_cleaned_results_57, "IR57 ~ MFG ~ gamma ~ Choice", 8, sig_thresh = 0.01,  regions = c("MFG", "mfg"))
+
+## OFC ##
+# beta_plots_all_subjects_choice(gamma_choice_cleaned_results_19, "IR19 ~ OFC ~ gamma ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("OFC", "ofc", "polar"))
+beta_plots_all_subjects_choice(gamma_choice_cleaned_results_35, "IR35 ~ OFC ~ gamma ~ Choice", 3, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("OFC", "ofc", "polar"))
+beta_plots_all_subjects_choice(gamma_choice_cleaned_results_57, "IR57 ~ OFC ~ gamma ~ Choice", 2, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("OFC", "ofc", "polar"))
+
+## Amygdala ##
+beta_plots_all_subjects_choice(gamma_choice_cleaned_results_19, "IR19 ~ Amyg ~ gamma ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("Amyg", "amyg"))
+# beta_plots_all_subjects_choice(gamma_choice_cleaned_results_35, "IR35 ~ Amyg ~ gamma ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("Amyg", "amyg"))
+beta_plots_all_subjects_choice(gamma_choice_cleaned_results_57, "IR57 ~ Amyg ~ gamma ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("Amyg", "amyg"))
+
+## Insula ##
+beta_plots_all_subjects_choice(gamma_choice_cleaned_results_19, "IR19 ~ Insula ~ gamma ~ Choice", 4, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("Insula", "insula"))
+beta_plots_all_subjects_choice(gamma_choice_cleaned_results_35, "IR35 ~ Insula ~ gamma ~ Choice", 3, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("Insula", "insula"))
+beta_plots_all_subjects_choice(gamma_choice_cleaned_results_57, "IR57 ~ Insula ~ gamma ~ Choice", 3, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("Insula", "insula"))
 
 ```
 
@@ -1076,16 +1201,36 @@ beta_plots_all_subjects_choice(right_hfa_choice_cleaned_results_35, "IR35 ~ Righ
 beta_plots_all_subjects_choice(left_hfa_choice_cleaned_results_57, "IR57 ~ Left ~ hfa ~ Choice", 8, sig_thresh = 0.01)
 beta_plots_all_subjects_choice(right_hfa_choice_cleaned_results_57, "IR57 ~ Right ~ hfa ~ Choice", 8, sig_thresh = 0.01)
 
+### By region ###
+## STS ##
+beta_plots_all_subjects_choice(hfa_choice_cleaned_results_19, "IR19 ~ STS ~ hfa ~ Choice", 3, sig_thresh = 0.01,  regions = c("STS", "sts"))
+beta_plots_all_subjects_choice(hfa_choice_cleaned_results_35, "IR35 ~ STS ~ hfa ~ Choice", 3, sig_thresh = 0.01,  regions = c("STS", "sts"))
+beta_plots_all_subjects_choice(hfa_choice_cleaned_results_57, "IR57 ~ STS ~ hfa ~ Choice", 8, sig_thresh = 0.01,  regions = c("STS", "sts"))
 
-# By region #
-beta_plots_all_subjects_choice(hfa_choice_cleaned_results_19, "IR19 ~ HFA ~ gamma ~ Choice", 8, sig_thresh = 0.01, regions = c("STS", "sts"))
-beta_plots_all_subjects_choice(hfa_choice_cleaned_results_35, "IR35 ~ HFA ~ gamma ~ Choice", 8, sig_thresh = 0.01, regions = c("STS", "sts"))
-beta_plots_all_subjects_choice(hfa_choice_cleaned_results_57, "IR57 ~ HFA ~ gamma ~ Choice", 8, sig_thresh = 0.01, regions = c("STS", "sts"))
+## STG ##
+beta_plots_all_subjects_choice(hfa_choice_cleaned_results_19, "IR19 ~ STG ~ hfa ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("STG", "stg"))
+beta_plots_all_subjects_choice(hfa_choice_cleaned_results_35, "IR35 ~ STG ~ hfa ~ Choice", 2, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("STG", "stg"))
+beta_plots_all_subjects_choice(hfa_choice_cleaned_results_57, "IR57 ~ STG ~ hfa ~ Choice", 2, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("STG", "stg"))
 
+## MFG ##
+beta_plots_all_subjects_choice(hfa_choice_cleaned_results_19, "IR19 ~ MFG ~ hfa ~ Choice", 8, sig_thresh = 0.01,  regions = c("MFG", "mfg"))
+beta_plots_all_subjects_choice(hfa_choice_cleaned_results_35, "IR35 ~ MFG ~ hfa ~ Choice", 8, sig_thresh = 0.01,  regions = c("MFG", "mfg"))
+beta_plots_all_subjects_choice(hfa_choice_cleaned_results_57, "IR57 ~ MFG ~ hfa ~ Choice", 8, sig_thresh = 0.01,  regions = c("MFG", "mfg"))
 
-beta_plots_all_subjects_choice(hfa_choice_cleaned_results_19, "IR19 ~ HFA ~ MFG ~ Choice", 8, sig_thresh = 0.01, regions = c("MFG", "mfg"))
-beta_plots_all_subjects_choice(hfa_choice_cleaned_results_35, "IR35 ~ HFA ~ MFG ~ Choice", 8, sig_thresh = 0.01, regions = c("MFG", "mfg"))
-beta_plots_all_subjects_choice(hfa_choice_cleaned_results_57, "IR57 ~ HFA ~ MFG ~ Choice", 8, sig_thresh = 0.01, regions = c("MFG", "mfg"))
+## OFC ##
+# beta_plots_all_subjects_choice(hfa_choice_cleaned_results_19, "IR19 ~ OFC ~ hfa ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("OFC", "ofc", "polar"))
+beta_plots_all_subjects_choice(hfa_choice_cleaned_results_35, "IR35 ~ OFC ~ hfa ~ Choice", 3, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("OFC", "ofc", "polar"))
+beta_plots_all_subjects_choice(hfa_choice_cleaned_results_57, "IR57 ~ OFC ~ hfa ~ Choice", 2, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("OFC", "ofc", "polar"))
+
+## Amygdala ##
+beta_plots_all_subjects_choice(hfa_choice_cleaned_results_19, "IR19 ~ Amyg ~ hfa ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("Amyg", "amyg"))
+# beta_plots_all_subjects_choice(hfa_choice_cleaned_results_35, "IR35 ~ Amyg ~ hfa ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("Amyg", "amyg"))
+beta_plots_all_subjects_choice(hfa_choice_cleaned_results_57, "IR57 ~ Amyg ~ hfa ~ Choice", 8, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("Amyg", "amyg"))
+
+## Insula ##
+beta_plots_all_subjects_choice(hfa_choice_cleaned_results_19, "IR19 ~ Insula ~ hfa ~ Choice", 4, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("Insula", "insula"))
+beta_plots_all_subjects_choice(hfa_choice_cleaned_results_35, "IR35 ~ Insula ~ hfa ~ Choice", 3, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("Insula", "insula"))
+beta_plots_all_subjects_choice(hfa_choice_cleaned_results_57, "IR57 ~ Insula ~ hfa ~ Choice", 3, sig_thresh = 0.01, vars = c("self_payoff", "other_payoff", "self_foregone", "other_foregone", "ineq_advent", "ineq_disadvent"), regions = c("Insula", "insula"))
 
 
 ```

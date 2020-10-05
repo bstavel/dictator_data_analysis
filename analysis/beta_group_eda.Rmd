@@ -1,0 +1,483 @@
+---
+title: "Beta ~ Group Stats"
+output: html_document
+author: "Brooke Staveland"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo <- FALSE,  # don't print the code chunk
+  warning <- FALSE,  # don't print warnings
+  message <- FALSE,  # don't print messages
+  fig.width <- 12,  # set default width of figures
+  fig.height <- 6,  # set default height of figures
+  fig.align <- "center",  # always align figure in center
+  fig.pos <- "H",  # always plot figure at the exact location of the code chunk
+  cache <- TRUE)  # cache results
+
+## libraries ##
+library(tidyverse)
+library(ggplot2)
+library(magrittr)
+library(ggthemr)
+library(grid)
+library(gtable)
+library(gridExtra)
+library(wesanderson)
+library(ggsci)
+library(zoo)
+library(kableExtra)
+library(lme4)
+library(RColorBrewer)
+library(doParallel)
+library(parallel)
+library(foreach)
+library(here)
+library(fs)
+library(ggcorrplot)
+library(viridis)
+library(lmtest)
+library(janitor)
+
+## hand written functions ##
+source(path(here(), "R", "load_behave_data.R"))
+source(path(here(), "R", "prep_behave_data.R"))
+source(path(here(), "R", "stretch_start_end.R"))
+source(path(here(), "R", "load_high_gamma_data.R"))
+source(path(here(), "R", "rolling_window_and_baseline.R"))
+source(path(here(), "R", "run_permuted_regressions.R"))
+source(path(here(), "R", "compile_results.R"))
+source(path(here(), "R", "run_filtered_anova.R"))
+source(path(here(), "R", "merge_stepped_anova_results.R"))
+# source('~/Projects/nice_r_functions/ggpaired_pretty.R')
+source(path(here(), "R", 'mutate_cond.R'))
+
+## plotting helpers ##
+ggthemr("solarized")
+solarized_palette <- c(
+        '#073642', '#E1965D',
+        '#268bd2', '#dc322f',
+        '#2aa198', '#b58900',
+       '#6c71c4', '#d33682')
+
+## parallelization ##
+nCores <- 4
+registerDoParallel(nCores)
+
+```
+
+
+```{r behave-prep, echo = F}
+
+# path to beahvioral files #
+path_to_raw_behave <- fs::path(here(), "../dg_behave_formatted")
+path_to_behave_munge <- fs::path(here(), "munge", "combined_behavioral_data.csv")
+path_to_behave_clean <- fs::path(here(), "munge", "clean_behavioral_data.csv")
+
+# concactenate behavioral data #
+load_behave_data(path_to_raw_behave)
+
+# prep behavioral data #
+prep_behave_data(path_to_behave_munge)
+
+# load clean data #
+behave_data <- read.csv(path_to_behave_clean)
+
+# table(behave_data$ineq_advent_choice)
+# table(behave_data_08$ineq_disadvent_choice)
+# table(behave_data_11$ineq_disadvent_choice)
+# table(behave_data_12$ineq_disadvent_choice)
+```
+
+
+```{r trial-types, echo = F}
+
+behave_data %>%
+  filter(self_var_payoff == other_var_payoff) %>%
+  mutate(greater_than_ten = if_else(self_var_payoff < 10, "less", "more")) %>%
+  select(SID, chose_equality, greater_than_ten) %>%
+  group_by(SID) %>%
+  tabyl(SID, chose_equality, greater_than_ten) %>%
+  kable(.) %>%
+  kable_styling()
+
+# There are three types of trials, trials without equality, trials where the advantage is in the dictator's favor and the reverse
+
+behave_data <- behave_data %>%
+  mutate(trial_type = if_else(self_var_payoff == other_var_payoff, "equality",
+                              if_else(self_var_payoff > other_var_payoff,
+                                      "Advantageous", "Disadvantageous")))  %>%
+  mutate(other_choice_type = if_else(self_payoff > 10  & other_payoff > 10, "other_gain",
+                                     if_else(self_payoff > 10 & other_payoff < 10,
+                                             "other_loss", "NA")))
+
+# How many of each
+behave_data %>%
+  filter(SID == "DG_s11") %>%
+  tabyl(trial_type) %>%
+  kable(.) %>%
+  kable_styling()
+
+behave_data %>%
+  filter(SID == "DG_s13") %>%
+  tabyl(trial_type) %>%
+  kable(.) %>%
+  kable_styling()
+
+behave_data %>%
+  filter(SID == "DG_s08") %>%
+  tabyl(trial_type) %>%
+  kable(.) %>%
+  kable_styling()
+
+behave_data %>%
+  filter(SID == "DG_s04") %>%
+  tabyl(trial_type) %>%
+  kable(.) %>%
+  kable_styling()
+
+behave_data %>%
+  filter(SID == "DG_s06") %>%
+  tabyl(trial_type) %>%
+  kable(.) %>%
+  kable_styling()
+
+behave_data %>%
+  filter(SID == "DG_s10") %>%
+  tabyl(trial_type) %>%
+  kable(.) %>%
+  kable_styling()
+
+
+# filter to current subject #
+behave_data_19 <- behave_data %>% filter(SID == "DG_s08")
+behave_data_35 <- behave_data %>% filter(SID == "DG_s11")
+behave_data_28 <- behave_data %>% filter(SID == "DG_s10")
+behave_data_39 <- behave_data %>% filter(SID == "DG_s12")
+behave_data_16 <- behave_data %>% filter(SID == "DG_s06")
+behave_data_10 <- behave_data %>% filter(SID == "DG_s04")
+behave_data_57 <- behave_data %>% filter(SID == "DG_s13")
+```
+
+
+```{r read-in-active-data, eval = T, echo = F}
+
+# read in active data #
+active_data <- read_csv(path(here(),
+                             "results", "active_elecs", "all_beta_electrode_tests.csv"))
+
+# read in active_only data #
+
+active_only_data <- read_csv(path(here(),
+                                  "results", "active_elecs", "active_beta_electrode_tests.csv"))
+
+
+```
+
+
+
+```{r detailed-table, echo = F}
+
+active_data_table <- active_data %>%
+  gather(key = "elec_num", value = "elec_name", first_region, second_region) %>%
+  mutate(ofc = if_else(grepl("ofc", elec_name, ignore.case = T), 1,
+                             if_else(grepl("orbit", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(frontopolar = if_else(grepl("polar", elec_name, ignore.case = T), 1,
+                             if_else(grepl("frontopolar", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(insula = if_else(grepl("insula", elec_name, ignore.case = T), 1,
+                           if_else(grepl("insular", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(mfg = if_else(grepl("mfg", elec_name, ignore.case = T), 1,
+                     if_else(grepl("medial frontal", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(cingulate = if_else(grepl("CC", elec_name, ignore.case = T), 1,
+                           if_else(grepl("cing", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(sts = if_else(grepl("sts", elec_name, ignore.case = T), 1,
+                 if_else(grepl("superior temporal", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(hipp_formation = if_else(grepl("hinal", elec_name, ignore.case = T), 1,
+                           if_else(grepl("ca1", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(amyg = if_else(grepl("amyg", elec_name, ignore.case = T), 1,
+                           if_else(grepl("ca1", elec_name, ignore.case = T), 1, 0))) %>%
+  select(sub, epoch, ofc, frontopolar, insula, mfg, cingulate, sts, hipp_formation, amyg) %>%
+  gather(key = "region", value = "count", -sub, -epoch) %>%
+  group_by(region, sub, epoch) %>%
+  filter(count == 1) %>%
+  summarise(total_elecs = n())
+
+active_only_data_table <- active_only_data %>%
+  gather(key = "elec_num", value = "elec_name", first_region, second_region) %>%
+  mutate(ofc = if_else(grepl("ofc", elec_name, ignore.case = T), 1,
+                             if_else(grepl("orbit", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(frontopolar = if_else(grepl("polar", elec_name, ignore.case = T), 1,
+                             if_else(grepl("frontopolar", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(insula = if_else(grepl("insula", elec_name, ignore.case = T), 1,
+                           if_else(grepl("insular", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(mfg = if_else(grepl("mfg", elec_name, ignore.case = T), 1,
+                     if_else(grepl("medial frontal", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(cingulate = if_else(grepl("CC", elec_name, ignore.case = T), 1,
+                           if_else(grepl("cing", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(sts = if_else(grepl("sts", elec_name, ignore.case = T), 1,
+                 if_else(grepl("superior temporal", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(hipp_formation = if_else(grepl("hinal", elec_name, ignore.case = T), 1,
+                           if_else(grepl("ca1", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(amyg = if_else(grepl("amyg", elec_name, ignore.case = T), 1,
+                           if_else(grepl("ca1", elec_name, ignore.case = T), 1, 0))) %>%
+  select(sub, epoch, ofc, frontopolar, insula, mfg, cingulate, sts, hipp_formation, amyg) %>%
+  gather(key = "region", value = "count", -sub, -epoch) %>%
+  group_by(region, sub, epoch) %>%
+  filter(count == 1) %>%
+  summarise(active_elecs = n())
+
+
+over_all_table <- merge.data.frame(active_only_data_table,
+                                   active_data_table,
+                                   by = c("region", "sub", "epoch"),
+                                   all.y = T)
+
+over_all_table %>%
+  mutate(percentage_active = active_elecs/total_elecs) %>%
+  arrange(region, sub) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = "striped")
+
+
+```
+
+
+```{r create-summary-plots, echo = F}
+
+labeled_active_data <- active_only_data %>%
+  gather(key = "elec_num", value = "elec_name", first_region, second_region) %>%
+  mutate(ofc = if_else(grepl("ofc", elec_name, ignore.case = T), 1,
+                             if_else(grepl("orbit", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(frontopolar = if_else(grepl("polar", elec_name, ignore.case = T), 1,
+                             if_else(grepl("frontopolar", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(insula = if_else(grepl("insula", elec_name, ignore.case = T), 1,
+                           if_else(grepl("insular", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(mfg = if_else(grepl("mfg", elec_name, ignore.case = T), 1,
+                     if_else(grepl("medial frontal", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(cingulate = if_else(grepl("CC", elec_name, ignore.case = T), 1,
+                           if_else(grepl("cing", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(sts = if_else(grepl("sts", elec_name, ignore.case = T), 1,
+                 if_else(grepl("superior temporal", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(hipp_formation = if_else(grepl("hinal", elec_name, ignore.case = T), 1,
+                           if_else(grepl("ca1", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(amyg = if_else(grepl("amyg", elec_name, ignore.case = T), 1,
+                           if_else(grepl("ca1", elec_name, ignore.case = T), 1, 0)))
+
+
+roi_pres_data <- labeled_active_data %>%
+  filter(ofc == 1 | frontopolar == 1 | insula == 1 | mfg == 1 | cingulate == 1 | sts == 1 | hipp_formation == 1 | amyg == 1) %>%
+  filter(epoch == "Presentation")
+
+roi_choice_data <- labeled_active_data %>%
+  filter(ofc == 1 | frontopolar == 1 | insula == 1 | mfg == 1 | cingulate == 1 | sts == 1 | hipp_formation == 1 | amyg == 1) %>%
+  filter(epoch == "Choice")  
+
+
+```
+
+
+```{r read-in-hg-data, echo = F, warning=F}
+
+## read in hg data ##
+
+hg_data <- read_csv(path(here(),
+                         "results", "active_elecs", "combined_beta_behave_data.csv"))
+hg_choice_data <- read_csv( path(here(),
+                                 "results",
+                                 "active_elecs", "combined_beta_behave_choice_data.csv"))
+
+## label it ##
+labeled_hg_data <- merge.data.frame(hg_data, roi_pres_data,
+                                    all.x = F, all.y = T,
+                                    by.x = c("subject", "electrodes"),
+                                    by.y = c("sub", "electrodes"))
+
+labeled_hg_choice_data <- merge.data.frame(hg_choice_data, roi_choice_data,
+                                    all.x = F, all.y = T,
+                                    by.x = c("subject", "electrodes"),
+                                    by.y = c("sub", "electrodes"))
+
+beepr::beep(2)
+```
+
+## By Trial Type
+```{r plot-trial-types, echo = F, fig.height=10, fig.width = 12, warning=F}
+# find average
+
+subsample_time <- paste0("time_", seq(from = 1, to = 1999, by = 25))
+
+labeled_hg_data_prepped <- labeled_hg_data %>%
+  filter(!is.na(trial_type)) %>%
+  select(starts_with("time"), electrodes, subject, trial_type,
+         ofc, frontopolar, insula, mfg, cingulate, sts, hipp_formation, amyg) %>%
+  gather(key = "Region", value = "Value",
+         -electrodes, -subject, -trial_type, -starts_with("time")) %>%
+  mutate(ROI = if_else(Value  == 1, Region, "NA")) %>%
+  filter(ROI != "NA") %>%
+  select(-Region, -Value) %>%
+  gather(key = "time", value = "HFA", -electrodes, -subject, -ROI, -trial_type) %>%
+  group_by(subject, ROI, trial_type, time) %>%
+  mutate(mean_hfa = mean(HFA)) %>%
+  mutate(upper_cl = t.test(HFA)$"conf.int"[2]) %>%
+  mutate(lower_cl = t.test(HFA)$"conf.int"[1]) %>%
+  ungroup(time) %>%
+  filter(time %in% subsample_time) %>%
+  mutate(time_numeric = as.numeric(gsub("time_", "", time)) -200)
+
+## choice ##
+labeled_hg_choice_data_prepped <- labeled_hg_choice_data %>%
+  filter(!is.na(trial_type)) %>%
+  select(starts_with("time"), electrodes, subject, trial_type,
+         ofc, frontopolar, insula, mfg, cingulate, sts, hipp_formation, amyg) %>%
+  gather(key = "Region", value = "Value",
+         -electrodes, -subject, -trial_type, -starts_with("time")) %>%
+  mutate(ROI = if_else(Value  == 1, Region, "NA")) %>%
+  filter(ROI != "NA") %>%
+  select(-Region, -Value) %>%
+  gather(key = "time", value = "HFA", -electrodes, -subject, -ROI, -trial_type) %>%
+  group_by(subject, ROI, trial_type, time) %>%
+  mutate(mean_hfa = mean(HFA)) %>%
+  mutate(upper_cl = t.test(HFA)$"conf.int"[2]) %>%
+  mutate(lower_cl = t.test(HFA)$"conf.int"[1]) %>%
+  ungroup(time) %>%
+  filter(time %in% subsample_time) %>%
+  mutate(time_numeric = as.numeric(gsub("time_", "", time)) - 750)
+
+rois_of_interest <- c("ofc", "frontopolar", "insula",
+                     "mfg", "cingulate", "sts", "hipp_formation", "amyg")
+
+for(roi in rois_of_interest){
+
+  ## presentation plot ##
+
+  pres_plot <-  labeled_hg_data_prepped %>%
+      ungroup() %>%
+      filter(trial_type %in% c("Disadvantageous", "Advantageous")) %>%
+      filter(ROI == roi) %>%
+      ggplot(., aes(x = time_numeric, y = mean_hfa, color  = trial_type, fill = trial_type)) +
+      geom_line() +
+      geom_ribbon(aes(ymin = lower_cl, ymax = upper_cl), alpha = .7) +
+      theme(panel.background = element_rect(fill = "white")) +
+      geom_vline(xintercept = 0) +
+      facet_wrap(~subject, ncol = 2) +
+      labs(y = "mean beta", fill = "Trial Type", color = "Trial Type", x = "Time") +
+      ggtitle(paste0(roi, " ~ Presentation"))
+
+  print(pres_plot)
+
+
+  ## choice plot ##
+
+  choice_plot <-   labeled_hg_choice_data_prepped %>%
+       ungroup() %>%
+      filter(trial_type %in% c("Disadvantageous", "Advantageous")) %>%
+      filter(ROI == roi) %>%
+      ggplot(., aes(x = time_numeric, y = mean_hfa, color = trial_type, fill = trial_type)) +
+      geom_line() +
+      geom_ribbon(aes(ymin = lower_cl, ymax = upper_cl), alpha = .7) +
+      theme(panel.background = element_rect(fill = "white")) +
+      geom_vline(xintercept = 0) +
+      geom_vline(xintercept = 1000, linetype = "dashed") +
+      labs(y = "mean beta", fill = "Trial Type", color = "Trial Type", x = "Time") +
+      facet_wrap(~subject, ncol = 2) +
+      ggtitle(paste0(roi, " ~ Choice"))
+
+  print(choice_plot)
+
+}
+
+```
+
+## By Other Split
+```{r other-splits, echo = F, fig.height=10, fig.width = 12, warning=F}
+
+## Presentation ##
+labeled_hg_data_prepped <- labeled_hg_data %>%
+  filter(other_choice_type != "NA") %>%
+  select(starts_with("time"), electrodes, subject, other_choice_type,
+         ofc, frontopolar, insula, mfg, cingulate, sts, hipp_formation, amyg) %>%
+  gather(key = "Region", value = "Value",
+         -electrodes, -subject, -other_choice_type, -starts_with("time")) %>%
+  mutate(ROI = if_else(Value  == 1, Region, "NA")) %>%
+  filter(ROI != "NA") %>%
+  select(-Region, -Value) %>%
+  gather(key = "time", value = "HFA", -electrodes, -subject, -ROI, -other_choice_type) %>%
+  group_by(subject, ROI, other_choice_type, time) %>%
+  mutate(mean_hfa = mean(HFA)) %>%
+  mutate(upper_cl = t.test(HFA)$"conf.int"[2]) %>%
+  mutate(lower_cl = t.test(HFA)$"conf.int"[1]) %>%
+  ungroup(time) %>%
+  filter(time %in% subsample_time) %>%
+  mutate(time_numeric = as.numeric(gsub("time_", "", time)) -200)
+
+
+## choice ##
+labeled_hg_choice_data_prepped <- labeled_hg_choice_data %>%
+  filter(other_choice_type != "NA") %>%
+  select(starts_with("time"), electrodes, subject, other_choice_type,
+         ofc, frontopolar, insula, mfg, cingulate, sts, hipp_formation, amyg) %>%
+  gather(key = "Region", value = "Value",
+         -electrodes, -subject, -other_choice_type, -starts_with("time")) %>%
+  mutate(ROI = if_else(Value  == 1, Region, "NA")) %>%
+  filter(ROI != "NA") %>%
+  select(-Region, -Value) %>%
+  gather(key = "time", value = "HFA", -electrodes, -subject, -ROI, -other_choice_type) %>%
+  group_by(subject, ROI, other_choice_type, time) %>%
+  mutate(mean_hfa = mean(HFA)) %>%
+  mutate(upper_cl = t.test(HFA)$"conf.int"[2]) %>%
+  mutate(lower_cl = t.test(HFA)$"conf.int"[1]) %>%
+  ungroup(time) %>%
+  filter(time %in% subsample_time) %>%
+  mutate(time_numeric = as.numeric(gsub("time_", "", time)) - 750)
+
+rois_of_interest <- c("ofc", "frontopolar", "insula",
+                     "mfg", "cingulate", "sts", "hipp_formation", "amyg")
+
+for(roi in rois_of_interest){
+
+  ## presentation plot ##
+
+  pres_plot <-  labeled_hg_data_prepped %>%
+      ungroup() %>%
+      filter(ROI == roi) %>%
+      ggplot(., aes(x = time_numeric,
+                    y = mean_hfa,
+                    color = other_choice_type,
+                    fill = other_choice_type)) +
+      geom_line() +
+      geom_ribbon(aes(ymin = lower_cl, ymax = upper_cl), alpha = .7) +
+      theme(panel.background = element_rect(fill = "white")) +
+      geom_vline(xintercept = 0) +
+      labs(y = "mean beta", fill = "Trial Type", color = "Trial Type", x = "Time") +
+      facet_wrap(~subject, ncol = 2) +
+      ggtitle(paste0(roi, " ~ Presentation"))
+
+  print(pres_plot)
+
+
+    ## choice plot ##
+
+  choice_plot <-   labeled_hg_choice_data_prepped %>%
+       ungroup() %>%
+      filter(ROI == roi) %>%
+      ggplot(., aes(x = time_numeric,
+                    y = mean_hfa,
+                    color = other_choice_type,
+                    fill = other_choice_type)) +
+      geom_line() +
+      geom_ribbon(aes(ymin = lower_cl, ymax = upper_cl), alpha = .7) +
+      theme(panel.background = element_rect(fill = "white")) +
+      geom_vline(xintercept = 0) +
+      geom_vline(xintercept = 1000, linetype = "dashed") +
+      labs(y = "mean beta", fill = "Trial Type", color = "Trial Type", x = "Time") +
+      facet_wrap(~subject, ncol = 2) +
+      ggtitle(paste0(roi, " ~ Choice"))
+
+  print(choice_plot)
+
+}
+
+
+```
