@@ -151,7 +151,7 @@ checkTrials %>%
   ggplot(., aes(x = SID, fill = SID, alpha = chose_better_side)) +
   geom_bar(position = "dodge") +
   theme(panel.background = element_rect(fill = "white")) +
-  scale_fill_manual(values = getPalette(12)) +
+  scale_fill_manual(values = getPalette(14)) +
   scale_alpha_discrete(range = c(.7, 1))
 
 ```
