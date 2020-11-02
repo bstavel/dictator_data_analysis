@@ -40,14 +40,14 @@ source("~/Projects/nice_r_functions/ggpaired_pretty.R")
 
 # Updated notes on subjects for the dictator
 
-Subjects: IR9  IR10  IR14  IR16  IR17  IR19  IR26  IR28  IR35  IR39  IR57 ST40 GP51 CP34 DA7
+Subjects: IR9  IR10  IR14  IR16  IR17  IR19  IR26  IR28  IR35  IR39  IR57 ST40 GP51 CP34 DA7 DA8
 
 # Using and have Recons
 * IR9: Only has loc meeting notes in orginal file-- look at both and fix with Bob
 * IR10 -done
 * IR16 -done
 * IR19 -done
-* IR26 -
+* IR26 - done
 * IR28 - done, no insula
 * IR35 -done
 * IR39 -done
@@ -104,6 +104,16 @@ for (sub in subjects_irvine) {
       temp_notes$`Out of Brain` <- 0
       temp_notes$Epileptic <- 0
       elec_notes <- bind_rows(temp_notes, elec_notes)
+    } else if (sub == "IR26") {
+      original <- readxl::read_xlsx('~/Projects/knight_server/remote/ecog/DATA_FOLDER/Irvine/IR26/Notes/IR26_Elec_Notes(old).xlsx')
+      colnames(original)[2] <- "Loc Meeting"
+      temp_notes <- merge.data.frame(temp_notes, original, by.x = "Electrode", by.y = "contact")
+      temp_notes <- temp_notes %>% select(-`Loc Meeting.x`) %>% rename(`Loc Meeting` = `Loc Meeting.y`)
+      temp_notes <- temp_notes[is.na(temp_notes$`Epileptic via Irvine`), ] # we want only blanks here, same as below
+      temp_notes$Discard <- 0
+      temp_notes$`Out of Brain` <- 0
+      temp_notes$Epileptic <- 0
+      elec_notes <- bind_rows(temp_notes, elec_notes)  
     } else if (sub == "IR19") {
       temp_notes <- temp_notes[!is.na(temp_notes$`Loc Meeting`), ] # missing some localization data, Richard to fix, but for now exclude
       elec_notes <- bind_rows(temp_notes, elec_notes)

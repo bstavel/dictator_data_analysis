@@ -1,0 +1,281 @@
+---
+title: "August 2020 Behavioral Analysis"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo <- FALSE,  # don't print the code chunk
+  warning <- FALSE,  # don't print warnings
+  message <- FALSE,  # don't print messages
+  fig.width <- 12,  # set default width of figures
+  fig.height <- 6,  # set default height of figures
+  fig.align <- "center",  # always align figure in center
+  fig.pos <- "H",  # always plot figure at the exact location of the code chunk
+  cache <- TRUE)  # cache results
+
+## libraries ##
+library(tidyverse)
+library(ggplot2)
+library(magrittr)
+library(ggthemr)
+library(grid)
+library(gtable)
+library(gridExtra)
+library(wesanderson)
+library(ggsci)
+library(zoo)
+library(kableExtra)
+library(lme4)
+library(RColorBrewer)
+library(doParallel)
+library(parallel)
+library(foreach)
+library(here)
+library(fs)
+library(ggcorrplot)
+library(viridis)
+library(lmtest)
+library(janitor)
+
+## hand written functions ##
+source(path(here(), "R", "load_behave_data.R"))
+source(path(here(), "R", "prep_behave_data.R"))
+source(path(here(), "R", "stretch_start_end.R"))
+source(path(here(), "R", "load_high_gamma_data.R"))
+source(path(here(), "R", "rolling_window_and_baseline.R"))
+source(path(here(), "R", "run_permuted_regressions.R"))
+source(path(here(), "R", "compile_results.R"))
+source(path(here(), "R", "run_filtered_anova.R"))
+source(path(here(), "R", "merge_stepped_anova_results.R"))
+# source('~/Projects/nice_r_functions/ggpaired_pretty.R')
+source(path(here(), "R", 'mutate_cond.R'))
+
+## plotting helpers ##
+ggthemr("solarized")
+solarized_palette <- c(
+        '#073642', '#E1965D',
+        '#268bd2', '#dc322f',
+        '#2aa198', '#b58900',
+       '#6c71c4', '#d33682')
+
+getPalette = colorRampPalette(brewer.pal(3, "Set1"))
+
+## parallelization ##
+nCores <- 4
+registerDoParallel(nCores)
+
+```
+
+
+```{r behave-prep, echo = F}
+
+# path to beahvioral files #
+path_to_raw_behave <- fs::path(here(), "../dg_behave_formatted")
+path_to_behave_munge <- fs::path(here(), "munge", "combined_behavioral_data.csv")
+path_to_behave_clean <- fs::path(here(), "munge", "clean_behavioral_data.csv")
+
+# concactenate behavioral data #
+load_behave_data(path_to_raw_behave)
+
+# prep behavioral data #
+prep_behave_data(path_to_behave_munge)
+
+# load clean data #
+behave_data <- read.csv(path_to_behave_clean)
+
+```
+
+
+```{r trial-types, echo = F}
+
+# There are three types of trials, trials without equality, trials where the advantage is in the dictator's favor and the reverse
+
+behave_data <- behave_data %>%
+  mutate(trial_type = if_else(self_var_payoff == other_var_payoff, "equality",
+                              if_else(self_var_payoff > other_var_payoff,
+                                      "Advantageous", "Disadvantageous")))  %>%
+  mutate(other_choice_type = if_else(self_payoff > 10  & other_payoff > 10, "other_gain",
+                                     if_else(self_payoff > 10 & other_payoff < 10,
+                                             "other_loss", "NA"))) %>%
+  mutate(ineq_ratio = self_var_payoff / other_var_payoff) 
+
+# filter to current subject #
+behave_data_19 <- behave_data %>% filter(SID == "DG_s08") %>% mutate(sub = "IR19")
+behave_data_35 <- behave_data %>% filter(SID == "DG_s11") %>% mutate(sub = "IR35")
+behave_data_28 <- behave_data %>% filter(SID == "DG_s10") %>% mutate(sub = "IR28")
+behave_data_39 <- behave_data %>% filter(SID == "DG_s12") %>% mutate(sub = "IR39")
+behave_data_16 <- behave_data %>% filter(SID == "DG_s06") %>% mutate(sub = "IR16")
+behave_data_10 <- behave_data %>% filter(SID == "DG_s04") %>% mutate(sub = "IR10")
+behave_data_57 <- behave_data %>% filter(SID == "DG_s13") %>% mutate(sub = "IR57")
+behave_data_26 <- behave_data %>% filter(SID == "DG_s09") %>% mutate(sub = "IR26")
+behave_data_09 <- behave_data %>% filter(SID == "DG_s03") %>% mutate(sub = "IR09")
+behave_data_short <- rbind(behave_data_10, behave_data_16, behave_data_19, behave_data_28, behave_data_35, behave_data_39, behave_data_57, behave_data_09, behave_data_26)
+```
+
+```{r trial-types-plots, echo = F, fig.width = 10, fig.height = 8}
+
+
+chose_plot <- behave_data_short %>%
+  ggplot(., aes(x = sub, fill = chose_equality, color = chose_equality)) +
+  geom_bar(position = position_dodge2()) +
+  theme(panel.background = element_rect(fill = "white")) +
+  scale_y_continuous(breaks = c(seq(from = 0, to = 150, by = 10)))
+
+summarized_disadvent_data <- behave_data_short %>%
+  filter(chose_equality == "Disadvent") %>%
+  group_by(sub) %>%
+  summarise_at(vars(self_payoff, self_foregone, other_payoff, other_foregone), function(x) sum(x))
+
+summarized_disadvent_data <- rbind(summarized_disadvent_data, c("IR35", rep(0, 4)))
+
+forgone_plot <- summarized_disadvent_data %>%
+  gather(key = "type", value = "amount", -sub) %>%
+  mutate(amount = as.numeric(amount)) %>%
+  ggplot(., aes(x = sub, y = amount, fill = type)) +
+  geom_col(position = position_dodge2()) +
+  theme(panel.background = element_rect(fill = "white"))
+
+ plot(arrangeGrob(grobs = list(ggplotGrob(chose_plot),
+                                ggplotGrob(forgone_plot)), nrow = 2, ncol = 1))
+
+```
+
+
+```{r inequity, fig.width = 5, fig.height = 4, echo = F}
+
+behave_data_short %>%
+  group_by(ineq_ratio) %>%
+  summarise_at(vars(ineq_choice_abs, other_payoff), function(x) mean(x, na.rm = T)) %>%
+  gather(key = "type", value = "amount", -ineq_ratio) %>%
+  filter(ineq_ratio != 1) %>%
+  mutate(ineq_ratio = round(ineq_ratio, 3)) %>%
+  ggplot(., aes(x = as.factor(ineq_ratio), y = amount, fill = type)) +
+  geom_col(position = position_dodge2()) +
+  theme(panel.background = element_rect(fill = "white")) +
+  labs( y = "Amount", x = "Self : Other Ration")
+
+behave_data_short %>%
+  group_by(sub) %>%
+  mutate(mean_inequity = mean(ineq_choice_abs, na.rm = T)) %>%
+  mutate(mean_other_payoff = mean(other_payoff, na.rm = T)) %>%
+  ggplot(., aes(x = mean_other_payoff, y = mean_inequity, color = sub)) +
+  geom_point(size = 4) +
+  theme(panel.background = element_rect(fill = "white")) +
+  scale_color_manual(values = getPalette(9)) +
+  labs( y = "Inequity", x = "Average Other Payoff", color = "subject")
+
+
+
+behave_data_short %>%
+  group_by(sub) %>%
+  mutate(mean_dis_inequity = mean(ineq_disadvent_choice, na.rm = T)) %>%
+  mutate(mean_self_payoff = mean(self_payoff, na.rm = T)) %>%
+  ggplot(., aes(x = mean_self_payoff, y = mean_dis_inequity, color = sub)) +
+  geom_point(size = 4) +
+  theme(panel.background = element_rect(fill = "white")) +
+  scale_color_manual(values = getPalette(9)) +
+  labs( y = "Dis. Inequity", x = "Average Self Payoff", color = "subject")
+
+behave_data_short %>%
+  group_by(sub) %>%
+  mutate(mean_adv_inequity = mean(ineq_advent_choice, na.rm = T)) %>%
+  mutate(mean_self_payoff = mean(self_payoff, na.rm = T)) %>%
+  ggplot(., aes(x = mean_self_payoff, y = mean_adv_inequity, color = sub)) +
+  geom_point(size = 4) +
+  theme(panel.background = element_rect(fill = "white")) +
+  scale_color_manual(values = getPalette(9)) +
+  labs( y = "Adv. Inequity", x = "Average Self Payoff", color = "subject")
+```
+
+
+```{r average-pay-out, echo = F, fig.width = 10, fig.height = 8}
+behave_data_short %>%
+  ggplot(., aes(x = sub, y = other_payoff, fill = sub)) +
+  geom_violin() +
+  geom_boxplot(width=0.1) +
+  scale_fill_manual(values = getPalette(9)) +
+  theme(panel.background = element_rect(fill = "white"))
+
+
+behave_data_short %>%
+  ggplot(., aes(x = sub, y = self_payoff, fill = sub)) +
+  geom_violin() +
+  geom_boxplot(width=0.1) +
+  scale_fill_manual(values = getPalette(9)) +
+  theme(panel.background = element_rect(fill = "white"))
+
+behave_data_short %>%
+  ggplot(., aes(x = sub, y = other_foregone, fill = sub)) +
+  geom_violin() +
+  geom_boxplot(width=0.1) +
+  scale_fill_manual(values = getPalette(9)) +
+  theme(panel.background = element_rect(fill = "white"))
+
+behave_data_short %>%
+  ggplot(., aes(x = sub, y = self_foregone, fill = sub)) +
+  geom_violin() +
+  geom_boxplot(width=0.1) +
+  scale_fill_manual(values = getPalette(9)) +
+  theme(panel.background = element_rect(fill = "white"))
+
+
+# behave_data_short %>%
+#   ggplot(., aes(x = self_payoff, y = self_foregone, fill = sub)) +
+#   geom_violin() +
+#   geom_boxplot(width=0.1) +
+#   scale_fill_manual(values = getPalette(9)) +
+#   theme(panel.background = element_rect(fill = "white"))
+
+```
+
+
+```{r bheave-typea, eval = F, fig.width=12, fig.height=8}
+
+behave_types_plot <- behave_data_short %>%
+  mutate(left_option = L_self + L_other) %>%
+  mutate(right_option = R_self + R_other) %>%
+  mutate(left_ineq = abs(L_self - L_other)) %>%
+  mutate(right_ineq =abs(R_self - R_other)) %>%
+  mutate(selfish = if_else((L_self >= R_self & side_chosen == "Left" ) |
+                              (R_self >= L_self & side_chosen == "Right"), "yes", "no" )) %>%
+  mutate(value_maximize = if_else((left_option > right_option & side_chosen == "Left" ) |
+                              (right_option > left_option & side_chosen == "Right"), "yes", "no" )) %>%
+  mutate(ineq_minimize =  if_else((left_ineq < right_ineq & side_chosen == "Left" ) |
+                              (right_ineq < left_ineq & side_chosen == "Right"), "yes", "no" )) %>%
+  select(sub, selfish, value_maximize, ineq_minimize, trial_type) %>%
+  gather(key = "type", value = "choice", -sub, -trial_type) %>%
+  filter(choice == "yes") %>%
+  ggplot(., aes(x = sub, fill = type)) +
+  geom_bar(position = position_dodge()) +
+  theme(panel.background = element_rect(fill = "white")) +
+  facet_wrap(~trial_type)
+
+chose_trial_plot <- behave_data_short %>%
+  ggplot(., aes(x = sub, fill = chose_equality, color = chose_equality)) +
+  geom_bar(position = position_dodge2()) +
+  theme(panel.background = element_rect(fill = "white")) +
+  scale_y_continuous(breaks = c(seq(from = 0, to = 150, by = 10)))
+
+
+ plot(arrangeGrob(grobs = list(ggplotGrob(behave_types_plot),
+                                ggplotGrob(chose_trial_plot)), nrow = 2, ncol = 1))
+ 
+ 
+hold <-  behave_data_short %>%
+   filter(sub == "IR57") %>%
+   mutate(less_than_ten = if_else(L_self < 10 | L_other < 10 | R_self < 10 | R_other < 10, 1, 0)) 
+
+table(hold$less_than_ten)
+
+behave_data_short %>%
+  mutate(self_less_than_ten = if_else(self_payoff < 10, 1, 0)) %>%
+  tabyl(self_less_than_ten, sub)
+
+self_payoff and ineq_disavent
+
+ineq_chosen - ineq_presented
+
+
+```
