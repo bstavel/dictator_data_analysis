@@ -31,7 +31,7 @@ registerDoParallel(nCores)
 
 ## regression parameters ##
 # save info needed for regressions #
-niter <- 10000
+niter <- 1000
 
 ## electrodes ##
 # load #
@@ -43,7 +43,7 @@ all_elecs <- elecs_to_use %>% select(Electrode)
 ### theta ###
 
 # ## read in data ##
-# path_hp_clean <- path(here(), "munge", "IR19", "theta_behave_choice_rscaler_2575_150.csv")
+# path_hp_clean <- path(here(), "munge", "IR19", "theta_behave_choice_rscaler_2575_200.csv")
 # power_behave <-  read.csv(path_hp_clean)
 # # merge with elecs #
 # brain_behave_data <- power_behave %>%
@@ -51,9 +51,9 @@ all_elecs <- elecs_to_use %>% select(Electrode)
 # all_electrodes <- unique(brain_behave_data$electrodes)
 # # bin names #
 # nBins <- colnames(brain_behave_data %>% select(starts_with("pre_"), starts_with("post_")))
-# 
-# ## run regressions ##
-# 
+
+## run regressions ##
+
 # # adv ineq #
 # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "ineq_advent", nBins, region_name =  "All", niter, sub = "IR19", tag = "theta-choice-locked-hilbertRS")
 # # disadv ineq #
@@ -70,42 +70,42 @@ all_elecs <- elecs_to_use %>% select(Electrode)
 # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff", nBins, region_name =  "All", niter, sub = "IR19", tag = "theta-choice-locked-hilbertRS")
 # # other var payoff #
 # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff", nBins, region_name =  "All", niter, sub = "IR19", tag = "theta-choice-locked-hilbertRS")
-# # # self diff #
-# # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_diff", nBins, region_name =  "All", niter, sub = "IR19", tag = "theta-choice-locked-hilbertRS")
-# # # other diff #
-# # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_diff", nBins, region_name =  "All", niter, sub = "IR19", tag = "theta-choice-locked-hilbertRS")
-# 
+# # self diff #
+# run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_diff", nBins, region_name =  "All", niter, sub = "IR19", tag = "theta-choice-locked-hilbertRS")
+# # other diff #
+# run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_diff", nBins, region_name =  "All", niter, sub = "IR19", tag = "theta-choice-locked-hilbertRS")
+
 
 ### HFA ###
 
-## read in data ##
-path_hp_clean <- path(here(), "munge", "IR19", "hfa_behave_choice_rscaler_2575_150.csv")
-power_behave <-  read.csv(path_hp_clean)
-# merge with elecs #
-brain_behave_data <- power_behave %>%
-  filter(grepl(paste(all_elecs$Electrode, collapse = "|"), electrodes))
-all_electrodes <- unique(brain_behave_data$electrodes)
-# bin names #
-nBins <- colnames(brain_behave_data %>% select(starts_with("pre_"), starts_with("post_")))
+# ## read in data ##
+# path_hp_clean <- path(here(), "munge", "IR19", "hfa_behave_choice_rscaler_2575_200.csv")
+# power_behave <-  read.csv(path_hp_clean)
+# # merge with elecs #
+# brain_behave_data <- power_behave %>%
+#   filter(grepl(paste(all_elecs$Electrode, collapse = "|"), electrodes))
+# all_electrodes <- unique(brain_behave_data$electrodes)
+# # bin names #
+# nBins <- colnames(brain_behave_data %>% select(starts_with("pre_"), starts_with("post_")))
 
 ## run regressions ##
 
-# adv ineq #
-run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "ineq_advent", nBins, region_name =  "All", niter, sub = "IR19", tag = "hfa-choice-locked-hilbertRS")
-# disadv ineq #
-run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "ineq_disadvent", nBins, region_name =  "All", niter, sub = "IR19", tag = "hfa-choice-locked-hilbertRS")
-# self payoff #
-run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_payoff", nBins, region_name =  "All", niter, sub = "IR19", tag = "hfa-choice-locked-hilbertRS")
-# other payoff #
-run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_payoff", nBins, region_name =  "All", niter, sub = "IR19", tag = "hfa-choice-locked-hilbertRS")
-# self foregone #
-run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_foregone", nBins, region_name =  "All", niter, sub = "IR19", tag = "hfa-choice-locked-hilbertRS")
-# other foregone #
-run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_foregone", nBins, region_name =  "All", niter, sub = "IR19", tag = "hfa-choice-locked-hilbertRS")
-# self var paroff #
-run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff", nBins, region_name =  "All", niter, sub = "IR19", tag = "hfa-choice-locked-hilbertRS")
-# other var payoff #
-run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff", nBins, region_name =  "All", niter, sub = "IR19", tag = "hfa-choice-locked-hilbertRS")
+# # adv ineq #
+# run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "ineq_advent", nBins, region_name =  "All", niter, sub = "IR19", tag = "hfa-choice-locked-hilbertRS")
+# # disadv ineq #
+# run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "ineq_disadvent", nBins, region_name =  "All", niter, sub = "IR19", tag = "hfa-choice-locked-hilbertRS")
+# # self payoff #
+# run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_payoff", nBins, region_name =  "All", niter, sub = "IR19", tag = "hfa-choice-locked-hilbertRS")
+# # other payoff #
+# run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_payoff", nBins, region_name =  "All", niter, sub = "IR19", tag = "hfa-choice-locked-hilbertRS")
+# # self foregone #
+# run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_foregone", nBins, region_name =  "All", niter, sub = "IR19", tag = "hfa-choice-locked-hilbertRS")
+# # other foregone #
+# run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_foregone", nBins, region_name =  "All", niter, sub = "IR19", tag = "hfa-choice-locked-hilbertRS")
+# # self var paroff #
+# run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff", nBins, region_name =  "All", niter, sub = "IR19", tag = "hfa-choice-locked-hilbertRS")
+# # other var payoff #
+# run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff", nBins, region_name =  "All", niter, sub = "IR19", tag = "hfa-choice-locked-hilbertRS")
 # # self diff #
 # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_diff", nBins, region_name =  "All", niter, sub = "IR19", tag = "hfa-choice-locked-hilbertRS")
 # # other diff #
@@ -115,7 +115,7 @@ run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, reg
 ### beta ###
 
 ## read in data ##
-path_hp_clean <- path(here(), "munge", "IR19", "beta_behave_choice_rscaler_2575_150.csv")
+path_hp_clean <- path(here(), "munge", "IR19", "beta_behave_choice_rscaler_2575_200.csv")
 power_behave <-  read.csv(path_hp_clean)
 # merge with elecs #
 brain_behave_data <- power_behave %>%
@@ -134,14 +134,14 @@ run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, reg
 run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_payoff", nBins, region_name =  "All", niter, sub = "IR19", tag = "beta-choice-locked-hilbertRS")
 # other payoff #
 run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_payoff", nBins, region_name =  "All", niter, sub = "IR19", tag = "beta-choice-locked-hilbertRS")
-# self foregone #
-run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_foregone", nBins, region_name =  "All", niter, sub = "IR19", tag = "beta-choice-locked-hilbertRS")
-# other foregone #
-run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_foregone", nBins, region_name =  "All", niter, sub = "IR19", tag = "beta-choice-locked-hilbertRS")
-# self var paroff #
-run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff", nBins, region_name =  "All", niter, sub = "IR19", tag = "beta-choice-locked-hilbertRS")
-# other var payoff #
-run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff", nBins, region_name =  "All", niter, sub = "IR19", tag = "beta-choice-locked-hilbertRS")
+# # self foregone #
+# run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_foregone", nBins, region_name =  "All", niter, sub = "IR19", tag = "beta-choice-locked-hilbertRS")
+# # other foregone #
+# run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_foregone", nBins, region_name =  "All", niter, sub = "IR19", tag = "beta-choice-locked-hilbertRS")
+# # self var paroff #
+# run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff", nBins, region_name =  "All", niter, sub = "IR19", tag = "beta-choice-locked-hilbertRS")
+# # other var payoff #
+# run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff", nBins, region_name =  "All", niter, sub = "IR19", tag = "beta-choice-locked-hilbertRS")
 # # self diff #
 # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_diff", nBins, region_name =  "All", niter, sub = "IR19", tag = "beta-choice-locked-hilbertRS")
 # # other diff #
@@ -151,7 +151,7 @@ run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, reg
 ### gamma ###
 
 ## read in data ##
-path_hp_clean <- path(here(), "munge", "IR19", "gamma_behave_choice_rscaler_2575_150.csv")
+path_hp_clean <- path(here(), "munge", "IR19", "gamma_behave_choice_rscaler_2575_200.csv")
 power_behave <-  read.csv(path_hp_clean)
 # merge with elecs #
 brain_behave_data <- power_behave %>%
@@ -170,14 +170,14 @@ run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, reg
 run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_payoff", nBins, region_name =  "All", niter, sub = "IR19", tag = "gamma-choice-locked-hilbertRS")
 # other payoff #
 run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_payoff", nBins, region_name =  "All", niter, sub = "IR19", tag = "gamma-choice-locked-hilbertRS")
-# self foregone #
-run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_foregone", nBins, region_name =  "All", niter, sub = "IR19", tag = "gamma-choice-locked-hilbertRS")
-# other foregone #
-run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_foregone", nBins, region_name =  "All", niter, sub = "IR19", tag = "gamma-choice-locked-hilbertRS")
-# self var paroff #
-run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff", nBins, region_name =  "All", niter, sub = "IR19", tag = "gamma-choice-locked-hilbertRS")
-# other var payoff #
-run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff", nBins, region_name =  "All", niter, sub = "IR19", tag = "gamma-choice-locked-hilbertRS")
+# # self foregone #
+# run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_foregone", nBins, region_name =  "All", niter, sub = "IR19", tag = "gamma-choice-locked-hilbertRS")
+# # other foregone #
+# run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_foregone", nBins, region_name =  "All", niter, sub = "IR19", tag = "gamma-choice-locked-hilbertRS")
+# # self var paroff #
+# run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff", nBins, region_name =  "All", niter, sub = "IR19", tag = "gamma-choice-locked-hilbertRS")
+# # other var payoff #
+# run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff", nBins, region_name =  "All", niter, sub = "IR19", tag = "gamma-choice-locked-hilbertRS")
 # # self diff #
 # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_diff", nBins, region_name =  "All", niter, sub = "IR19", tag = "gamma-choice-locked-hilbertRS")
 # # other diff #
@@ -186,7 +186,7 @@ run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, reg
 ### alpha ###
 
 ## read in data ##
-path_hp_clean <- path(here(), "munge", "IR19", "alpha_behave_choice_rscaler_2575_150.csv")
+path_hp_clean <- path(here(), "munge", "IR19", "alpha_behave_choice_rscaler_2575_200.csv")
 power_behave <-  read.csv(path_hp_clean)
 # merge with elecs #
 brain_behave_data <- power_behave %>%
@@ -205,14 +205,14 @@ run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, reg
 run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_payoff", nBins, region_name =  "All", niter, sub = "IR19", tag = "alpha-choice-locked-hilbertRS")
 # other payoff #
 run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_payoff", nBins, region_name =  "All", niter, sub = "IR19", tag = "alpha-choice-locked-hilbertRS")
-# self foregone #
-run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_foregone", nBins, region_name =  "All", niter, sub = "IR19", tag = "alpha-choice-locked-hilbertRS")
-# other foregone #
-run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_foregone", nBins, region_name =  "All", niter, sub = "IR19", tag = "alpha-choice-locked-hilbertRS")
-# self var paroff #
-run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff", nBins, region_name =  "All", niter, sub = "IR19", tag = "alpha-choice-locked-hilbertRS")
-# other var payoff #
-run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff", nBins, region_name =  "All", niter, sub = "IR19", tag = "alpha-choice-locked-hilbertRS")
+# # self foregone #
+# run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_foregone", nBins, region_name =  "All", niter, sub = "IR19", tag = "alpha-choice-locked-hilbertRS")
+# # other foregone #
+# run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_foregone", nBins, region_name =  "All", niter, sub = "IR19", tag = "alpha-choice-locked-hilbertRS")
+# # self var paroff #
+# run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff", nBins, region_name =  "All", niter, sub = "IR19", tag = "alpha-choice-locked-hilbertRS")
+# # other var payoff #
+# run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff", nBins, region_name =  "All", niter, sub = "IR19", tag = "alpha-choice-locked-hilbertRS")
 # # self diff #
 # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_diff", nBins, region_name =  "All", niter, sub = "IR19", tag = "alpha-choice-locked-hilbertRS")
 # # other diff #
@@ -221,7 +221,7 @@ run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, reg
 ### delta ###
 
 ## read in data ##
-path_hp_clean <- path(here(), "munge", "IR19", "delta_behave_choice_rscaler_2575_150.csv")
+path_hp_clean <- path(here(), "munge", "IR19", "delta_behave_choice_rscaler_2575_200.csv")
 power_behave <-  read.csv(path_hp_clean)
 # merge with elecs #
 brain_behave_data <- power_behave %>%
@@ -240,14 +240,14 @@ run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, reg
 run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_payoff", nBins, region_name =  "All", niter, sub = "IR19", tag = "delta-choice-locked-hilbertRS")
 # other payoff #
 run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_payoff", nBins, region_name =  "All", niter, sub = "IR19", tag = "delta-choice-locked-hilbertRS")
-# self foregone #
-run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_foregone", nBins, region_name =  "All", niter, sub = "IR19", tag = "delta-choice-locked-hilbertRS")
-# other foregone #
-run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_foregone", nBins, region_name =  "All", niter, sub = "IR19", tag = "delta-choice-locked-hilbertRS")
-# self var paroff #
-run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff", nBins, region_name =  "All", niter, sub = "IR19", tag = "delta-choice-locked-hilbertRS")
-# other var payoff #
-run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff", nBins, region_name =  "All", niter, sub = "IR19", tag = "delta-choice-locked-hilbertRS")
+# # self foregone #
+# run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_foregone", nBins, region_name =  "All", niter, sub = "IR19", tag = "delta-choice-locked-hilbertRS")
+# # other foregone #
+# run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_foregone", nBins, region_name =  "All", niter, sub = "IR19", tag = "delta-choice-locked-hilbertRS")
+# # self var paroff #
+# run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff", nBins, region_name =  "All", niter, sub = "IR19", tag = "delta-choice-locked-hilbertRS")
+# # other var payoff #
+# run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff", nBins, region_name =  "All", niter, sub = "IR19", tag = "delta-choice-locked-hilbertRS")
 # # self diff #
 # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_diff", nBins, region_name =  "All", niter, sub = "IR19", tag = "delta-choice-locked-hilbertRS")
 # # other diff #

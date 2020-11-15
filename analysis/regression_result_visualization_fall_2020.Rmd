@@ -10,11 +10,11 @@ knitr::opts_chunk$set(
   echo <- FALSE,  # don't print the code chunk
   warning <- FALSE,  # don't print warnings
   message <- FALSE,  # don't print messages
-  fig.width <- 12,  # set default width of figures
-  fig.height <- 6,  # set default height of figures
+  fig.width <- 5,  # set default width of figures
+  fig.height <- 8,  # set default height of figures
   fig.align <- "center",  # always align figure in center
   fig.pos <- "H",  # always plot figure at the exact location of the code chunk
-  cache <- TRUE)  # cache results
+  cache <- FALSE)  # cache results
 
 ## libraries ##
 library(tidyverse)
@@ -69,16 +69,14 @@ This analysis script visualizes the output of the permuted regressions.
 
 Load and prep presentation-locked results for all subjects.
 
-```{r concatenate-results-presentation}
+```{r concatenate-results-presentation, echo = F}
 
 ### any subject general vars ###
 spec_vars <- c("*", "*")
 abs_beta_val <- F
-reg_name_one <- "self_diff"
-reg_name_two <- "other_diff"
 regions_to_combine <- c("All")
  
-# IR39 has not been run yet # 
+# IR39 has strange behavior # 
 # ## IR39 ##
 # 
 # # combine different csvs #
@@ -89,22 +87,7 @@ regions_to_combine <- c("All")
 #                                            path = path(here(), "results", "IR39", "insula"),
 #                                            absBeta = F)
 # 
-# # # runa anova for inequity results #
-# # path_hg_clean <- path(here(), "munge", "IR39", "hg_behave_presentation_locked_extended_150_insula.csv")
-# # hg_behave <-  read.csv(path_hg_clean)
-# # run_filtered_anova(results = presentation_results_39,
-# #                    brain_behave_data = hg_behave,
-# #                    sub = "IR39",
-# #                    region_name = "All",
-# #                    reg_name_one = reg_name_one,
-# #                    reg_name_two = reg_name_two,
-# #                    all_results = T,
-# #                    type = "pres-locked_insula")
-# # 
-# # # read back in the results #
-# # region_name <- "All"
-# # adv_pres_results_for_plots_39 <- read.csv(fs::path(here(), "results", "IR39", paste0(region_name, "_pres-locked_insula_anova_results_", reg_name_one, ".csv")))
-# # dis_pres_results_for_plots_39 <- read.csv(fs::path(here(), "results", "IR39", paste0(region_name, "_pres-locked_insula_anova_results_", reg_name_two, ".csv")))
+
 
 
 ## IR35 ##
@@ -124,24 +107,8 @@ theta_presentation_results_35 <- compile_results(regions = regions_to_combine,
                                            path = path(here(), "results", "IR35", "post_eda"), 
                                            absBeta = abs_beta_val)
 
-# # runa anova for inequity results #
-# path_hg_clean <- path(here(), "munge", "IR35", "hg_behave_presentation_locked_extended_150_insula.csv")
-# hg_behave <-  read.csv(path_hg_clean)
-# run_filtered_anova(results = presentation_results_35, 
-#                    brain_behave_data = hg_behave, 
-#                    sub = "IR35", 
-#                    region_name = "All", 
-#                    all_results = T, 
-#                    reg_name_one = reg_name_one, 
-#                    reg_name_two = reg_name_two,                    
-#                    type = "pres-locked_insula")
-# 
-# # read back in the results #
-# region_name <- "All"
-# adv_pres_results_for_plots_35 <- read.csv(fs::path(here(), "results", "IR35", paste0(region_name, "_pres-locked_insula_anova_results_", reg_name_one, ".csv")))
-# dis_pres_results_for_plots_35 <- read.csv(fs::path(here(), "results", "IR35", paste0(region_name, "_pres-locked_insula_anova_results_", reg_name_two, ".csv")))
 
-# ## IR19 ##
+# ## IR19 has weird behavior  ##
 # 
 # # combine different csvs #
 # theta_presentation_results_19 <- compile_results(regions = regions_to_combine, 
@@ -158,52 +125,26 @@ theta_presentation_results_35 <- compile_results(regions = regions_to_combine,
 #                                            path = path(here(), "results", "IR19", "all"), 
 #                                            absBeta = abs_beta_val)
 # 
-# # runa anova for inequity results #
-# path_hg_clean <- path(here(), "munge", "IR19", "hg_behave_presentation_locked_extended_150_insula.csv")
-# hg_behave <-  read.csv(path_hg_clean)
-# hg_behave <- hg_behave %>% mutate(electrodes = gsub("POL ", "", electrodes)) # IR19 has weird elec names
-# run_filtered_anova(results = presentation_results_19, 
-#                    brain_behave_data = hg_behave, 
-#                    sub = "IR19", 
-#                    region_name = "All", 
-#                    reg_name_one = reg_name_one, 
-#                    reg_name_two = reg_name_two,                    
-#                    all_results = T, 
-#                    type = "pres-locked_insula")
-# 
-# # read back in the results #
-# region_name <- "All"
-# adv_pres_results_for_plots_19 <- read.csv(fs::path(here(), "results", "IR19", paste0(region_name, "_pres-locked_insula_anova_results_", reg_name_one, ".csv")))
-# dis_pres_results_for_plots_19 <- read.csv(fs::path(here(), "results", "IR19", paste0(region_name, "_pres-locked_insula_anova_results_", reg_name_two, ".csv")))
 
-# haven't run IR16 yet #
-# ## IR16 ##
-# 
-# # combine different csvs #
-# presentation_results_16 <- compile_results(regions = regions_to_combine,
-#                                            type = "pres-locked",
-#                                            sub = "IR16",
-#                                            spec_vars = spec_vars,
-#                                            path = path(here(), "results", "IR16", "insula"),
-#                                            absBeta = F)
-# 
-# # # runa anova for inequity results #
-# # path_hg_clean <- path(here(), "munge", "IR16", "hg_behave_presentation_locked_extended_150_insula.csv")
-# # hg_behave <-  read.csv(path_hg_clean)
-# # hg_behave <- hg_behave %>% mutate(electrodes = gsub("POL ", "", electrodes)) # IR16 has weird elec names
-# # run_filtered_anova(results = presentation_results_16,
-# #                    brain_behave_data = hg_behave,
-# #                    sub = "IR16",
-# #                    region_name = "All",
-# #                    reg_name_one = reg_name_one,
-# #                    reg_name_two = reg_name_two,
-# #                    all_results = T,
-# #                    type = "pres-locked_insula")
-# # 
-# # # read back in the results #
-# # region_name <- "All"
-# # adv_pres_results_for_plots_16 <- read.csv(fs::path(here(), "results", "IR16", paste0(region_name, "_pres-locked_insula_anova_results_", reg_name_one, ".csv")))
-# # dis_pres_results_for_plots_16 <- read.csv(fs::path(here(), "results", "IR16", paste0(region_name, "_pres-locked_insula_anova_results_", reg_name_two, ".csv")))
+
+
+## IR16 ##
+
+# combine different csvs #
+hfa_presentation_results_16 <- compile_results(regions = regions_to_combine,
+                                           type = "hfa-pres-locked-hilbertRS",
+                                           sub = "IR16",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR16", "post_eda"),
+                                           absBeta = F)
+
+theta_presentation_results_16 <- compile_results(regions = regions_to_combine,
+                                           type = "theta-pres-locked-hilbertRS",
+                                           sub = "IR16",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR16", "post_eda"),
+                                           absBeta = F)
+
 
 ## IR57 ##
 
@@ -222,24 +163,57 @@ theta_presentation_results_57 <- compile_results(regions = regions_to_combine,
                                            path = path(here(), "results", "IR57", "post_eda"),
                                            absBeta = F)
 
-# # runa anova for inequity results #
-# path_hg_clean <- path(here(), "munge", "IR57", "hg_behave_presentation_locked_extended_150_insula.csv")
-# hg_behave <-  read.csv(path_hg_clean)
-# hg_behave <- hg_behave %>% mutate(electrodes = gsub("POL ", "", electrodes)) # IR16 has weird elec names
-# run_filtered_anova(results = presentation_results_57,
-#                    brain_behave_data = hg_behave,
-#                    sub = "IR57",
-#                    region_name = "All",
-#                    reg_name_one = reg_name_one,
-#                    reg_name_two = reg_name_two,
-#                    all_results = T,
-#                    type = "pres-locked_insula")
-# 
-# # read back in the results #
-# region_name <- "All"
-# adv_pres_results_for_plots_57 <- read.csv(fs::path(here(), "results", "IR57", paste0(region_name, "_pres-locked_insula_anova_results_", reg_name_one, ".csv")))
-# dis_pres_results_for_plots_57 <- read.csv(fs::path(here(), "results", "IR57", paste0(region_name, "_pres-locked_insula_anova_results_", reg_name_two, ".csv")))
 
+
+## IR9 ##
+
+# combine different csvs #
+hfa_presentation_results_9 <- compile_results(regions = regions_to_combine,
+                                           type = "hfa-pres-locked-hilbertRS",
+                                           sub = "IR9",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR9", "post_eda"),
+                                           absBeta = F)
+
+theta_presentation_results_9 <- compile_results(regions = regions_to_combine,
+                                           type = "theta-pres-locked-hilbertRS",
+                                           sub = "IR9",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR9", "post_eda"),
+                                           absBeta = F)
+
+## IR10 ##
+
+# combine different csvs #
+hfa_presentation_results_10 <- compile_results(regions = regions_to_combine,
+                                           type = "hfa-pres-locked-hilbertRS",
+                                           sub = "IR10",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR10", "post_eda"),
+                                           absBeta = F)
+
+theta_presentation_results_10 <- compile_results(regions = regions_to_combine,
+                                           type = "theta-pres-locked-hilbertRS",
+                                           sub = "IR10",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR10", "post_eda"),
+                                           absBeta = F)
+## IR26 ##
+
+# combine different csvs #
+hfa_presentation_results_26 <- compile_results(regions = regions_to_combine,
+                                           type = "hfa-pres-locked-hilbertRS",
+                                           sub = "IR26",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR26", "post_eda"),
+                                           absBeta = F)
+
+theta_presentation_results_26 <- compile_results(regions = regions_to_combine,
+                                           type = "theta-pres-locked-hilbertRS",
+                                           sub = "IR26",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR26", "post_eda"),
+                                           absBeta = F)
 
 ## IR28 ##
 
@@ -265,13 +239,11 @@ theta_presentation_results_28 <- compile_results(regions = regions_to_combine,
 
 Load and prep choice-locked results for all subjects.
 
-```{r concatenate-results-choice}
+```{r concatenate-results-choice, echo =F}
 
 ### any subject general vars ###
 spec_vars <- c("*", "*")
 abs_beta_val <- F
-reg_name_one <- "self_diff"
-reg_name_two <- "other_diff"
 regions_to_combine <- c("All")
   
 # ## IR39 ##
@@ -284,22 +256,6 @@ regions_to_combine <- c("All")
 #                                            path = path(here(), "results", "IR39"),
 #                                            absBeta = F)
 # 
-# # runa anova for inequity results #
-# path_hg_clean <- path(here(), "munge", "IR39", "hg_behave_choice_locked_cut_fixation_150_insula.csv")
-# hg_behave <-  read.csv(path_hg_clean)
-# run_filtered_anova(results = choice_results_39,
-#                    brain_behave_data = hg_behave,
-#                    sub = "IR39",
-#                    region_name = "All",
-#                    reg_name_one = reg_name_one,
-#                    reg_name_two = reg_name_two,
-#                    all_results = T,
-#                    type = "choice-locked_insula")
-# 
-# # read back in the results #
-# region_name <- "All"
-# adv_choice_results_for_plots_39 <- read.csv(fs::path(here(), "results", "IR39", paste0(region_name, "_choice-locked_insula_anova_results_", reg_name_one, ".csv")))
-# dis_choice_results_for_plots_39 <- read.csv(fs::path(here(), "results", "IR39", paste0(region_name, "_choice-locked_insula_anova_results_", reg_name_two, ".csv")))
 
 
 ## IR35 ##
@@ -347,22 +303,6 @@ hfa_choice_results_35 <- compile_results(regions = regions_to_combine,
                                            absBeta = abs_beta_val)
 
 
-# # runa anova for inequity results #
-# path_hg_clean <- path(here(), "munge", "IR35", "hg_behave_choice_locked_cut_fixation_150_insula.csv")
-# hg_behave <-  read.csv(path_hg_clean)
-# run_filtered_anova(results = choice_results_35, 
-#                    brain_behave_data = hg_behave, 
-#                    sub = "IR35", 
-#                    region_name = "All", 
-#                    all_results = T, 
-#                    reg_name_one = reg_name_one, 
-#                    reg_name_two = reg_name_two,                    
-#                    type = "choice-locked_insula")
-# 
-# # read back in the results #
-# region_name <- "All"
-# adv_choice_results_for_plots_35 <- read.csv(fs::path(here(), "results", "IR35", paste0(region_name, "_choice-locked_insula_anova_results_", reg_name_one, ".csv")))
-# dis_choice_results_for_plots_35 <- read.csv(fs::path(here(), "results", "IR35", paste0(region_name, "_choice-locked_insula_anova_results_", reg_name_two, ".csv")))
 
 # ## IR19 ##
 # 
@@ -426,34 +366,6 @@ hfa_choice_results_35 <- compile_results(regions = regions_to_combine,
 # adv_choice_results_for_plots_19 <- read.csv(fs::path(here(), "results", "IR19", paste0(region_name, "_choice-locked_insula_anova_results_", reg_name_one, ".csv")))
 # dis_choice_results_for_plots_19 <- read.csv(fs::path(here(), "results", "IR19", paste0(region_name, "_choice-locked_insula_anova_results_", reg_name_two, ".csv")))
 
-# ## IR16 ##
-# 
-# # combine different csvs #
-# regions_to_combine <- c("Insula")
-# choice_results_16 <- compile_results(regions = regions_to_combine, 
-#                                      type = "choice-locked", 
-#                                      sub = "IR16", 
-#                                      spec_vars = spec_vars, 
-#                                      path = path(here(), "results", "IR16", "insula"), 
-#                                      absBeta = abs_beta_val)
-# 
-# # runa anova for inequity results #
-# path_hg_clean <- path(here(), "munge", "IR16", "hg_behave_choice_locked_cut_fixation_150_insula.csv")
-# hg_behave <-  read.csv(path_hg_clean)
-# hg_behave <- hg_behave %>% mutate(electrodes = gsub("POL ", "", electrodes)) # IR16 has weird elec names
-# run_filtered_anova(results = choice_results_16, 
-#                    brain_behave_data = hg_behave, 
-#                    sub = "IR16", 
-#                    region_name = "All", 
-#                    reg_name_one = reg_name_one, 
-#                    reg_name_two = reg_name_two,                    
-#                    all_results = T, 
-#                    type = "choice-locked_insula")
-# 
-# # read back in the results #
-# region_name <- "All"
-# adv_choice_results_for_plots_16 <- read.csv(fs::path(here(), "results", "IR16", paste0(region_name, "_choice-locked_insula_anova_results_", reg_name_one, ".csv")))
-# dis_choice_results_for_plots_16 <- read.csv(fs::path(here(), "results", "IR16", paste0(region_name, "_choice-locked_insula_anova_results_", reg_name_two, ".csv")))
 
 ## IR57 ##
 
@@ -498,23 +410,6 @@ hfa_choice_results_57 <- compile_results(regions = regions_to_combine,
                                            spec_vars = spec_vars, 
                                            path = path(here(), "results", "IR57", "post_eda"), 
                                            absBeta = abs_beta_val)
-# # runa anova for inequity results #
-# path_hg_clean <- path(here(), "munge", "IR57", "hg_behave_choice_locked_cut_fixation_150_insula.csv")
-# hg_behave <-  read.csv(path_hg_clean)
-# hg_behave <- hg_behave %>% mutate(electrodes = gsub("POL ", "", electrodes)) # IR16 has weird elec names
-# run_filtered_anova(results = choice_results_57, 
-#                    brain_behave_data = hg_behave, 
-#                    sub = "IR57", 
-#                    region_name = "All", 
-#                    reg_name_one = reg_name_one, 
-#                    reg_name_two = reg_name_two,                    
-#                    all_results = T, 
-#                    type = "choice-locked_insula")
-# 
-# # read back in the results #
-# region_name <- "All"
-# adv_choice_results_for_plots_57 <- read.csv(fs::path(here(), "results", "IR57", paste0(region_name, "_choice-locked_insula_anova_results_", reg_name_one, ".csv")))
-# dis_choice_results_for_plots_57 <- read.csv(fs::path(here(), "results", "IR57", paste0(region_name, "_choice-locked_insula_anova_results_", reg_name_two, ".csv")))
 
 
 ## IR28 ##
@@ -561,12 +456,82 @@ hfa_choice_results_28 <- compile_results(regions = regions_to_combine,
                                            path = path(here(), "results", "IR28", "post_eda"), 
                                            absBeta = abs_beta_val)
 
+
+## IR9 ##
+
+# combine different csvs #
+theta_choice_results_9 <- compile_results(regions = regions_to_combine, 
+                                           type = "theta-choice-locked-hilbertRS", 
+                                           sub = "IR9", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR9", "post_eda"), 
+                                           absBeta = abs_beta_val)
+
+hfa_choice_results_9 <- compile_results(regions = regions_to_combine, 
+                                           type = "hfa-choice-locked-hilbertRS", 
+                                           sub = "IR9", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR9", "post_eda"), 
+                                           absBeta = abs_beta_val)
+
+## IR10 ##
+
+# combine different csvs #
+theta_choice_results_10 <- compile_results(regions = regions_to_combine, 
+                                           type = "theta-choice-locked-hilbertRS", 
+                                           sub = "IR10", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR10", "post_eda"), 
+                                           absBeta = abs_beta_val)
+
+hfa_choice_results_10 <- compile_results(regions = regions_to_combine, 
+                                           type = "hfa-choice-locked-hilbertRS", 
+                                           sub = "IR10", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR10", "post_eda"), 
+                                           absBeta = abs_beta_val)
+
+## IR26 ##
+
+# combine different csvs #
+theta_choice_results_26 <- compile_results(regions = regions_to_combine, 
+                                           type = "theta-choice-locked-hilbertRS", 
+                                           sub = "IR26", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR26", "post_eda"), 
+                                           absBeta = abs_beta_val)
+
+hfa_choice_results_26 <- compile_results(regions = regions_to_combine, 
+                                           type = "hfa-choice-locked-hilbertRS", 
+                                           sub = "IR26", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR26", "post_eda"), 
+                                           absBeta = abs_beta_val)
+
+## IR16 ##
+
+# combine different csvs #
+theta_choice_results_16 <- compile_results(regions = regions_to_combine, 
+                                           type = "theta-choice-locked-hilbertRS", 
+                                           sub = "IR16", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR16", "post_eda"), 
+                                           absBeta = abs_beta_val)
+
+hfa_choice_results_16 <- compile_results(regions = regions_to_combine, 
+                                           type = "hfa-choice-locked-hilbertRS", 
+                                           sub = "IR16", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR16", "post_eda"), 
+                                           absBeta = abs_beta_val)
+
+
 ```
 
 
 ## plotting functions
 
-```{r plotting-functions}
+```{r plotting-functions, echo = F}
 ggthemr::ggthemr("pale", layout = "plain")
 getPalette = colorRampPalette(brewer.pal(10, "Set1"))
 
@@ -749,13 +714,13 @@ beta_plots_all_subjects <- function(df, subject, sig_thresh, nrows, vars = c("se
     arrange(bin)
    
    # create labeler for ROIs
-    roi_labels <- plot_df$ROI
+    roi_labels <- paste(plot_df$ROI, "\n elec: ", plot_df$electrode)
     names(roi_labels) <- plot_df$electrode
     
     plot_df %>%
       ggplot(., aes(x = bin, y= Beta)) +
       geom_line(aes(group = predictor), color = "grey", alpha = .3) +
-      geom_point(aes(color = predictor_sig)) + 
+      geom_point(aes(color = predictor_sig), size = 3) + 
       geom_vline(xintercept = 0, color = "black") +
       theme(axis.text.x = element_text(angle = 90),
             # axis.ticks.x = element_blank(),
@@ -780,13 +745,13 @@ beta_plots_all_subjects_choice <- function(df, subject, sig_thresh, nrows, vars 
         arrange(bin)
     
     # create labeler for ROIs
-    roi_labels <- plot_df$ROI
+    roi_labels <- paste(plot_df$ROI, "\n elec: ", plot_df$electrode)
     names(roi_labels) <- plot_df$electrode
       
     plot_df %>%  
         ggplot(., aes(x = bin, y= Beta, color = predictor_sig)) +
         geom_line(aes(group = predictor), color = "grey", alpha = .3) +
-        geom_point(aes(color = predictor_sig)) + 
+        geom_point(aes(color = predictor_sig), size = 3) + 
         geom_vline(xintercept = 0, color = "black") +
         geom_vline(xintercept = 20, color = "black") +
         theme(axis.text.x = element_text(angle = 90),
@@ -800,11 +765,12 @@ beta_plots_all_subjects_choice <- function(df, subject, sig_thresh, nrows, vars 
 }
 
 
+
 ```
 
 ## Presentation Results
 
-```{r clean-presentation-results}
+```{r clean-presentation-results, echo = F}
 
 
 merge_with_elec_info <- function(df, localizations_sub) {
@@ -848,8 +814,34 @@ localizations <- read_csv(path(here(), "munge", "combined_electrode_info_cleaned
 localizations_28 <- localizations %>% filter(subject == "IR28") %>% select(Electrode, `Loc Meeting`)
 localizations_35 <- localizations %>% filter(subject == "IR35") %>% select(Electrode, `Loc Meeting`)
 localizations_57 <- localizations %>% filter(subject == "IR57") %>% select(Electrode, `Loc Meeting`)
+localizations_9 <- localizations %>% filter(subject == "IR9") %>% select(Electrode, `Loc Meeting`)
+localizations_10 <- localizations %>% filter(subject == "IR10") %>% select(Electrode, `Loc Meeting`)
+localizations_10 <- localizations_10 %>%
+  mutate(Electrode = gsub("POL ", "", Electrode)) %>%
+  mutate(Electrode = gsub(" POL", "", Electrode)) %>%
+  mutate(Electrode = gsub("-Ref", "", Electrode)) %>%
+  mutate(Electrode = gsub("-Ref-", "-", Electrode)) 
+localizations_26 <- localizations %>% filter(subject == "IR26") %>% select(Electrode, `Loc Meeting`)
+localizations_16 <- localizations %>% filter(subject == "IR16") %>% select(Electrode, `Loc Meeting`)
 
 ### clean data ###
+theta_presentation_cleaned_results_9 <- merge_with_elec_info(theta_presentation_results_9,
+                                                              localizations_9)
+hfa_presentation_cleaned_results_9 <- merge_with_elec_info(hfa_presentation_results_9,
+                                                            localizations_9)
+theta_presentation_cleaned_results_10 <- merge_with_elec_info(theta_presentation_results_10,
+                                                              localizations_10)
+hfa_presentation_cleaned_results_10 <- merge_with_elec_info(hfa_presentation_results_10,
+                                                            localizations_10)
+theta_presentation_cleaned_results_16 <- merge_with_elec_info(theta_presentation_results_16,
+                                                              localizations_16)
+hfa_presentation_cleaned_results_16 <- merge_with_elec_info(hfa_presentation_results_16,
+                                                            localizations_16)
+theta_presentation_cleaned_results_26 <- merge_with_elec_info(theta_presentation_results_26,
+                                                              localizations_26)
+hfa_presentation_cleaned_results_26 <- merge_with_elec_info(hfa_presentation_results_26,
+                                                            localizations_26)
+
 theta_presentation_cleaned_results_28 <- merge_with_elec_info(theta_presentation_results_28,
                                                               localizations_28)
 hfa_presentation_cleaned_results_28 <- merge_with_elec_info(hfa_presentation_results_28,
@@ -866,6 +858,32 @@ hfa_presentation_cleaned_results_57 <- merge_with_elec_info(hfa_presentation_res
                                                             localizations_57)
 
 ## split left and right for plotting ##
+left_theta_presentation_cleaned_results_9 <- theta_presentation_cleaned_results_9 %>% filter(grepl("^L", electrode))
+right_theta_presentation_cleaned_results_9 <- theta_presentation_cleaned_results_9 %>% filter(grepl("^R", electrode))
+
+left_hfa_presentation_cleaned_results_9 <- hfa_presentation_cleaned_results_28 %>% filter(grepl("^L", electrode))
+right_hfa_presentation_cleaned_results_9 <- hfa_presentation_cleaned_results_28 %>% filter(grepl("^R", electrode))
+
+left_theta_presentation_cleaned_results_10 <- theta_presentation_cleaned_results_10 %>% filter(grepl("^L", electrode))
+right_theta_presentation_cleaned_results_10 <- theta_presentation_cleaned_results_10 %>% filter(grepl("^R", electrode))
+
+left_hfa_presentation_cleaned_results_10 <- hfa_presentation_cleaned_results_10 %>% filter(grepl("^L", electrode))
+right_hfa_presentation_cleaned_results_10 <- hfa_presentation_cleaned_results_10 %>% filter(grepl("^R", electrode))
+
+left_theta_presentation_cleaned_results_16 <- theta_presentation_cleaned_results_16 %>% filter(grepl("^L", electrode))
+right_theta_presentation_cleaned_results_16 <- theta_presentation_cleaned_results_16 %>% filter(grepl("^R", electrode))
+
+left_hfa_presentation_cleaned_results_16 <- hfa_presentation_cleaned_results_16 %>% filter(grepl("^L", electrode))
+right_hfa_presentation_cleaned_results_16 <- hfa_presentation_cleaned_results_16 %>% filter(grepl("^R", electrode))
+
+left_theta_presentation_cleaned_results_26 <- theta_presentation_cleaned_results_26 %>% filter(grepl("^L", electrode))
+right_theta_presentation_cleaned_results_26 <- theta_presentation_cleaned_results_26 %>% filter(grepl("^R", electrode))
+
+left_hfa_presentation_cleaned_results_26 <- hfa_presentation_cleaned_results_26 %>% filter(grepl("^L", electrode))
+right_hfa_presentation_cleaned_results_26 <- hfa_presentation_cleaned_results_26 %>% filter(grepl("^R", electrode))
+
+
+
 left_theta_presentation_cleaned_results_28 <- theta_presentation_cleaned_results_28 %>% filter(grepl("^L", electrode))
 right_theta_presentation_cleaned_results_28 <- theta_presentation_cleaned_results_28 %>% filter(grepl("^R", electrode))
 
@@ -888,18 +906,29 @@ right_hfa_presentation_cleaned_results_57 <- hfa_presentation_cleaned_results_57
 
 ```
 
-```{r pres_viz}
+```{r pres_viz, echo = F, fig.width= 18, fig.height= 22}
 
 ## Theta ##
-beta_plots_all_subjects(left_theta_presentation_cleaned_results_57, "IR57 ~ Left ~ Theta ~ Pres", 8, sig_thresh = 0.01)
-beta_plots_all_subjects(right_theta_presentation_cleaned_results_57, "IR57 ~ Right ~ Theta ~ Pres", 8, sig_thresh = 0.01)
+beta_plots_all_subjects(left_theta_presentation_cleaned_results_57, "IR57 ~ Left ~ Theta ~ Pres", 10, sig_thresh = 0.01)
+beta_plots_all_subjects(right_theta_presentation_cleaned_results_57, "IR57 ~ Right ~ Theta ~ Pres", 10, sig_thresh = 0.01)
 
-beta_plots_all_subjects(left_theta_presentation_cleaned_results_35, "IR35 ~ Left ~ Theta ~ Pres", 8, sig_thresh = 0.01)
-beta_plots_all_subjects(right_theta_presentation_cleaned_results_35, "IR35 ~ Right ~ Theta ~ Pres", 8, sig_thresh = 0.01)
+beta_plots_all_subjects(left_theta_presentation_cleaned_results_35, "IR35 ~ Left ~ Theta ~ Pres", 10, sig_thresh = 0.01)
+beta_plots_all_subjects(right_theta_presentation_cleaned_results_35, "IR35 ~ Right ~ Theta ~ Pres", 10, sig_thresh = 0.01)
 
 beta_plots_all_subjects(left_theta_presentation_cleaned_results_28, "IR28 ~ Left ~ Theta ~ Pres", 8, sig_thresh = 0.01)
 beta_plots_all_subjects(right_theta_presentation_cleaned_results_28, "IR28 ~ Right ~ Theta ~ Pres", 8, sig_thresh = 0.01)
 
+beta_plots_all_subjects(left_theta_presentation_cleaned_results_9, "IR9 ~ Left ~ Theta ~ Pres", 8, sig_thresh = 0.01)
+beta_plots_all_subjects(right_theta_presentation_cleaned_results_9, "IR9 ~ Right ~ Theta ~ Pres", 9, sig_thresh = 0.01)
+
+beta_plots_all_subjects(left_theta_presentation_cleaned_results_10, "IR10 ~ Left ~ Theta ~ Pres", 8, sig_thresh = 0.01)
+beta_plots_all_subjects(right_theta_presentation_cleaned_results_10, "IR10 ~ Right ~ Theta ~ Pres", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects(left_theta_presentation_cleaned_results_26, "IR26 ~ Left ~ Theta ~ Pres", 8, sig_thresh = 0.01)
+beta_plots_all_subjects(right_theta_presentation_cleaned_results_26, "IR26 ~ Right ~ Theta ~ Pres", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects(left_theta_presentation_cleaned_results_16, "IR16 ~ Left ~ Theta ~ Pres", 8, sig_thresh = 0.01)
+beta_plots_all_subjects(right_theta_presentation_cleaned_results_16, "IR16 ~ Right ~ Theta ~ Pres", 8, sig_thresh = 0.01)
 
 ## HFA ##
 beta_plots_all_subjects(left_hfa_presentation_cleaned_results_57, "IR57 ~ Left ~ HFA ~ Pres", 8, sig_thresh = 0.01)
@@ -911,6 +940,17 @@ beta_plots_all_subjects(right_hfa_presentation_cleaned_results_35, "IR35 ~ Right
 beta_plots_all_subjects(left_hfa_presentation_cleaned_results_28, "IR28 ~ Left ~ HFA ~ Pres", 8, sig_thresh = 0.01)
 beta_plots_all_subjects(right_hfa_presentation_cleaned_results_28, "IR28 ~ Right ~ HFA ~ Pres", 8, sig_thresh = 0.01)
 
+beta_plots_all_subjects(left_hfa_presentation_cleaned_results_9, "IR9 ~ Left ~ HFA ~ Pres", 8, sig_thresh = 0.01)
+beta_plots_all_subjects(right_hfa_presentation_cleaned_results_9, "IR9 ~ Right ~ HFA ~ Pres", 9, sig_thresh = 0.01)
+
+beta_plots_all_subjects(left_hfa_presentation_cleaned_results_10, "IR10 ~ Left ~ HFA ~ Pres", 8, sig_thresh = 0.01)
+beta_plots_all_subjects(right_hfa_presentation_cleaned_results_10, "IR10 ~ Right ~ HFA ~ Pres", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects(left_hfa_presentation_cleaned_results_26, "IR26 ~ Left ~ HFA ~ Pres", 8, sig_thresh = 0.01)
+beta_plots_all_subjects(right_hfa_presentation_cleaned_results_26, "IR26 ~ Right ~ HFA ~ Pres", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects(left_hfa_presentation_cleaned_results_16, "IR16 ~ Left ~ HFA ~ Pres", 8, sig_thresh = 0.01)
+beta_plots_all_subjects(right_hfa_presentation_cleaned_results_16, "IR16 ~ Right ~ HFA ~ Pres", 8, sig_thresh = 0.01)
 
 ```
 
@@ -918,7 +958,7 @@ beta_plots_all_subjects(right_hfa_presentation_cleaned_results_28, "IR28 ~ Right
 
 
 
-```{r choice-prep}
+```{r choice-prep, echo = F}
 
 # IR35 #
 theta_choice_cleaned_results_35 <- merge_with_elec_info(theta_choice_results_35, localizations_35)
@@ -929,7 +969,18 @@ hfa_choice_cleaned_results_57 <- merge_with_elec_info(hfa_choice_results_57, loc
 # IR28 #
 theta_choice_cleaned_results_28 <- merge_with_elec_info(theta_choice_results_28, localizations_28)
 hfa_choice_cleaned_results_28 <- merge_with_elec_info(hfa_choice_results_28, localizations_28)
-
+# IR9 #
+theta_choice_cleaned_results_9 <- merge_with_elec_info(theta_choice_results_9, localizations_9)
+hfa_choice_cleaned_results_9 <- merge_with_elec_info(hfa_choice_results_9, localizations_9)
+# IR10 #
+theta_choice_cleaned_results_10 <- merge_with_elec_info(theta_choice_results_10, localizations_10)
+hfa_choice_cleaned_results_10 <- merge_with_elec_info(hfa_choice_results_10, localizations_10)
+# IR26 #
+theta_choice_cleaned_results_26 <- merge_with_elec_info(theta_choice_results_26, localizations_26)
+hfa_choice_cleaned_results_26 <- merge_with_elec_info(hfa_choice_results_26, localizations_26)
+# IR16 #
+theta_choice_cleaned_results_16 <- merge_with_elec_info(theta_choice_results_16, localizations_26)
+hfa_choice_cleaned_results_16 <- merge_with_elec_info(hfa_choice_results_26, localizations_26)
 
 # theta #
 left_theta_choice_cleaned_results_35 <- theta_choice_cleaned_results_35 %>% filter(grepl("^L", electrode))
@@ -938,6 +989,14 @@ left_theta_choice_cleaned_results_57 <- theta_choice_cleaned_results_57 %>% filt
 right_theta_choice_cleaned_results_57 <- theta_choice_cleaned_results_57 %>% filter(grepl("^R", electrode))
 left_theta_choice_cleaned_results_28 <- theta_choice_cleaned_results_28 %>% filter(grepl("^L", electrode))
 right_theta_choice_cleaned_results_28 <- theta_choice_cleaned_results_28 %>% filter(grepl("^R", electrode))
+left_theta_choice_cleaned_results_9 <- theta_choice_cleaned_results_9 %>% filter(grepl("^L", electrode))
+right_theta_choice_cleaned_results_9 <- theta_choice_cleaned_results_9 %>% filter(grepl("^R", electrode))
+left_theta_choice_cleaned_results_10 <- theta_choice_cleaned_results_10 %>% filter(grepl("^L", electrode))
+right_theta_choice_cleaned_results_10 <- theta_choice_cleaned_results_10 %>% filter(grepl("^R", electrode))
+left_theta_choice_cleaned_results_26 <- theta_choice_cleaned_results_26 %>% filter(grepl("^L", electrode))
+right_theta_choice_cleaned_results_26 <- theta_choice_cleaned_results_26 %>% filter(grepl("^R", electrode))
+left_theta_choice_cleaned_results_16 <- theta_choice_cleaned_results_16 %>% filter(grepl("^L", electrode))
+right_theta_choice_cleaned_results_16 <- theta_choice_cleaned_results_16 %>% filter(grepl("^R", electrode))
 
 
 # hfa #
@@ -947,23 +1006,43 @@ left_hfa_choice_cleaned_results_57 <- hfa_choice_cleaned_results_57 %>% filter(g
 right_hfa_choice_cleaned_results_57 <- hfa_choice_cleaned_results_57 %>% filter(grepl("^R", electrode))
 left_hfa_choice_cleaned_results_28 <- hfa_choice_cleaned_results_28 %>% filter(grepl("^L", electrode))
 right_hfa_choice_cleaned_results_28 <- hfa_choice_cleaned_results_28 %>% filter(grepl("^R", electrode))
+left_hfa_choice_cleaned_results_9 <- hfa_choice_cleaned_results_9 %>% filter(grepl("^L", electrode))
+right_hfa_choice_cleaned_results_9 <- hfa_choice_cleaned_results_9 %>% filter(grepl("^R", electrode))
+left_hfa_choice_cleaned_results_10 <- hfa_choice_cleaned_results_10 %>% filter(grepl("^L", electrode))
+right_hfa_choice_cleaned_results_10 <- hfa_choice_cleaned_results_10 %>% filter(grepl("^R", electrode))
+left_hfa_choice_cleaned_results_26 <- hfa_choice_cleaned_results_26 %>% filter(grepl("^L", electrode))
+right_hfa_choice_cleaned_results_26 <- hfa_choice_cleaned_results_26 %>% filter(grepl("^R", electrode))
+left_hfa_choice_cleaned_results_16 <- hfa_choice_cleaned_results_16 %>% filter(grepl("^L", electrode))
+right_hfa_choice_cleaned_results_16 <- hfa_choice_cleaned_results_16 %>% filter(grepl("^R", electrode))
 
 
 
 ```
 
-```{r choice-viz}
+```{r choice-viz, echo = F, fig.width= 18, fig.height= 22}
 
 ## theta ##
 
-beta_plots_all_subjects_choice(left_theta_choice_cleaned_results_35, "IR35 ~ Left ~ Theta ~ Choice", 8, sig_thresh = 0.01)
-beta_plots_all_subjects_choice(right_theta_choice_cleaned_results_35, "IR35 ~ Right ~ Theta ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(left_theta_choice_cleaned_results_35, "IR35 ~ Left ~ Theta ~ Choice", 10, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_theta_choice_cleaned_results_35, "IR35 ~ Right ~ Theta ~ Choice", 10, sig_thresh = 0.01)
 
-beta_plots_all_subjects_choice(left_theta_choice_cleaned_results_57, "IR57 ~ Left ~ Theta ~ Choice", 8, sig_thresh = 0.01)
-beta_plots_all_subjects_choice(right_theta_choice_cleaned_results_57, "IR57 ~ Right ~ Theta ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(left_theta_choice_cleaned_results_57, "IR57 ~ Left ~ Theta ~ Choice", 10, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_theta_choice_cleaned_results_57, "IR57 ~ Right ~ Theta ~ Choice", 10, sig_thresh = 0.01)
 
 beta_plots_all_subjects_choice(left_theta_choice_cleaned_results_28, "IR28 ~ Left ~ Theta ~ Choice", 8, sig_thresh = 0.01)
 beta_plots_all_subjects_choice(right_theta_choice_cleaned_results_28, "IR28 ~ Right ~ Theta ~ Choice", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_theta_choice_cleaned_results_9, "IR9 ~ Left ~ Theta ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_theta_choice_cleaned_results_9, "IR9 ~ Right ~ Theta ~ Choice", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_theta_choice_cleaned_results_10, "IR10 ~ Left ~ Theta ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_theta_choice_cleaned_results_10, "IR10 ~ Right ~ Theta ~ Choice", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_theta_choice_cleaned_results_26, "IR26 ~ Left ~ Theta ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_theta_choice_cleaned_results_26, "IR26 ~ Right ~ Theta ~ Choice", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_theta_choice_cleaned_results_16, "IR16 ~ Left ~ Theta ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_theta_choice_cleaned_results_16, "IR16 ~ Right ~ Theta ~ Choice", 8, sig_thresh = 0.01)
 
 ## HFA ##
 
@@ -976,6 +1055,17 @@ beta_plots_all_subjects_choice(right_hfa_choice_cleaned_results_57, "IR57 ~ Righ
 beta_plots_all_subjects_choice(left_hfa_choice_cleaned_results_28, "IR28 ~ Left ~ hfa ~ Choice", 8, sig_thresh = 0.01)
 beta_plots_all_subjects_choice(right_hfa_choice_cleaned_results_28, "IR28 ~ Right ~ hfa ~ Choice", 8, sig_thresh = 0.01)
 
+beta_plots_all_subjects_choice(left_hfa_choice_cleaned_results_9, "IR9 ~ Left ~ hfa ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_hfa_choice_cleaned_results_9, "IR9 ~ Right ~ hfa ~ Choice", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_hfa_choice_cleaned_results_10, "IR10 ~ Left ~ hfa ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_hfa_choice_cleaned_results_10, "IR10 ~ Right ~ hfa ~ Choice", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_hfa_choice_cleaned_results_26, "IR26 ~ Left ~ hfa ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_hfa_choice_cleaned_results_26, "IR26 ~ Right ~ hfa ~ Choice", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_theta_choice_cleaned_results_16, "IR16 ~ Left ~ Theta ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_theta_choice_cleaned_results_16, "IR16 ~ Right ~ Theta ~ Choice", 8, sig_thresh = 0.01)
 
 ```
 
