@@ -63,11 +63,39 @@ registerDoParallel(nCores)
 
 # Dictator Game Regression Results
 
-This analysis script visualizes the output of the permuted regressions.
+This analysis script visualizes the output of the permuted regressions for all frequencies.
 
-## Load Presentation
 
-Load and prep presentation-locked results for all subjects.
+*Links*
+[Presentation](#pres)
+
+[Presentation ~ Delta](#p-d)
+
+[Presentation ~ Theta](#p-t)
+
+[Presentation ~ Alpha](#p-a)
+
+[Presentation ~ Beta](#p-b)
+
+[Presentation ~ Gamma](#p-g)
+
+[Presentation ~ HFA](#p-h)
+
+
+[Choice](#chocie)
+
+[Choice ~ Delta](#c-d)
+
+[Choice ~ Theta](#c-t)
+
+[Choice ~ Alpha](#c-a)
+
+[Choice ~ Beta](#c-b)
+
+[Choice ~ Gamma](#c-g)
+
+[Choice ~ HFA](#c-h)
+
 
 ```{r concatenate-results-presentation, echo = F}
 
@@ -100,11 +128,38 @@ hfa_presentation_results_35 <- compile_results(regions = regions_to_combine,
                                            path = path(here(), "results", "IR35", "post_eda"), 
                                            absBeta = abs_beta_val)
 
+delta_presentation_results_35 <- compile_results(regions = regions_to_combine,
+                                           type = "delta-pres-locked-hilbertRS",
+                                           sub = "IR35",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR35", "post_eda"),
+                                           absBeta = abs_beta_val)
+
 theta_presentation_results_35 <- compile_results(regions = regions_to_combine, 
                                            type = "theta-pres-locked-hilbertRS", 
                                            sub = "IR35", 
                                            spec_vars = spec_vars, 
                                            path = path(here(), "results", "IR35", "post_eda"), 
+                                           absBeta = abs_beta_val)
+alpha_presentation_results_35 <- compile_results(regions = regions_to_combine,
+                                           type = "alpha-pres-locked-hilbertRS",
+                                           sub = "IR35",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR35", "post_eda"),
+                                           absBeta = abs_beta_val)
+
+beta_presentation_results_35 <- compile_results(regions = regions_to_combine,
+                                           type = "beta-pres-locked-hilbertRS",
+                                           sub = "IR35",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR35", "post_eda"),
+                                           absBeta = abs_beta_val)
+
+gamma_presentation_results_35 <- compile_results(regions = regions_to_combine,
+                                           type = "gamma-pres-locked-hilbertRS",
+                                           sub = "IR35",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR35", "post_eda"),
                                            absBeta = abs_beta_val)
 
 
@@ -131,113 +186,276 @@ theta_presentation_results_35 <- compile_results(regions = regions_to_combine,
 ## IR16 ##
 
 # combine different csvs #
-hfa_presentation_results_16 <- compile_results(regions = regions_to_combine,
-                                           type = "hfa-pres-locked-hilbertRS",
-                                           sub = "IR16",
-                                           spec_vars = spec_vars,
-                                           path = path(here(), "results", "IR16", "post_eda"),
-                                           absBeta = F)
+hfa_presentation_results_16 <- compile_results(regions = regions_to_combine, 
+                                           type = "hfa-pres-locked-hilbertRS", 
+                                           sub = "IR16", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR16", "post_eda"), 
+                                           absBeta = abs_beta_val)
 
-theta_presentation_results_16 <- compile_results(regions = regions_to_combine,
-                                           type = "theta-pres-locked-hilbertRS",
+delta_presentation_results_16 <- compile_results(regions = regions_to_combine,
+                                           type = "delta-pres-locked-hilbertRS",
                                            sub = "IR16",
                                            spec_vars = spec_vars,
                                            path = path(here(), "results", "IR16", "post_eda"),
-                                           absBeta = F)
+                                           absBeta = abs_beta_val)
+
+theta_presentation_results_16 <- compile_results(regions = regions_to_combine, 
+                                           type = "theta-pres-locked-hilbertRS", 
+                                           sub = "IR16", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR16", "post_eda"), 
+                                           absBeta = abs_beta_val)
+alpha_presentation_results_16 <- compile_results(regions = regions_to_combine,
+                                           type = "alpha-pres-locked-hilbertRS",
+                                           sub = "IR16",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR16", "post_eda"),
+                                           absBeta = abs_beta_val)
+
+beta_presentation_results_16 <- compile_results(regions = regions_to_combine,
+                                           type = "beta-pres-locked-hilbertRS",
+                                           sub = "IR16",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR16", "post_eda"),
+                                           absBeta = abs_beta_val)
+
+gamma_presentation_results_16 <- compile_results(regions = regions_to_combine,
+                                           type = "gamma-pres-locked-hilbertRS",
+                                           sub = "IR16",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR16", "post_eda"),
+                                           absBeta = abs_beta_val)
 
 
 ## IR57 ##
 
 # combine different csvs #
-hfa_presentation_results_57 <- compile_results(regions = regions_to_combine,
-                                           type = "hfa-pres-locked-hilbertRS",
-                                           sub = "IR57",
-                                           spec_vars = spec_vars,
-                                           path = path(here(), "results", "IR57", "post_eda"),
-                                           absBeta = F)
+hfa_presentation_results_57 <- compile_results(regions = regions_to_combine, 
+                                           type = "hfa-pres-locked-hilbertRS", 
+                                           sub = "IR57", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR57", "post_eda"), 
+                                           absBeta = abs_beta_val)
 
-theta_presentation_results_57 <- compile_results(regions = regions_to_combine,
-                                           type = "theta-pres-locked-hilbertRS",
+delta_presentation_results_57 <- compile_results(regions = regions_to_combine,
+                                           type = "delta-pres-locked-hilbertRS",
                                            sub = "IR57",
                                            spec_vars = spec_vars,
                                            path = path(here(), "results", "IR57", "post_eda"),
-                                           absBeta = F)
+                                           absBeta = abs_beta_val)
+
+theta_presentation_results_57 <- compile_results(regions = regions_to_combine, 
+                                           type = "theta-pres-locked-hilbertRS", 
+                                           sub = "IR57", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR57", "post_eda"), 
+                                           absBeta = abs_beta_val)
+alpha_presentation_results_57 <- compile_results(regions = regions_to_combine,
+                                           type = "alpha-pres-locked-hilbertRS",
+                                           sub = "IR57",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR57", "post_eda"),
+                                           absBeta = abs_beta_val)
+
+beta_presentation_results_57 <- compile_results(regions = regions_to_combine,
+                                           type = "beta-pres-locked-hilbertRS",
+                                           sub = "IR57",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR57", "post_eda"),
+                                           absBeta = abs_beta_val)
+
+gamma_presentation_results_57 <- compile_results(regions = regions_to_combine,
+                                           type = "gamma-pres-locked-hilbertRS",
+                                           sub = "IR57",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR57", "post_eda"),
+                                           absBeta = abs_beta_val)
+
 
 
 
 ## IR9 ##
 
 # combine different csvs #
-hfa_presentation_results_9 <- compile_results(regions = regions_to_combine,
-                                           type = "hfa-pres-locked-hilbertRS",
-                                           sub = "IR9",
-                                           spec_vars = spec_vars,
-                                           path = path(here(), "results", "IR9", "post_eda"),
-                                           absBeta = F)
+hfa_presentation_results_9 <- compile_results(regions = regions_to_combine, 
+                                           type = "hfa-pres-locked-hilbertRS", 
+                                           sub = "IR9", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR9", "post_eda"), 
+                                           absBeta = abs_beta_val)
 
-theta_presentation_results_9 <- compile_results(regions = regions_to_combine,
-                                           type = "theta-pres-locked-hilbertRS",
+delta_presentation_results_9 <- compile_results(regions = regions_to_combine,
+                                           type = "delta-pres-locked-hilbertRS",
                                            sub = "IR9",
                                            spec_vars = spec_vars,
                                            path = path(here(), "results", "IR9", "post_eda"),
-                                           absBeta = F)
+                                           absBeta = abs_beta_val)
+
+theta_presentation_results_9 <- compile_results(regions = regions_to_combine, 
+                                           type = "theta-pres-locked-hilbertRS", 
+                                           sub = "IR9", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR9", "post_eda"), 
+                                           absBeta = abs_beta_val)
+alpha_presentation_results_9 <- compile_results(regions = regions_to_combine,
+                                           type = "alpha-pres-locked-hilbertRS",
+                                           sub = "IR9",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR9", "post_eda"),
+                                           absBeta = abs_beta_val)
+
+beta_presentation_results_9 <- compile_results(regions = regions_to_combine,
+                                           type = "beta-pres-locked-hilbertRS",
+                                           sub = "IR9",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR9", "post_eda"),
+                                           absBeta = abs_beta_val)
+
+gamma_presentation_results_9 <- compile_results(regions = regions_to_combine,
+                                           type = "gamma-pres-locked-hilbertRS",
+                                           sub = "IR9",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR9", "post_eda"),
+                                           absBeta = abs_beta_val)
+
 
 ## IR10 ##
 
 # combine different csvs #
-hfa_presentation_results_10 <- compile_results(regions = regions_to_combine,
-                                           type = "hfa-pres-locked-hilbertRS",
-                                           sub = "IR10",
-                                           spec_vars = spec_vars,
-                                           path = path(here(), "results", "IR10", "post_eda"),
-                                           absBeta = F)
+hfa_presentation_results_10 <- compile_results(regions = regions_to_combine, 
+                                           type = "hfa-pres-locked-hilbertRS", 
+                                           sub = "IR10", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR10", "post_eda"), 
+                                           absBeta = abs_beta_val)
 
-theta_presentation_results_10 <- compile_results(regions = regions_to_combine,
-                                           type = "theta-pres-locked-hilbertRS",
+delta_presentation_results_10 <- compile_results(regions = regions_to_combine,
+                                           type = "delta-pres-locked-hilbertRS",
                                            sub = "IR10",
                                            spec_vars = spec_vars,
                                            path = path(here(), "results", "IR10", "post_eda"),
-                                           absBeta = F)
+                                           absBeta = abs_beta_val)
+
+theta_presentation_results_10 <- compile_results(regions = regions_to_combine, 
+                                           type = "theta-pres-locked-hilbertRS", 
+                                           sub = "IR10", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR10", "post_eda"), 
+                                           absBeta = abs_beta_val)
+alpha_presentation_results_10 <- compile_results(regions = regions_to_combine,
+                                           type = "alpha-pres-locked-hilbertRS",
+                                           sub = "IR10",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR10", "post_eda"),
+                                           absBeta = abs_beta_val)
+
+beta_presentation_results_10 <- compile_results(regions = regions_to_combine,
+                                           type = "beta-pres-locked-hilbertRS",
+                                           sub = "IR10",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR10", "post_eda"),
+                                           absBeta = abs_beta_val)
+
+gamma_presentation_results_10 <- compile_results(regions = regions_to_combine,
+                                           type = "gamma-pres-locked-hilbertRS",
+                                           sub = "IR10",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR10", "post_eda"),
+                                           absBeta = abs_beta_val)
+
 ## IR26 ##
 
 # combine different csvs #
-hfa_presentation_results_26 <- compile_results(regions = regions_to_combine,
-                                           type = "hfa-pres-locked-hilbertRS",
-                                           sub = "IR26",
-                                           spec_vars = spec_vars,
-                                           path = path(here(), "results", "IR26", "post_eda"),
-                                           absBeta = F)
+hfa_presentation_results_26 <- compile_results(regions = regions_to_combine, 
+                                           type = "hfa-pres-locked-hilbertRS", 
+                                           sub = "IR26", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR26", "post_eda"), 
+                                           absBeta = abs_beta_val)
 
-theta_presentation_results_26 <- compile_results(regions = regions_to_combine,
-                                           type = "theta-pres-locked-hilbertRS",
+delta_presentation_results_26 <- compile_results(regions = regions_to_combine,
+                                           type = "delta-pres-locked-hilbertRS",
                                            sub = "IR26",
                                            spec_vars = spec_vars,
                                            path = path(here(), "results", "IR26", "post_eda"),
-                                           absBeta = F)
+                                           absBeta = abs_beta_val)
+
+theta_presentation_results_26 <- compile_results(regions = regions_to_combine, 
+                                           type = "theta-pres-locked-hilbertRS", 
+                                           sub = "IR26", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR26", "post_eda"), 
+                                           absBeta = abs_beta_val)
+alpha_presentation_results_26 <- compile_results(regions = regions_to_combine,
+                                           type = "alpha-pres-locked-hilbertRS",
+                                           sub = "IR26",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR26", "post_eda"),
+                                           absBeta = abs_beta_val)
+
+beta_presentation_results_26 <- compile_results(regions = regions_to_combine,
+                                           type = "beta-pres-locked-hilbertRS",
+                                           sub = "IR26",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR26", "post_eda"),
+                                           absBeta = abs_beta_val)
+
+gamma_presentation_results_26 <- compile_results(regions = regions_to_combine,
+                                           type = "gamma-pres-locked-hilbertRS",
+                                           sub = "IR26",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR26", "post_eda"),
+                                           absBeta = abs_beta_val)
+
 
 ## IR28 ##
 
 # combine different csvs #
-hfa_presentation_results_28 <- compile_results(regions = regions_to_combine,
-                                           type = "hfa-pres-locked-hilbertRS",
-                                           sub = "IR28",
-                                           spec_vars = spec_vars,
-                                           path = path(here(), "results", "IR28", "post_eda"),
-                                           absBeta = F)
+hfa_presentation_results_28 <- compile_results(regions = regions_to_combine, 
+                                           type = "hfa-pres-locked-hilbertRS", 
+                                           sub = "IR28", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR28", "post_eda"), 
+                                           absBeta = abs_beta_val)
 
-theta_presentation_results_28 <- compile_results(regions = regions_to_combine,
-                                           type = "theta-pres-locked-hilbertRS",
+delta_presentation_results_28 <- compile_results(regions = regions_to_combine,
+                                           type = "delta-pres-locked-hilbertRS",
                                            sub = "IR28",
                                            spec_vars = spec_vars,
                                            path = path(here(), "results", "IR28", "post_eda"),
-                                           absBeta = F)
+                                           absBeta = abs_beta_val)
+
+theta_presentation_results_28 <- compile_results(regions = regions_to_combine, 
+                                           type = "theta-pres-locked-hilbertRS", 
+                                           sub = "IR28", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR28", "post_eda"), 
+                                           absBeta = abs_beta_val)
+alpha_presentation_results_28 <- compile_results(regions = regions_to_combine,
+                                           type = "alpha-pres-locked-hilbertRS",
+                                           sub = "IR28",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR28", "post_eda"),
+                                           absBeta = abs_beta_val)
+
+beta_presentation_results_28 <- compile_results(regions = regions_to_combine,
+                                           type = "beta-pres-locked-hilbertRS",
+                                           sub = "IR28",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR28", "post_eda"),
+                                           absBeta = abs_beta_val)
+
+gamma_presentation_results_28 <- compile_results(regions = regions_to_combine,
+                                           type = "gamma-pres-locked-hilbertRS",
+                                           sub = "IR28",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR28", "post_eda"),
+                                           absBeta = abs_beta_val)
+
 
 
 ```
-
-## Load Choice
-
-Load and prep choice-locked results for all subjects.
 
 ```{r concatenate-results-choice, echo =F}
 
@@ -260,13 +478,13 @@ regions_to_combine <- c("All")
 
 ## IR35 ##
 
-# # combine different csvs #
-# delta_choice_results_35 <- compile_results(regions = regions_to_combine, 
-#                                            type = "delta-choice-locked-hilbertRS", 
-#                                            sub = "IR35", 
-#                                            spec_vars = spec_vars, 
-#                                            path = path(here(), "results", "IR35", "all", "choice"), 
-#                                            absBeta = abs_beta_val)
+# combine different csvs #
+delta_choice_results_35 <- compile_results(regions = regions_to_combine,
+                                           type = "delta-choice-locked-hilbertRS",
+                                           sub = "IR35",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR35", "post_eda"),
+                                           absBeta = abs_beta_val)
 
 theta_choice_results_35 <- compile_results(regions = regions_to_combine, 
                                            type = "theta-choice-locked-hilbertRS", 
@@ -274,26 +492,26 @@ theta_choice_results_35 <- compile_results(regions = regions_to_combine,
                                            spec_vars = spec_vars, 
                                            path = path(here(), "results", "IR35", "post_eda"), 
                                            absBeta = abs_beta_val)
-# alpha_choice_results_35 <- compile_results(regions = regions_to_combine, 
-#                                            type = "alpha-choice-locked-hilbertRS", 
-#                                            sub = "IR35", 
-#                                            spec_vars = spec_vars, 
-#                                            path = path(here(), "results", "IR35", "all", "choice"), 
-#                                            absBeta = abs_beta_val)
-# 
-# beta_choice_results_35 <- compile_results(regions = regions_to_combine, 
-#                                            type = "beta-choice-locked-hilbertRS", 
-#                                            sub = "IR35", 
-#                                            spec_vars = spec_vars, 
-#                                            path = path(here(), "results", "IR35", "all", "choice"), 
-#                                            absBeta = abs_beta_val)
-# 
-# gamma_choice_results_35 <- compile_results(regions = regions_to_combine, 
-#                                            type = "gamma-choice-locked-hilbertRS", 
-#                                            sub = "IR35", 
-#                                            spec_vars = spec_vars, 
-#                                            path = path(here(), "results", "IR35", "all", "choice"), 
-#                                            absBeta = abs_beta_val)
+alpha_choice_results_35 <- compile_results(regions = regions_to_combine,
+                                           type = "alpha-choice-locked-hilbertRS",
+                                           sub = "IR35",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR35", "post_eda"),
+                                           absBeta = abs_beta_val)
+
+beta_choice_results_35 <- compile_results(regions = regions_to_combine,
+                                           type = "beta-choice-locked-hilbertRS",
+                                           sub = "IR35",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR35", "post_eda"),
+                                           absBeta = abs_beta_val)
+
+gamma_choice_results_35 <- compile_results(regions = regions_to_combine,
+                                           type = "gamma-choice-locked-hilbertRS",
+                                           sub = "IR35",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR35", "post_eda"),
+                                           absBeta = abs_beta_val)
 
 hfa_choice_results_35 <- compile_results(regions = regions_to_combine, 
                                            type = "hfa-choice-locked-hilbertRS", 
@@ -348,34 +566,17 @@ hfa_choice_results_35 <- compile_results(regions = regions_to_combine,
 #                                            path = path(here(), "results", "IR19", "all", "choice"), 
 #                                            absBeta = abs_beta_val)
 
-# # runa anova for inequity results #
-# path_hg_clean <- path(here(), "munge", "IR19", "hg_behave_choice_locked_cut_fixation_150_insula.csv")
-# hg_behave <-  read.csv(path_hg_clean)
-# hg_behave <- hg_behave %>% mutate(electrodes = gsub("POL ", "", electrodes)) # IR19 has weird elec names
-# run_filtered_anova(results = choice_results_19, 
-#                    brain_behave_data = hg_behave, 
-#                    sub = "IR19", 
-#                    region_name = "All", 
-#                    reg_name_one = reg_name_one, 
-#                    reg_name_two = reg_name_two,                    
-#                    all_results = T, 
-#                    type = "choice-locked_insula")
-# 
-# # read back in the results #
-# region_name <- "All"
-# adv_choice_results_for_plots_19 <- read.csv(fs::path(here(), "results", "IR19", paste0(region_name, "_choice-locked_insula_anova_results_", reg_name_one, ".csv")))
-# dis_choice_results_for_plots_19 <- read.csv(fs::path(here(), "results", "IR19", paste0(region_name, "_choice-locked_insula_anova_results_", reg_name_two, ".csv")))
 
 
 ## IR57 ##
 
-# # combine different csvs #
-# delta_choice_results_57 <- compile_results(regions = regions_to_combine, 
-#                                            type = "delta-choice-locked-hilbertRS", 
-#                                            sub = "IR57", 
-#                                            spec_vars = spec_vars, 
-#                                            path = path(here(), "results", "IR57", "all", "choice"), 
-#                                            absBeta = abs_beta_val)
+# combine different csvs #
+delta_choice_results_57 <- compile_results(regions = regions_to_combine,
+                                           type = "delta-choice-locked-hilbertRS",
+                                           sub = "IR57",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR57", "post_eda"),
+                                           absBeta = abs_beta_val)
 
 theta_choice_results_57 <- compile_results(regions = regions_to_combine, 
                                            type = "theta-choice-locked-hilbertRS", 
@@ -383,27 +584,27 @@ theta_choice_results_57 <- compile_results(regions = regions_to_combine,
                                            spec_vars = spec_vars, 
                                            path = path(here(), "results", "IR57", "post_eda"), 
                                            absBeta = abs_beta_val)
-# alpha_choice_results_57 <- compile_results(regions = regions_to_combine, 
-#                                            type = "alpha-choice-locked-hilbertRS", 
-#                                            sub = "IR57", 
-#                                            spec_vars = spec_vars, 
-#                                            path = path(here(), "results", "IR57", "all", "choice"), 
-#                                            absBeta = abs_beta_val)
-# 
-# beta_choice_results_57 <- compile_results(regions = regions_to_combine, 
-#                                            type = "beta-choice-locked-hilbertRS", 
-#                                            sub = "IR57", 
-#                                            spec_vars = spec_vars, 
-#                                            path = path(here(), "results", "IR57", "all", "choice"), 
-#                                            absBeta = abs_beta_val)
-# 
-# gamma_choice_results_57 <- compile_results(regions = regions_to_combine, 
-#                                            type = "gamma-choice-locked-hilbertRS", 
-#                                            sub = "IR57", 
-#                                            spec_vars = spec_vars, 
-#                                            path = path(here(), "results", "IR57", "all", "choice"), 
-#                                            absBeta = abs_beta_val)
-# 
+alpha_choice_results_57 <- compile_results(regions = regions_to_combine,
+                                           type = "alpha-choice-locked-hilbertRS",
+                                           sub = "IR57",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR57", "post_eda"),
+                                           absBeta = abs_beta_val)
+
+beta_choice_results_57 <- compile_results(regions = regions_to_combine,
+                                           type = "beta-choice-locked-hilbertRS",
+                                           sub = "IR57",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR57", "post_eda"),
+                                           absBeta = abs_beta_val)
+
+gamma_choice_results_57 <- compile_results(regions = regions_to_combine,
+                                           type = "gamma-choice-locked-hilbertRS",
+                                           sub = "IR57",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR57", "post_eda"),
+                                           absBeta = abs_beta_val)
+
 hfa_choice_results_57 <- compile_results(regions = regions_to_combine, 
                                            type = "hfa-choice-locked-hilbertRS", 
                                            sub = "IR57", 
@@ -415,12 +616,12 @@ hfa_choice_results_57 <- compile_results(regions = regions_to_combine,
 ## IR28 ##
 
 # # combine different csvs #
-# delta_choice_results_28 <- compile_results(regions = regions_to_combine, 
-#                                            type = "delta-choice-locked-hilbertRS", 
-#                                            sub = "IR28", 
-#                                            spec_vars = spec_vars, 
-#                                            path = path(here(), "results", "IR28", "all", "choice"), 
-#                                            absBeta = abs_beta_val)
+delta_choice_results_28 <- compile_results(regions = regions_to_combine,
+                                           type = "delta-choice-locked-hilbertRS",
+                                           sub = "IR28",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR28", "post_eda"), 
+                                           absBeta = abs_beta_val)
 
 theta_choice_results_28 <- compile_results(regions = regions_to_combine, 
                                            type = "theta-choice-locked-hilbertRS", 
@@ -428,27 +629,27 @@ theta_choice_results_28 <- compile_results(regions = regions_to_combine,
                                            spec_vars = spec_vars, 
                                            path = path(here(), "results", "IR28", "post_eda"), 
                                            absBeta = abs_beta_val)
-# alpha_choice_results_28 <- compile_results(regions = regions_to_combine, 
-#                                            type = "alpha-choice-locked-hilbertRS", 
-#                                            sub = "IR28", 
-#                                            spec_vars = spec_vars, 
-#                                            path = path(here(), "results", "IR28", "all", "choice"), 
-#                                            absBeta = abs_beta_val)
-# 
-# beta_choice_results_28 <- compile_results(regions = regions_to_combine, 
-#                                            type = "beta-choice-locked-hilbertRS", 
-#                                            sub = "IR28", 
-#                                            spec_vars = spec_vars, 
-#                                            path = path(here(), "results", "IR28", "all", "choice"), 
-#                                            absBeta = abs_beta_val)
-# 
-# gamma_choice_results_28 <- compile_results(regions = regions_to_combine, 
-#                                            type = "gamma-choice-locked-hilbertRS", 
-#                                            sub = "IR28", 
-#                                            spec_vars = spec_vars, 
-#                                            path = path(here(), "results", "IR28", "all", "choice"), 
-#                                            absBeta = abs_beta_val)
-# 
+alpha_choice_results_28 <- compile_results(regions = regions_to_combine,
+                                           type = "alpha-choice-locked-hilbertRS",
+                                           sub = "IR28",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR28",  "post_eda"), 
+                                           absBeta = abs_beta_val)
+
+beta_choice_results_28 <- compile_results(regions = regions_to_combine,
+                                           type = "beta-choice-locked-hilbertRS",
+                                           sub = "IR28",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR28",  "post_eda"), 
+                                           absBeta = abs_beta_val)
+
+gamma_choice_results_28 <- compile_results(regions = regions_to_combine,
+                                           type = "gamma-choice-locked-hilbertRS",
+                                           sub = "IR28",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR28",  "post_eda"), 
+                                           absBeta = abs_beta_val)
+
 hfa_choice_results_28 <- compile_results(regions = regions_to_combine, 
                                            type = "hfa-choice-locked-hilbertRS", 
                                            sub = "IR28", 
@@ -460,11 +661,38 @@ hfa_choice_results_28 <- compile_results(regions = regions_to_combine,
 ## IR9 ##
 
 # combine different csvs #
+delta_choice_results_9 <- compile_results(regions = regions_to_combine,
+                                           type = "delta-choice-locked-hilbertRS",
+                                           sub = "IR9",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR9", "post_eda"),
+                                           absBeta = abs_beta_val)
+
 theta_choice_results_9 <- compile_results(regions = regions_to_combine, 
                                            type = "theta-choice-locked-hilbertRS", 
                                            sub = "IR9", 
                                            spec_vars = spec_vars, 
                                            path = path(here(), "results", "IR9", "post_eda"), 
+                                           absBeta = abs_beta_val)
+alpha_choice_results_9 <- compile_results(regions = regions_to_combine,
+                                           type = "alpha-choice-locked-hilbertRS",
+                                           sub = "IR9",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR9", "post_eda"),
+                                           absBeta = abs_beta_val)
+
+beta_choice_results_9 <- compile_results(regions = regions_to_combine,
+                                           type = "beta-choice-locked-hilbertRS",
+                                           sub = "IR9",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR9", "post_eda"),
+                                           absBeta = abs_beta_val)
+
+gamma_choice_results_9 <- compile_results(regions = regions_to_combine,
+                                           type = "gamma-choice-locked-hilbertRS",
+                                           sub = "IR9",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR9", "post_eda"),
                                            absBeta = abs_beta_val)
 
 hfa_choice_results_9 <- compile_results(regions = regions_to_combine, 
@@ -474,14 +702,42 @@ hfa_choice_results_9 <- compile_results(regions = regions_to_combine,
                                            path = path(here(), "results", "IR9", "post_eda"), 
                                            absBeta = abs_beta_val)
 
+
 ## IR10 ##
 
 # combine different csvs #
+delta_choice_results_10 <- compile_results(regions = regions_to_combine,
+                                           type = "delta-choice-locked-hilbertRS",
+                                           sub = "IR10",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR10", "post_eda"),
+                                           absBeta = abs_beta_val)
+
 theta_choice_results_10 <- compile_results(regions = regions_to_combine, 
                                            type = "theta-choice-locked-hilbertRS", 
                                            sub = "IR10", 
                                            spec_vars = spec_vars, 
                                            path = path(here(), "results", "IR10", "post_eda"), 
+                                           absBeta = abs_beta_val)
+alpha_choice_results_10 <- compile_results(regions = regions_to_combine,
+                                           type = "alpha-choice-locked-hilbertRS",
+                                           sub = "IR10",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR10", "post_eda"),
+                                           absBeta = abs_beta_val)
+
+beta_choice_results_10 <- compile_results(regions = regions_to_combine,
+                                           type = "beta-choice-locked-hilbertRS",
+                                           sub = "IR10",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR10", "post_eda"),
+                                           absBeta = abs_beta_val)
+
+gamma_choice_results_10 <- compile_results(regions = regions_to_combine,
+                                           type = "gamma-choice-locked-hilbertRS",
+                                           sub = "IR10",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR10", "post_eda"),
                                            absBeta = abs_beta_val)
 
 hfa_choice_results_10 <- compile_results(regions = regions_to_combine, 
@@ -491,14 +747,42 @@ hfa_choice_results_10 <- compile_results(regions = regions_to_combine,
                                            path = path(here(), "results", "IR10", "post_eda"), 
                                            absBeta = abs_beta_val)
 
+
 ## IR26 ##
 
 # combine different csvs #
+delta_choice_results_26 <- compile_results(regions = regions_to_combine,
+                                           type = "delta-choice-locked-hilbertRS",
+                                           sub = "IR26",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR26", "post_eda"),
+                                           absBeta = abs_beta_val)
+
 theta_choice_results_26 <- compile_results(regions = regions_to_combine, 
                                            type = "theta-choice-locked-hilbertRS", 
                                            sub = "IR26", 
                                            spec_vars = spec_vars, 
                                            path = path(here(), "results", "IR26", "post_eda"), 
+                                           absBeta = abs_beta_val)
+alpha_choice_results_26 <- compile_results(regions = regions_to_combine,
+                                           type = "alpha-choice-locked-hilbertRS",
+                                           sub = "IR26",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR26", "post_eda"),
+                                           absBeta = abs_beta_val)
+
+beta_choice_results_26 <- compile_results(regions = regions_to_combine,
+                                           type = "beta-choice-locked-hilbertRS",
+                                           sub = "IR26",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR26", "post_eda"),
+                                           absBeta = abs_beta_val)
+
+gamma_choice_results_26 <- compile_results(regions = regions_to_combine,
+                                           type = "gamma-choice-locked-hilbertRS",
+                                           sub = "IR26",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR26", "post_eda"),
                                            absBeta = abs_beta_val)
 
 hfa_choice_results_26 <- compile_results(regions = regions_to_combine, 
@@ -508,14 +792,42 @@ hfa_choice_results_26 <- compile_results(regions = regions_to_combine,
                                            path = path(here(), "results", "IR26", "post_eda"), 
                                            absBeta = abs_beta_val)
 
+
 ## IR16 ##
 
 # combine different csvs #
+delta_choice_results_16 <- compile_results(regions = regions_to_combine,
+                                           type = "delta-choice-locked-hilbertRS",
+                                           sub = "IR16",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR16", "post_eda"),
+                                           absBeta = abs_beta_val)
+
 theta_choice_results_16 <- compile_results(regions = regions_to_combine, 
                                            type = "theta-choice-locked-hilbertRS", 
                                            sub = "IR16", 
                                            spec_vars = spec_vars, 
                                            path = path(here(), "results", "IR16", "post_eda"), 
+                                           absBeta = abs_beta_val)
+alpha_choice_results_16 <- compile_results(regions = regions_to_combine,
+                                           type = "alpha-choice-locked-hilbertRS",
+                                           sub = "IR16",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR16", "post_eda"),
+                                           absBeta = abs_beta_val)
+
+beta_choice_results_16 <- compile_results(regions = regions_to_combine,
+                                           type = "beta-choice-locked-hilbertRS",
+                                           sub = "IR16",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR16", "post_eda"),
+                                           absBeta = abs_beta_val)
+
+gamma_choice_results_16 <- compile_results(regions = regions_to_combine,
+                                           type = "gamma-choice-locked-hilbertRS",
+                                           sub = "IR16",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR16", "post_eda"),
                                            absBeta = abs_beta_val)
 
 hfa_choice_results_16 <- compile_results(regions = regions_to_combine, 
@@ -526,10 +838,8 @@ hfa_choice_results_16 <- compile_results(regions = regions_to_combine,
                                            absBeta = abs_beta_val)
 
 
+
 ```
-
-
-## plotting functions
 
 ```{r plotting-functions, echo = F}
 ggthemr::ggthemr("pale", layout = "plain")
@@ -768,9 +1078,9 @@ beta_plots_all_subjects_choice <- function(df, subject, sig_thresh, nrows, vars 
 
 ```
 
-## Presentation Results
+## Presentation Results {#pres}
 
-```{r clean-presentation-results, echo = F}
+```{r presentation-localization, echo = F}
 
 
 merge_with_elec_info <- function(df, localizations_sub) {
@@ -810,7 +1120,7 @@ merge_with_elec_info <- function(df, localizations_sub) {
 
 
 ## get region names ##
-localizations <- read_csv(path(here(), "munge", "combined_electrode_info_cleaned.csv"))
+localizations <- read_csv(path(here(), "munge", "combined_electrode_info_with_bob.csv"))
 localizations_28 <- localizations %>% filter(subject == "IR28") %>% select(Electrode, `Loc Meeting`)
 localizations_35 <- localizations %>% filter(subject == "IR35") %>% select(Electrode, `Loc Meeting`)
 localizations_57 <- localizations %>% filter(subject == "IR57") %>% select(Electrode, `Loc Meeting`)
@@ -824,81 +1134,242 @@ localizations_10 <- localizations_10 %>%
 localizations_26 <- localizations %>% filter(subject == "IR26") %>% select(Electrode, `Loc Meeting`)
 localizations_16 <- localizations %>% filter(subject == "IR16") %>% select(Electrode, `Loc Meeting`)
 
+
 ### clean data ###
+# IR9 #
+delta_presentation_cleaned_results_9 <- merge_with_elec_info(delta_presentation_results_9,
+                                                            localizations_9)
 theta_presentation_cleaned_results_9 <- merge_with_elec_info(theta_presentation_results_9,
                                                               localizations_9)
+beta_presentation_cleaned_results_9 <- merge_with_elec_info(beta_presentation_results_9,
+                                                              localizations_9)
+alpha_presentation_cleaned_results_9 <- merge_with_elec_info(alpha_presentation_results_9,
+                                                            localizations_9)
+gamma_presentation_cleaned_results_9 <- merge_with_elec_info(gamma_presentation_results_9,
+                                                            localizations_9)
 hfa_presentation_cleaned_results_9 <- merge_with_elec_info(hfa_presentation_results_9,
                                                             localizations_9)
+
+# IR10 #
+delta_presentation_cleaned_results_10 <- merge_with_elec_info(delta_presentation_results_10,
+                                                            localizations_10)
 theta_presentation_cleaned_results_10 <- merge_with_elec_info(theta_presentation_results_10,
                                                               localizations_10)
+beta_presentation_cleaned_results_10 <- merge_with_elec_info(beta_presentation_results_10,
+                                                              localizations_10)
+alpha_presentation_cleaned_results_10 <- merge_with_elec_info(alpha_presentation_results_10,
+                                                            localizations_10)
+gamma_presentation_cleaned_results_10 <- merge_with_elec_info(gamma_presentation_results_10,
+                                                            localizations_10)
 hfa_presentation_cleaned_results_10 <- merge_with_elec_info(hfa_presentation_results_10,
                                                             localizations_10)
+
+# IR16 #
+delta_presentation_cleaned_results_16 <- merge_with_elec_info(delta_presentation_results_16,
+                                                            localizations_16)
 theta_presentation_cleaned_results_16 <- merge_with_elec_info(theta_presentation_results_16,
                                                               localizations_16)
+beta_presentation_cleaned_results_16 <- merge_with_elec_info(beta_presentation_results_16,
+                                                              localizations_16)
+alpha_presentation_cleaned_results_16 <- merge_with_elec_info(alpha_presentation_results_16,
+                                                            localizations_16)
+gamma_presentation_cleaned_results_16 <- merge_with_elec_info(gamma_presentation_results_16,
+                                                            localizations_16)
 hfa_presentation_cleaned_results_16 <- merge_with_elec_info(hfa_presentation_results_16,
                                                             localizations_16)
+
+# IR26 #
+delta_presentation_cleaned_results_26 <- merge_with_elec_info(delta_presentation_results_26,
+                                                            localizations_26)
 theta_presentation_cleaned_results_26 <- merge_with_elec_info(theta_presentation_results_26,
                                                               localizations_26)
+beta_presentation_cleaned_results_26 <- merge_with_elec_info(beta_presentation_results_26,
+                                                              localizations_26)
+alpha_presentation_cleaned_results_26 <- merge_with_elec_info(alpha_presentation_results_26,
+                                                            localizations_26)
+gamma_presentation_cleaned_results_26 <- merge_with_elec_info(gamma_presentation_results_26,
+                                                            localizations_26)
 hfa_presentation_cleaned_results_26 <- merge_with_elec_info(hfa_presentation_results_26,
                                                             localizations_26)
 
+# IR28 #
+delta_presentation_cleaned_results_28 <- merge_with_elec_info(delta_presentation_results_28,
+                                                            localizations_28)
 theta_presentation_cleaned_results_28 <- merge_with_elec_info(theta_presentation_results_28,
                                                               localizations_28)
+beta_presentation_cleaned_results_28 <- merge_with_elec_info(beta_presentation_results_28,
+                                                              localizations_28)
+alpha_presentation_cleaned_results_28 <- merge_with_elec_info(alpha_presentation_results_28,
+                                                            localizations_28)
+gamma_presentation_cleaned_results_28 <- merge_with_elec_info(gamma_presentation_results_28,
+                                                            localizations_28)
 hfa_presentation_cleaned_results_28 <- merge_with_elec_info(hfa_presentation_results_28,
                                                             localizations_28)
-
+# IR35 #
+delta_presentation_cleaned_results_35 <- merge_with_elec_info(delta_presentation_results_35,
+                                                            localizations_35)
 theta_presentation_cleaned_results_35 <- merge_with_elec_info(theta_presentation_results_35,
                                                               localizations_35)
+beta_presentation_cleaned_results_35 <- merge_with_elec_info(beta_presentation_results_35,
+                                                              localizations_35)
+alpha_presentation_cleaned_results_35 <- merge_with_elec_info(alpha_presentation_results_35,
+                                                            localizations_35)
+gamma_presentation_cleaned_results_35 <- merge_with_elec_info(gamma_presentation_results_35,
+                                                            localizations_35)
 hfa_presentation_cleaned_results_35 <- merge_with_elec_info(hfa_presentation_results_35,
                                                             localizations_35)
-
+# IR57 #
+delta_presentation_cleaned_results_57 <- merge_with_elec_info(delta_presentation_results_57,
+                                                            localizations_57)
 theta_presentation_cleaned_results_57 <- merge_with_elec_info(theta_presentation_results_57,
                                                               localizations_57)
+beta_presentation_cleaned_results_57 <- merge_with_elec_info(beta_presentation_results_57,
+                                                              localizations_57)
+alpha_presentation_cleaned_results_57 <- merge_with_elec_info(alpha_presentation_results_57,
+                                                            localizations_57)
+gamma_presentation_cleaned_results_57 <- merge_with_elec_info(gamma_presentation_results_57,
+                                                            localizations_57)
 hfa_presentation_cleaned_results_57 <- merge_with_elec_info(hfa_presentation_results_57,
                                                             localizations_57)
+```
+
+```{r separate-data}
+
 
 ## split left and right for plotting ##
+# IR9 #
+left_delta_presentation_cleaned_results_9 <- delta_presentation_cleaned_results_9 %>% filter(grepl("^L", electrode))
+right_delta_presentation_cleaned_results_9 <- delta_presentation_cleaned_results_9 %>% filter(grepl("^R", electrode))
+
 left_theta_presentation_cleaned_results_9 <- theta_presentation_cleaned_results_9 %>% filter(grepl("^L", electrode))
 right_theta_presentation_cleaned_results_9 <- theta_presentation_cleaned_results_9 %>% filter(grepl("^R", electrode))
 
-left_hfa_presentation_cleaned_results_9 <- hfa_presentation_cleaned_results_28 %>% filter(grepl("^L", electrode))
-right_hfa_presentation_cleaned_results_9 <- hfa_presentation_cleaned_results_28 %>% filter(grepl("^R", electrode))
+left_alpha_presentation_cleaned_results_9 <- alpha_presentation_cleaned_results_9 %>% filter(grepl("^L", electrode))
+right_alpha_presentation_cleaned_results_9 <- alpha_presentation_cleaned_results_9 %>% filter(grepl("^R", electrode))
+
+left_beta_presentation_cleaned_results_9 <- beta_presentation_cleaned_results_9 %>% filter(grepl("^L", electrode))
+right_beta_presentation_cleaned_results_9 <- beta_presentation_cleaned_results_9 %>% filter(grepl("^R", electrode))
+
+left_gamma_presentation_cleaned_results_9 <- gamma_presentation_cleaned_results_9 %>% filter(grepl("^L", electrode))
+right_gamma_presentation_cleaned_results_9 <- gamma_presentation_cleaned_results_9 %>% filter(grepl("^R", electrode))
+
+left_hfa_presentation_cleaned_results_9 <- hfa_presentation_cleaned_results_9 %>% filter(grepl("^L", electrode))
+right_hfa_presentation_cleaned_results_9 <- hfa_presentation_cleaned_results_9 %>% filter(grepl("^R", electrode))
+
+# IR10 #
+left_delta_presentation_cleaned_results_10 <- delta_presentation_cleaned_results_10 %>% filter(grepl("^L", electrode))
+right_delta_presentation_cleaned_results_10 <- delta_presentation_cleaned_results_10 %>% filter(grepl("^R", electrode))
 
 left_theta_presentation_cleaned_results_10 <- theta_presentation_cleaned_results_10 %>% filter(grepl("^L", electrode))
 right_theta_presentation_cleaned_results_10 <- theta_presentation_cleaned_results_10 %>% filter(grepl("^R", electrode))
 
+left_alpha_presentation_cleaned_results_10 <- alpha_presentation_cleaned_results_10 %>% filter(grepl("^L", electrode))
+right_alpha_presentation_cleaned_results_10 <- alpha_presentation_cleaned_results_10 %>% filter(grepl("^R", electrode))
+
+left_beta_presentation_cleaned_results_10 <- beta_presentation_cleaned_results_10 %>% filter(grepl("^L", electrode))
+right_beta_presentation_cleaned_results_10 <- beta_presentation_cleaned_results_10 %>% filter(grepl("^R", electrode))
+
+left_gamma_presentation_cleaned_results_10 <- gamma_presentation_cleaned_results_10 %>% filter(grepl("^L", electrode))
+right_gamma_presentation_cleaned_results_10 <- gamma_presentation_cleaned_results_10 %>% filter(grepl("^R", electrode))
+
 left_hfa_presentation_cleaned_results_10 <- hfa_presentation_cleaned_results_10 %>% filter(grepl("^L", electrode))
 right_hfa_presentation_cleaned_results_10 <- hfa_presentation_cleaned_results_10 %>% filter(grepl("^R", electrode))
+
+# IR16 #
+left_delta_presentation_cleaned_results_16 <- delta_presentation_cleaned_results_16 %>% filter(grepl("^L", electrode))
+right_delta_presentation_cleaned_results_16 <- delta_presentation_cleaned_results_16 %>% filter(grepl("^R", electrode))
 
 left_theta_presentation_cleaned_results_16 <- theta_presentation_cleaned_results_16 %>% filter(grepl("^L", electrode))
 right_theta_presentation_cleaned_results_16 <- theta_presentation_cleaned_results_16 %>% filter(grepl("^R", electrode))
 
+left_alpha_presentation_cleaned_results_16 <- alpha_presentation_cleaned_results_16 %>% filter(grepl("^L", electrode))
+right_alpha_presentation_cleaned_results_16 <- alpha_presentation_cleaned_results_16 %>% filter(grepl("^R", electrode))
+
+left_beta_presentation_cleaned_results_16 <- beta_presentation_cleaned_results_16 %>% filter(grepl("^L", electrode))
+right_beta_presentation_cleaned_results_16 <- beta_presentation_cleaned_results_16 %>% filter(grepl("^R", electrode))
+
+left_gamma_presentation_cleaned_results_16 <- gamma_presentation_cleaned_results_16 %>% filter(grepl("^L", electrode))
+right_gamma_presentation_cleaned_results_16 <- gamma_presentation_cleaned_results_16 %>% filter(grepl("^R", electrode))
+
 left_hfa_presentation_cleaned_results_16 <- hfa_presentation_cleaned_results_16 %>% filter(grepl("^L", electrode))
 right_hfa_presentation_cleaned_results_16 <- hfa_presentation_cleaned_results_16 %>% filter(grepl("^R", electrode))
 
+
+# IR26 #
+left_delta_presentation_cleaned_results_26 <- delta_presentation_cleaned_results_26 %>% filter(grepl("^L", electrode))
+right_delta_presentation_cleaned_results_26 <- delta_presentation_cleaned_results_26 %>% filter(grepl("^R", electrode))
+
 left_theta_presentation_cleaned_results_26 <- theta_presentation_cleaned_results_26 %>% filter(grepl("^L", electrode))
 right_theta_presentation_cleaned_results_26 <- theta_presentation_cleaned_results_26 %>% filter(grepl("^R", electrode))
+
+left_alpha_presentation_cleaned_results_26 <- alpha_presentation_cleaned_results_26 %>% filter(grepl("^L", electrode))
+right_alpha_presentation_cleaned_results_26 <- alpha_presentation_cleaned_results_26 %>% filter(grepl("^R", electrode))
+
+left_beta_presentation_cleaned_results_26 <- beta_presentation_cleaned_results_26 %>% filter(grepl("^L", electrode))
+right_beta_presentation_cleaned_results_26 <- beta_presentation_cleaned_results_26 %>% filter(grepl("^R", electrode))
+
+left_gamma_presentation_cleaned_results_26 <- gamma_presentation_cleaned_results_26 %>% filter(grepl("^L", electrode))
+right_gamma_presentation_cleaned_results_26 <- gamma_presentation_cleaned_results_26 %>% filter(grepl("^R", electrode))
 
 left_hfa_presentation_cleaned_results_26 <- hfa_presentation_cleaned_results_26 %>% filter(grepl("^L", electrode))
 right_hfa_presentation_cleaned_results_26 <- hfa_presentation_cleaned_results_26 %>% filter(grepl("^R", electrode))
 
 
+# IR28 #
+left_delta_presentation_cleaned_results_28 <- delta_presentation_cleaned_results_28 %>% filter(grepl("^L", electrode))
+right_delta_presentation_cleaned_results_28 <- delta_presentation_cleaned_results_28 %>% filter(grepl("^R", electrode))
 
 left_theta_presentation_cleaned_results_28 <- theta_presentation_cleaned_results_28 %>% filter(grepl("^L", electrode))
 right_theta_presentation_cleaned_results_28 <- theta_presentation_cleaned_results_28 %>% filter(grepl("^R", electrode))
 
+left_alpha_presentation_cleaned_results_28 <- alpha_presentation_cleaned_results_28 %>% filter(grepl("^L", electrode))
+right_alpha_presentation_cleaned_results_28 <- alpha_presentation_cleaned_results_28 %>% filter(grepl("^R", electrode))
+
+left_beta_presentation_cleaned_results_28 <- beta_presentation_cleaned_results_28 %>% filter(grepl("^L", electrode))
+right_beta_presentation_cleaned_results_28 <- beta_presentation_cleaned_results_28 %>% filter(grepl("^R", electrode))
+
+left_gamma_presentation_cleaned_results_28 <- gamma_presentation_cleaned_results_28 %>% filter(grepl("^L", electrode))
+right_gamma_presentation_cleaned_results_28 <- gamma_presentation_cleaned_results_28 %>% filter(grepl("^R", electrode))
+
 left_hfa_presentation_cleaned_results_28 <- hfa_presentation_cleaned_results_28 %>% filter(grepl("^L", electrode))
 right_hfa_presentation_cleaned_results_28 <- hfa_presentation_cleaned_results_28 %>% filter(grepl("^R", electrode))
 
+
+# IR35 #
+left_delta_presentation_cleaned_results_35 <- delta_presentation_cleaned_results_35 %>% filter(grepl("^L", electrode))
+right_delta_presentation_cleaned_results_35 <- delta_presentation_cleaned_results_35 %>% filter(grepl("^R", electrode))
+
 left_theta_presentation_cleaned_results_35 <- theta_presentation_cleaned_results_35 %>% filter(grepl("^L", electrode))
 right_theta_presentation_cleaned_results_35 <- theta_presentation_cleaned_results_35 %>% filter(grepl("^R", electrode))
+
+left_alpha_presentation_cleaned_results_35 <- alpha_presentation_cleaned_results_35 %>% filter(grepl("^L", electrode))
+right_alpha_presentation_cleaned_results_35 <- alpha_presentation_cleaned_results_35 %>% filter(grepl("^R", electrode))
+
+left_beta_presentation_cleaned_results_35 <- beta_presentation_cleaned_results_35 %>% filter(grepl("^L", electrode))
+right_beta_presentation_cleaned_results_35 <- beta_presentation_cleaned_results_35 %>% filter(grepl("^R", electrode))
+
+left_gamma_presentation_cleaned_results_35 <- gamma_presentation_cleaned_results_35 %>% filter(grepl("^L", electrode))
+right_gamma_presentation_cleaned_results_35 <- gamma_presentation_cleaned_results_35 %>% filter(grepl("^R", electrode))
 
 left_hfa_presentation_cleaned_results_35 <- hfa_presentation_cleaned_results_35 %>% filter(grepl("^L", electrode))
 right_hfa_presentation_cleaned_results_35 <- hfa_presentation_cleaned_results_35 %>% filter(grepl("^R", electrode))
 
 
+# IR57 #
+left_delta_presentation_cleaned_results_57 <- delta_presentation_cleaned_results_57 %>% filter(grepl("^L", electrode))
+right_delta_presentation_cleaned_results_57 <- delta_presentation_cleaned_results_57 %>% filter(grepl("^R", electrode))
+
 left_theta_presentation_cleaned_results_57 <- theta_presentation_cleaned_results_57 %>% filter(grepl("^L", electrode))
 right_theta_presentation_cleaned_results_57 <- theta_presentation_cleaned_results_57 %>% filter(grepl("^R", electrode))
+
+left_alpha_presentation_cleaned_results_57 <- alpha_presentation_cleaned_results_57 %>% filter(grepl("^L", electrode))
+right_alpha_presentation_cleaned_results_57 <- alpha_presentation_cleaned_results_57 %>% filter(grepl("^R", electrode))
+
+left_beta_presentation_cleaned_results_57 <- beta_presentation_cleaned_results_57 %>% filter(grepl("^L", electrode))
+right_beta_presentation_cleaned_results_57 <- beta_presentation_cleaned_results_57 %>% filter(grepl("^R", electrode))
+
+left_gamma_presentation_cleaned_results_57 <- gamma_presentation_cleaned_results_57 %>% filter(grepl("^L", electrode))
+right_gamma_presentation_cleaned_results_57 <- gamma_presentation_cleaned_results_57 %>% filter(grepl("^R", electrode))
 
 left_hfa_presentation_cleaned_results_57 <- hfa_presentation_cleaned_results_57 %>% filter(grepl("^L", electrode))
 right_hfa_presentation_cleaned_results_57 <- hfa_presentation_cleaned_results_57 %>% filter(grepl("^R", electrode))
@@ -906,7 +1377,37 @@ right_hfa_presentation_cleaned_results_57 <- hfa_presentation_cleaned_results_57
 
 ```
 
-```{r pres_viz, echo = F, fig.width= 18, fig.height= 22}
+### Pres ~ Delta {#p-d}
+
+```{r delta-pres_viz, echo = F, fig.width= 18, fig.height= 22}
+
+## delta ##
+beta_plots_all_subjects(left_delta_presentation_cleaned_results_57, "IR57 ~ Left ~ delta ~ Pres", 10, sig_thresh = 0.01)
+beta_plots_all_subjects(right_delta_presentation_cleaned_results_57, "IR57 ~ Right ~ delta ~ Pres", 10, sig_thresh = 0.01)
+
+beta_plots_all_subjects(left_delta_presentation_cleaned_results_35, "IR35 ~ Left ~ delta ~ Pres", 10, sig_thresh = 0.01)
+beta_plots_all_subjects(right_delta_presentation_cleaned_results_35, "IR35 ~ Right ~ delta ~ Pres", 10, sig_thresh = 0.01)
+
+beta_plots_all_subjects(left_delta_presentation_cleaned_results_28, "IR28 ~ Left ~ delta ~ Pres", 8, sig_thresh = 0.01)
+beta_plots_all_subjects(right_delta_presentation_cleaned_results_28, "IR28 ~ Right ~ delta ~ Pres", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects(left_delta_presentation_cleaned_results_9, "IR9 ~ Left ~ delta ~ Pres", 8, sig_thresh = 0.01)
+beta_plots_all_subjects(right_delta_presentation_cleaned_results_9, "IR9 ~ Right ~ delta ~ Pres", 9, sig_thresh = 0.01)
+
+beta_plots_all_subjects(left_delta_presentation_cleaned_results_10, "IR10 ~ Left ~ delta ~ Pres", 8, sig_thresh = 0.01)
+beta_plots_all_subjects(right_delta_presentation_cleaned_results_10, "IR10 ~ Right ~ delta ~ Pres", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects(left_delta_presentation_cleaned_results_26, "IR26 ~ Left ~ delta ~ Pres", 8, sig_thresh = 0.01)
+beta_plots_all_subjects(right_delta_presentation_cleaned_results_26, "IR26 ~ Right ~ delta ~ Pres", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects(left_delta_presentation_cleaned_results_16, "IR16 ~ Left ~ delta ~ Pres", 8, sig_thresh = 0.01)
+beta_plots_all_subjects(right_delta_presentation_cleaned_results_16, "IR16 ~ Right ~ delta ~ Pres", 8, sig_thresh = 0.01)
+
+```
+
+### Pres ~ Theta {#p-t}
+
+```{r theta-pres_viz, echo = F, fig.width= 18, fig.height= 22}
 
 ## Theta ##
 beta_plots_all_subjects(left_theta_presentation_cleaned_results_57, "IR57 ~ Left ~ Theta ~ Pres", 10, sig_thresh = 0.01)
@@ -929,6 +1430,96 @@ beta_plots_all_subjects(right_theta_presentation_cleaned_results_26, "IR26 ~ Rig
 
 beta_plots_all_subjects(left_theta_presentation_cleaned_results_16, "IR16 ~ Left ~ Theta ~ Pres", 8, sig_thresh = 0.01)
 beta_plots_all_subjects(right_theta_presentation_cleaned_results_16, "IR16 ~ Right ~ Theta ~ Pres", 8, sig_thresh = 0.01)
+
+```
+
+### Pres ~ Alpha {#p-a}
+
+```{r alpha-pres_viz, echo = F, fig.width= 18, fig.height= 22}
+
+## alpha ##
+beta_plots_all_subjects(left_alpha_presentation_cleaned_results_57, "IR57 ~ Left ~ alpha ~ Pres", 10, sig_thresh = 0.01)
+beta_plots_all_subjects(right_alpha_presentation_cleaned_results_57, "IR57 ~ Right ~ alpha ~ Pres", 10, sig_thresh = 0.01)
+
+beta_plots_all_subjects(left_alpha_presentation_cleaned_results_35, "IR35 ~ Left ~ alpha ~ Pres", 10, sig_thresh = 0.01)
+beta_plots_all_subjects(right_alpha_presentation_cleaned_results_35, "IR35 ~ Right ~ alpha ~ Pres", 10, sig_thresh = 0.01)
+
+beta_plots_all_subjects(left_alpha_presentation_cleaned_results_28, "IR28 ~ Left ~ alpha ~ Pres", 8, sig_thresh = 0.01)
+beta_plots_all_subjects(right_alpha_presentation_cleaned_results_28, "IR28 ~ Right ~ alpha ~ Pres", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects(left_alpha_presentation_cleaned_results_9, "IR9 ~ Left ~ alpha ~ Pres", 8, sig_thresh = 0.01)
+beta_plots_all_subjects(right_alpha_presentation_cleaned_results_9, "IR9 ~ Right ~ alpha ~ Pres", 9, sig_thresh = 0.01)
+
+beta_plots_all_subjects(left_alpha_presentation_cleaned_results_10, "IR10 ~ Left ~ alpha ~ Pres", 8, sig_thresh = 0.01)
+beta_plots_all_subjects(right_alpha_presentation_cleaned_results_10, "IR10 ~ Right ~ alpha ~ Pres", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects(left_alpha_presentation_cleaned_results_26, "IR26 ~ Left ~ alpha ~ Pres", 8, sig_thresh = 0.01)
+beta_plots_all_subjects(right_alpha_presentation_cleaned_results_26, "IR26 ~ Right ~ alpha ~ Pres", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects(left_alpha_presentation_cleaned_results_16, "IR16 ~ Left ~ alpha ~ Pres", 8, sig_thresh = 0.01)
+beta_plots_all_subjects(right_alpha_presentation_cleaned_results_16, "IR16 ~ Right ~ alpha ~ Pres", 8, sig_thresh = 0.01)
+
+```
+
+### Pres ~ Beta {#p-b}
+
+```{r beta-pres_viz, echo = F, fig.width= 18, fig.height= 22}
+
+## beta ##
+beta_plots_all_subjects(left_beta_presentation_cleaned_results_57, "IR57 ~ Left ~ beta ~ Pres", 10, sig_thresh = 0.01)
+beta_plots_all_subjects(right_beta_presentation_cleaned_results_57, "IR57 ~ Right ~ beta ~ Pres", 10, sig_thresh = 0.01)
+
+beta_plots_all_subjects(left_beta_presentation_cleaned_results_35, "IR35 ~ Left ~ beta ~ Pres", 10, sig_thresh = 0.01)
+beta_plots_all_subjects(right_beta_presentation_cleaned_results_35, "IR35 ~ Right ~ beta ~ Pres", 10, sig_thresh = 0.01)
+
+beta_plots_all_subjects(left_beta_presentation_cleaned_results_28, "IR28 ~ Left ~ beta ~ Pres", 8, sig_thresh = 0.01)
+beta_plots_all_subjects(right_beta_presentation_cleaned_results_28, "IR28 ~ Right ~ beta ~ Pres", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects(left_beta_presentation_cleaned_results_9, "IR9 ~ Left ~ beta ~ Pres", 8, sig_thresh = 0.01)
+beta_plots_all_subjects(right_beta_presentation_cleaned_results_9, "IR9 ~ Right ~ beta ~ Pres", 9, sig_thresh = 0.01)
+
+beta_plots_all_subjects(left_beta_presentation_cleaned_results_10, "IR10 ~ Left ~ beta ~ Pres", 8, sig_thresh = 0.01)
+beta_plots_all_subjects(right_beta_presentation_cleaned_results_10, "IR10 ~ Right ~ beta ~ Pres", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects(left_beta_presentation_cleaned_results_26, "IR26 ~ Left ~ beta ~ Pres", 8, sig_thresh = 0.01)
+beta_plots_all_subjects(right_beta_presentation_cleaned_results_26, "IR26 ~ Right ~ beta ~ Pres", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects(left_beta_presentation_cleaned_results_16, "IR16 ~ Left ~ beta ~ Pres", 8, sig_thresh = 0.01)
+beta_plots_all_subjects(right_beta_presentation_cleaned_results_16, "IR16 ~ Right ~ beta ~ Pres", 8, sig_thresh = 0.01)
+
+```
+
+### Pres ~ Gamma {#p-g}
+
+```{r gamma-pres_viz, echo = F, fig.width= 18, fig.height= 22}
+
+## gamma ##
+beta_plots_all_subjects(left_gamma_presentation_cleaned_results_57, "IR57 ~ Left ~ gamma ~ Pres", 10, sig_thresh = 0.01)
+beta_plots_all_subjects(right_gamma_presentation_cleaned_results_57, "IR57 ~ Right ~ gamma ~ Pres", 10, sig_thresh = 0.01)
+
+beta_plots_all_subjects(left_gamma_presentation_cleaned_results_35, "IR35 ~ Left ~ gamma ~ Pres", 10, sig_thresh = 0.01)
+beta_plots_all_subjects(right_gamma_presentation_cleaned_results_35, "IR35 ~ Right ~ gamma ~ Pres", 10, sig_thresh = 0.01)
+
+beta_plots_all_subjects(left_gamma_presentation_cleaned_results_28, "IR28 ~ Left ~ gamma ~ Pres", 8, sig_thresh = 0.01)
+beta_plots_all_subjects(right_gamma_presentation_cleaned_results_28, "IR28 ~ Right ~ gamma ~ Pres", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects(left_gamma_presentation_cleaned_results_9, "IR9 ~ Left ~ gamma ~ Pres", 8, sig_thresh = 0.01)
+beta_plots_all_subjects(right_gamma_presentation_cleaned_results_9, "IR9 ~ Right ~ gamma ~ Pres", 9, sig_thresh = 0.01)
+
+beta_plots_all_subjects(left_gamma_presentation_cleaned_results_10, "IR10 ~ Left ~ gamma ~ Pres", 8, sig_thresh = 0.01)
+beta_plots_all_subjects(right_gamma_presentation_cleaned_results_10, "IR10 ~ Right ~ gamma ~ Pres", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects(left_gamma_presentation_cleaned_results_26, "IR26 ~ Left ~ gamma ~ Pres", 8, sig_thresh = 0.01)
+beta_plots_all_subjects(right_gamma_presentation_cleaned_results_26, "IR26 ~ Right ~ gamma ~ Pres", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects(left_gamma_presentation_cleaned_results_16, "IR16 ~ Left ~ gamma ~ Pres", 8, sig_thresh = 0.01)
+beta_plots_all_subjects(right_gamma_presentation_cleaned_results_16, "IR16 ~ Right ~ gamma ~ Pres", 8, sig_thresh = 0.01)
+
+```
+
+### Pres ~ HFA {#p-h}
+
+```{r hfa-pres_viz, echo = F, fig.width= 18, fig.height= 22}
 
 ## HFA ##
 beta_plots_all_subjects(left_hfa_presentation_cleaned_results_57, "IR57 ~ Left ~ HFA ~ Pres", 8, sig_thresh = 0.01)
@@ -955,32 +1546,81 @@ beta_plots_all_subjects(right_hfa_presentation_cleaned_results_16, "IR16 ~ Right
 ```
 
 
+# Choice Results {#choice}
 
 
-
-```{r choice-prep, echo = F}
+```{r choice-localization, echo = F}
 
 # IR35 #
+delta_choice_cleaned_results_35 <- merge_with_elec_info(delta_choice_results_35, localizations_35)
 theta_choice_cleaned_results_35 <- merge_with_elec_info(theta_choice_results_35, localizations_35)
+alpha_choice_cleaned_results_35 <- merge_with_elec_info(alpha_choice_results_35, localizations_35)
+beta_choice_cleaned_results_35 <- merge_with_elec_info(beta_choice_results_35, localizations_35)
+gamma_choice_cleaned_results_35 <- merge_with_elec_info(gamma_choice_results_35, localizations_35)
 hfa_choice_cleaned_results_35 <- merge_with_elec_info(hfa_choice_results_35, localizations_35)
 # IR57#
+delta_choice_cleaned_results_57 <- merge_with_elec_info(delta_choice_results_57, localizations_57)
 theta_choice_cleaned_results_57 <- merge_with_elec_info(theta_choice_results_57, localizations_57)
+alpha_choice_cleaned_results_57 <- merge_with_elec_info(alpha_choice_results_57, localizations_57)
+beta_choice_cleaned_results_57 <- merge_with_elec_info(beta_choice_results_57, localizations_57)
+gamma_choice_cleaned_results_57 <- merge_with_elec_info(gamma_choice_results_57, localizations_57)
 hfa_choice_cleaned_results_57 <- merge_with_elec_info(hfa_choice_results_57, localizations_57)
 # IR28 #
+delta_choice_cleaned_results_28 <- merge_with_elec_info(delta_choice_results_28, localizations_28)
 theta_choice_cleaned_results_28 <- merge_with_elec_info(theta_choice_results_28, localizations_28)
+alpha_choice_cleaned_results_28 <- merge_with_elec_info(alpha_choice_results_28, localizations_28)
+beta_choice_cleaned_results_28 <- merge_with_elec_info(beta_choice_results_28, localizations_28)
+gamma_choice_cleaned_results_28 <- merge_with_elec_info(gamma_choice_results_28, localizations_28)
 hfa_choice_cleaned_results_28 <- merge_with_elec_info(hfa_choice_results_28, localizations_28)
 # IR9 #
+delta_choice_cleaned_results_9 <- merge_with_elec_info(delta_choice_results_9, localizations_9)
 theta_choice_cleaned_results_9 <- merge_with_elec_info(theta_choice_results_9, localizations_9)
+alphaa_choice_cleaned_results_9 <- merge_with_elec_info(alpha_choice_results_9, localizations_9)
+beta_choice_cleaned_results_9 <- merge_with_elec_info(beta_choice_results_9, localizations_9)
+gamma_choice_cleaned_results_9 <- merge_with_elec_info(gamma_choice_results_9, localizations_9)
 hfa_choice_cleaned_results_9 <- merge_with_elec_info(hfa_choice_results_9, localizations_9)
 # IR10 #
+delta_choice_cleaned_results_10 <- merge_with_elec_info(delta_choice_results_10, localizations_10)
 theta_choice_cleaned_results_10 <- merge_with_elec_info(theta_choice_results_10, localizations_10)
+alphaa_choice_cleaned_results_10 <- merge_with_elec_info(alpha_choice_results_10, localizations_10)
+beta_choice_cleaned_results_10 <- merge_with_elec_info(beta_choice_results_10, localizations_10)
+gamma_choice_cleaned_results_10 <- merge_with_elec_info(gamma_choice_results_10, localizations_10)
 hfa_choice_cleaned_results_10 <- merge_with_elec_info(hfa_choice_results_10, localizations_10)
 # IR26 #
+delta_choice_cleaned_results_26 <- merge_with_elec_info(delta_choice_results_26, localizations_26)
 theta_choice_cleaned_results_26 <- merge_with_elec_info(theta_choice_results_26, localizations_26)
+alphaa_choice_cleaned_results_26 <- merge_with_elec_info(alpha_choice_results_26, localizations_26)
+beta_choice_cleaned_results_26 <- merge_with_elec_info(beta_choice_results_26, localizations_26)
+gamma_choice_cleaned_results_26 <- merge_with_elec_info(gamma_choice_results_26, localizations_26)
 hfa_choice_cleaned_results_26 <- merge_with_elec_info(hfa_choice_results_26, localizations_26)
 # IR16 #
-theta_choice_cleaned_results_16 <- merge_with_elec_info(theta_choice_results_16, localizations_26)
-hfa_choice_cleaned_results_16 <- merge_with_elec_info(hfa_choice_results_26, localizations_26)
+delta_choice_cleaned_results_16 <- merge_with_elec_info(delta_choice_results_16, localizations_16)
+theta_choice_cleaned_results_16 <- merge_with_elec_info(theta_choice_results_16, localizations_16)
+alphaa_choice_cleaned_results_16 <- merge_with_elec_info(alpha_choice_results_16, localizations_16)
+beta_choice_cleaned_results_16 <- merge_with_elec_info(beta_choice_results_16, localizations_16)
+gamma_choice_cleaned_results_16 <- merge_with_elec_info(gamma_choice_results_16, localizations_16)
+hfa_choice_cleaned_results_16 <- merge_with_elec_info(hfa_choice_results_16, localizations_16)
+
+```
+
+```{r choice-split-data}
+
+# delta #
+left_delta_choice_cleaned_results_35 <- delta_choice_cleaned_results_35 %>% filter(grepl("^L", electrode))
+right_delta_choice_cleaned_results_35 <- delta_choice_cleaned_results_35 %>% filter(grepl("^R", electrode))
+left_delta_choice_cleaned_results_57 <- delta_choice_cleaned_results_57 %>% filter(grepl("^L", electrode))
+right_delta_choice_cleaned_results_57 <- delta_choice_cleaned_results_57 %>% filter(grepl("^R", electrode))
+left_delta_choice_cleaned_results_28 <- delta_choice_cleaned_results_28 %>% filter(grepl("^L", electrode))
+right_delta_choice_cleaned_results_28 <- delta_choice_cleaned_results_28 %>% filter(grepl("^R", electrode))
+left_delta_choice_cleaned_results_9 <- delta_choice_cleaned_results_9 %>% filter(grepl("^L", electrode))
+right_delta_choice_cleaned_results_9 <- delta_choice_cleaned_results_9 %>% filter(grepl("^R", electrode))
+left_delta_choice_cleaned_results_10 <- delta_choice_cleaned_results_10 %>% filter(grepl("^L", electrode))
+right_delta_choice_cleaned_results_10 <- delta_choice_cleaned_results_10 %>% filter(grepl("^R", electrode))
+left_delta_choice_cleaned_results_26 <- delta_choice_cleaned_results_26 %>% filter(grepl("^L", electrode))
+right_delta_choice_cleaned_results_26 <- delta_choice_cleaned_results_26 %>% filter(grepl("^R", electrode))
+left_delta_choice_cleaned_results_16 <- delta_choice_cleaned_results_16 %>% filter(grepl("^L", electrode))
+right_delta_choice_cleaned_results_16 <- delta_choice_cleaned_results_16 %>% filter(grepl("^R", electrode))
+
 
 # theta #
 left_theta_choice_cleaned_results_35 <- theta_choice_cleaned_results_35 %>% filter(grepl("^L", electrode))
@@ -997,6 +1637,54 @@ left_theta_choice_cleaned_results_26 <- theta_choice_cleaned_results_26 %>% filt
 right_theta_choice_cleaned_results_26 <- theta_choice_cleaned_results_26 %>% filter(grepl("^R", electrode))
 left_theta_choice_cleaned_results_16 <- theta_choice_cleaned_results_16 %>% filter(grepl("^L", electrode))
 right_theta_choice_cleaned_results_16 <- theta_choice_cleaned_results_16 %>% filter(grepl("^R", electrode))
+
+# alpha #
+left_alpha_choice_cleaned_results_35 <- alpha_choice_cleaned_results_35 %>% filter(grepl("^L", electrode))
+right_alpha_choice_cleaned_results_35 <- alpha_choice_cleaned_results_35 %>% filter(grepl("^R", electrode))
+left_alpha_choice_cleaned_results_57 <- alpha_choice_cleaned_results_57 %>% filter(grepl("^L", electrode))
+right_alpha_choice_cleaned_results_57 <- alpha_choice_cleaned_results_57 %>% filter(grepl("^R", electrode))
+left_alpha_choice_cleaned_results_28 <- alpha_choice_cleaned_results_28 %>% filter(grepl("^L", electrode))
+right_alpha_choice_cleaned_results_28 <- alpha_choice_cleaned_results_28 %>% filter(grepl("^R", electrode))
+left_alpha_choice_cleaned_results_9 <- alpha_choice_cleaned_results_9 %>% filter(grepl("^L", electrode))
+right_alpha_choice_cleaned_results_9 <- alpha_choice_cleaned_results_9 %>% filter(grepl("^R", electrode))
+left_alpha_choice_cleaned_results_10 <- alpha_choice_cleaned_results_10 %>% filter(grepl("^L", electrode))
+right_alpha_choice_cleaned_results_10 <- alpha_choice_cleaned_results_10 %>% filter(grepl("^R", electrode))
+left_alpha_choice_cleaned_results_26 <- alpha_choice_cleaned_results_26 %>% filter(grepl("^L", electrode))
+right_alpha_choice_cleaned_results_26 <- alpha_choice_cleaned_results_26 %>% filter(grepl("^R", electrode))
+left_alpha_choice_cleaned_results_16 <- alpha_choice_cleaned_results_16 %>% filter(grepl("^L", electrode))
+right_alpha_choice_cleaned_results_16 <- alpha_choice_cleaned_results_16 %>% filter(grepl("^R", electrode))
+
+# beta #
+left_beta_choice_cleaned_results_35 <- beta_choice_cleaned_results_35 %>% filter(grepl("^L", electrode))
+right_beta_choice_cleaned_results_35 <- beta_choice_cleaned_results_35 %>% filter(grepl("^R", electrode))
+left_beta_choice_cleaned_results_57 <- beta_choice_cleaned_results_57 %>% filter(grepl("^L", electrode))
+right_beta_choice_cleaned_results_57 <- beta_choice_cleaned_results_57 %>% filter(grepl("^R", electrode))
+left_beta_choice_cleaned_results_28 <- beta_choice_cleaned_results_28 %>% filter(grepl("^L", electrode))
+right_beta_choice_cleaned_results_28 <- beta_choice_cleaned_results_28 %>% filter(grepl("^R", electrode))
+left_beta_choice_cleaned_results_9 <- beta_choice_cleaned_results_9 %>% filter(grepl("^L", electrode))
+right_beta_choice_cleaned_results_9 <- beta_choice_cleaned_results_9 %>% filter(grepl("^R", electrode))
+left_beta_choice_cleaned_results_10 <- beta_choice_cleaned_results_10 %>% filter(grepl("^L", electrode))
+right_beta_choice_cleaned_results_10 <- beta_choice_cleaned_results_10 %>% filter(grepl("^R", electrode))
+left_beta_choice_cleaned_results_26 <- beta_choice_cleaned_results_26 %>% filter(grepl("^L", electrode))
+right_beta_choice_cleaned_results_26 <- beta_choice_cleaned_results_26 %>% filter(grepl("^R", electrode))
+left_beta_choice_cleaned_results_16 <- beta_choice_cleaned_results_16 %>% filter(grepl("^L", electrode))
+right_beta_choice_cleaned_results_16 <- beta_choice_cleaned_results_16 %>% filter(grepl("^R", electrode))
+
+# gamma #
+left_gamma_choice_cleaned_results_35 <- gamma_choice_cleaned_results_35 %>% filter(grepl("^L", electrode))
+right_gamma_choice_cleaned_results_35 <- gamma_choice_cleaned_results_35 %>% filter(grepl("^R", electrode))
+left_gamma_choice_cleaned_results_57 <- gamma_choice_cleaned_results_57 %>% filter(grepl("^L", electrode))
+right_gamma_choice_cleaned_results_57 <- gamma_choice_cleaned_results_57 %>% filter(grepl("^R", electrode))
+left_gamma_choice_cleaned_results_28 <- gamma_choice_cleaned_results_28 %>% filter(grepl("^L", electrode))
+right_gamma_choice_cleaned_results_28 <- gamma_choice_cleaned_results_28 %>% filter(grepl("^R", electrode))
+left_gamma_choice_cleaned_results_9 <- gamma_choice_cleaned_results_9 %>% filter(grepl("^L", electrode))
+right_gamma_choice_cleaned_results_9 <- gamma_choice_cleaned_results_9 %>% filter(grepl("^R", electrode))
+left_gamma_choice_cleaned_results_10 <- gamma_choice_cleaned_results_10 %>% filter(grepl("^L", electrode))
+right_gamma_choice_cleaned_results_10 <- gamma_choice_cleaned_results_10 %>% filter(grepl("^R", electrode))
+left_gamma_choice_cleaned_results_26 <- gamma_choice_cleaned_results_26 %>% filter(grepl("^L", electrode))
+right_gamma_choice_cleaned_results_26 <- gamma_choice_cleaned_results_26 %>% filter(grepl("^R", electrode))
+left_gamma_choice_cleaned_results_16 <- gamma_choice_cleaned_results_16 %>% filter(grepl("^L", electrode))
+right_gamma_choice_cleaned_results_16 <- gamma_choice_cleaned_results_16 %>% filter(grepl("^R", electrode))
 
 
 # hfa #
@@ -1019,7 +1707,38 @@ right_hfa_choice_cleaned_results_16 <- hfa_choice_cleaned_results_16 %>% filter(
 
 ```
 
-```{r choice-viz, echo = F, fig.width= 18, fig.height= 22}
+### Choice ~ Delta {#c-d}
+
+```{r delta-choice-viz, echo = F, fig.width= 18, fig.height= 22}
+
+## theta ##
+
+beta_plots_all_subjects_choice(left_delta_choice_cleaned_results_35, "IR35 ~ Left ~ delta ~ Choice", 10, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_delta_choice_cleaned_results_35, "IR35 ~ Right ~ delta ~ Choice", 10, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_delta_choice_cleaned_results_57, "IR57 ~ Left ~ delta ~ Choice", 10, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_delta_choice_cleaned_results_57, "IR57 ~ Right ~ delta ~ Choice", 10, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_delta_choice_cleaned_results_28, "IR28 ~ Left ~ delta ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_delta_choice_cleaned_results_28, "IR28 ~ Right ~ delta ~ Choice", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_delta_choice_cleaned_results_9, "IR9 ~ Left ~ delta ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_delta_choice_cleaned_results_9, "IR9 ~ Right ~ delta ~ Choice", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_delta_choice_cleaned_results_10, "IR10 ~ Left ~ delta ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_delta_choice_cleaned_results_10, "IR10 ~ Right ~ delta ~ Choice", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_delta_choice_cleaned_results_26, "IR26 ~ Left ~ delta ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_delta_choice_cleaned_results_26, "IR26 ~ Right ~ delta ~ Choice", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_delta_choice_cleaned_results_16, "IR16 ~ Left ~ delta ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_delta_choice_cleaned_results_16, "IR16 ~ Right ~ delta ~ Choice", 8, sig_thresh = 0.01)
+
+```
+
+### Choice ~ Theta {#c-t}
+
+```{r theta-choice-viz, echo = F, fig.width= 18, fig.height= 22}
 
 ## theta ##
 
@@ -1044,6 +1763,99 @@ beta_plots_all_subjects_choice(right_theta_choice_cleaned_results_26, "IR26 ~ Ri
 beta_plots_all_subjects_choice(left_theta_choice_cleaned_results_16, "IR16 ~ Left ~ Theta ~ Choice", 8, sig_thresh = 0.01)
 beta_plots_all_subjects_choice(right_theta_choice_cleaned_results_16, "IR16 ~ Right ~ Theta ~ Choice", 8, sig_thresh = 0.01)
 
+```
+
+### Choice ~ Alpha {#c-a}
+
+```{r alpha-choice-viz, echo = F, fig.width= 18, fig.height= 22}
+
+## alpha ##
+
+beta_plots_all_subjects_choice(left_alpha_choice_cleaned_results_35, "IR35 ~ Left ~ alpha ~ Choice", 10, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_alpha_choice_cleaned_results_35, "IR35 ~ Right ~ alpha ~ Choice", 10, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_alpha_choice_cleaned_results_57, "IR57 ~ Left ~ alpha ~ Choice", 10, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_alpha_choice_cleaned_results_57, "IR57 ~ Right ~ alpha ~ Choice", 10, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_alpha_choice_cleaned_results_28, "IR28 ~ Left ~ alpha ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_alpha_choice_cleaned_results_28, "IR28 ~ Right ~ alpha ~ Choice", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_alpha_choice_cleaned_results_9, "IR9 ~ Left ~ alpha ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_alpha_choice_cleaned_results_9, "IR9 ~ Right ~ alpha ~ Choice", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_alpha_choice_cleaned_results_10, "IR10 ~ Left ~ alpha ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_alpha_choice_cleaned_results_10, "IR10 ~ Right ~ alpha ~ Choice", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_alpha_choice_cleaned_results_26, "IR26 ~ Left ~ alpha ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_alpha_choice_cleaned_results_26, "IR26 ~ Right ~ alpha ~ Choice", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_alpha_choice_cleaned_results_16, "IR16 ~ Left ~ alpha ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_alpha_choice_cleaned_results_16, "IR16 ~ Right ~ alpha ~ Choice", 8, sig_thresh = 0.01)
+
+```
+
+### Choice ~ Beta {#c-b}
+
+```{r beta-choice-viz, echo = F, fig.width= 18, fig.height= 22}
+
+## beta ##
+
+beta_plots_all_subjects_choice(left_beta_choice_cleaned_results_35, "IR35 ~ Left ~ beta ~ Choice", 10, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_beta_choice_cleaned_results_35, "IR35 ~ Right ~ beta ~ Choice", 10, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_beta_choice_cleaned_results_57, "IR57 ~ Left ~ beta ~ Choice", 10, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_beta_choice_cleaned_results_57, "IR57 ~ Right ~ beta ~ Choice", 10, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_beta_choice_cleaned_results_28, "IR28 ~ Left ~ beta ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_beta_choice_cleaned_results_28, "IR28 ~ Right ~ beta ~ Choice", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_beta_choice_cleaned_results_9, "IR9 ~ Left ~ beta ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_beta_choice_cleaned_results_9, "IR9 ~ Right ~ beta ~ Choice", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_beta_choice_cleaned_results_10, "IR10 ~ Left ~ beta ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_beta_choice_cleaned_results_10, "IR10 ~ Right ~ beta ~ Choice", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_beta_choice_cleaned_results_26, "IR26 ~ Left ~ beta ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_beta_choice_cleaned_results_26, "IR26 ~ Right ~ beta ~ Choice", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_beta_choice_cleaned_results_16, "IR16 ~ Left ~ beta ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_beta_choice_cleaned_results_16, "IR16 ~ Right ~ beta ~ Choice", 8, sig_thresh = 0.01)
+
+```
+
+### Choice ~ Gamma {#c-g}
+
+```{r gamma-choice-viz, echo = F, fig.width= 18, fig.height= 22}
+
+## gamma ##
+
+beta_plots_all_subjects_choice(left_gamma_choice_cleaned_results_35, "IR35 ~ Left ~ gamma ~ Choice", 10, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_gamma_choice_cleaned_results_35, "IR35 ~ Right ~ gamma ~ Choice", 10, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_gamma_choice_cleaned_results_57, "IR57 ~ Left ~ gamma ~ Choice", 10, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_gamma_choice_cleaned_results_57, "IR57 ~ Right ~ gamma ~ Choice", 10, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_gamma_choice_cleaned_results_28, "IR28 ~ Left ~ gamma ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_gamma_choice_cleaned_results_28, "IR28 ~ Right ~ gamma ~ Choice", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_gamma_choice_cleaned_results_9, "IR9 ~ Left ~ gamma ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_gamma_choice_cleaned_results_9, "IR9 ~ Right ~ gamma ~ Choice", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_gamma_choice_cleaned_results_10, "IR10 ~ Left ~ gamma ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_gamma_choice_cleaned_results_10, "IR10 ~ Right ~ gamma ~ Choice", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_gamma_choice_cleaned_results_26, "IR26 ~ Left ~ gamma ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_gamma_choice_cleaned_results_26, "IR26 ~ Right ~ gamma ~ Choice", 8, sig_thresh = 0.01)
+
+beta_plots_all_subjects_choice(left_gamma_choice_cleaned_results_16, "IR16 ~ Left ~ gamma ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_gamma_choice_cleaned_results_16, "IR16 ~ Right ~ gamma ~ Choice", 8, sig_thresh = 0.01)
+
+```
+
+### Choice ~ HFA {#c-h}
+
+```{r hf-choice-viz, echo = F, fig.width= 18, fig.height= 22}
+
 ## HFA ##
 
 beta_plots_all_subjects_choice(left_hfa_choice_cleaned_results_35, "IR35 ~ Left ~ hfa ~ Choice", 8, sig_thresh = 0.01)
@@ -1064,8 +1876,8 @@ beta_plots_all_subjects_choice(right_hfa_choice_cleaned_results_10, "IR10 ~ Righ
 beta_plots_all_subjects_choice(left_hfa_choice_cleaned_results_26, "IR26 ~ Left ~ hfa ~ Choice", 8, sig_thresh = 0.01)
 beta_plots_all_subjects_choice(right_hfa_choice_cleaned_results_26, "IR26 ~ Right ~ hfa ~ Choice", 8, sig_thresh = 0.01)
 
-beta_plots_all_subjects_choice(left_theta_choice_cleaned_results_16, "IR16 ~ Left ~ Theta ~ Choice", 8, sig_thresh = 0.01)
-beta_plots_all_subjects_choice(right_theta_choice_cleaned_results_16, "IR16 ~ Right ~ Theta ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(left_hfa_choice_cleaned_results_16, "IR16 ~ Left ~ hfa ~ Choice", 8, sig_thresh = 0.01)
+beta_plots_all_subjects_choice(right_hfa_choice_cleaned_results_16, "IR16 ~ Right ~ hfa ~ Choice", 8, sig_thresh = 0.01)
 
 ```
 
