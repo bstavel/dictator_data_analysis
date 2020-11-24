@@ -1654,6 +1654,7 @@ load_CP34_choice_data <- function(file_path_to_power_data, clean_name, band) {
   file_path_to_first_electrode_names <- path(here(), "munge", "savio_cluster", "CP34-1_electrodes_choice_locked_rscaler_2575.csv")
   file_path_to_second_electrode_names <- path(here(), "munge", "savio_cluster", "CP34-2_electrodes_choice_locked_rscaler_2575.csv")
   file_path_to_elecs_of_interest <- path(here(), "munge", "CP34_elecs_of_interest.csv")
+  file_path_to_baseline <- path(here(), "munge", paste0(band, "baseline_CP34.csv"))
   
   ## combine data since it came in two files ##
   file_path_to_first_power_data <- gsub("CP34", "CP34-1", file_path_to_power_data)
