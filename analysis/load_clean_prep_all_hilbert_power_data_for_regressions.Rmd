@@ -89,6 +89,7 @@ behave_data_10 <- behave_data %>% filter(SID == "DG_s04")
 behave_data_57 <- behave_data %>% filter(SID == "DG_s13")
 behave_data_9 <- behave_data %>% filter(SID == "DG_s03")
 behave_data_26 <- behave_data %>% filter(SID == "DG_s09")
+behave_data_cp34 <- behave_data %>% filter(SID == "DG_s14")
 
 # table(behave_data$ineq_advent_choice)
 # table(behave_data_08$ineq_disadvent_choice)
@@ -919,6 +920,91 @@ load_IR26_presentation_data(file_path_to_power_data, clean_name, band)
 beep(2)
 ```
 
+```{r load-hg-data-presentation-locked-cp34, eval=F}
+
+### CP34 ~ PRESENTATION ###
+
+## function to filter to ROI, baseline, compress, and c=merge within behvaioral data ##
+load_CP34_presentation_data <- function(file_path_to_power_data, clean_name, band) {
+  
+  # necessary paths #
+  file_path_to_first_electrode_names <- path(here(), "munge", "savio_cluster", "CP34-1_electrodes_presentation_locked_rscaler_2575.csv")
+  file_path_to_second_electrode_names <- path(here(), "munge", "savio_cluster", "CP34-2_electrodes_presentation_locked_rscaler_2575.csv")
+  file_path_to_elecs_of_interest <- path(here(), "munge", "CP34_elecs_of_interest.csv")
+  
+  ## combine data since it came in two files ##
+  file_path_to_first_power_data <- gsub("CP34", "CP34-1", file_path_to_power_data)
+  file_path_to_second_power_data <- gsub("CP34", "CP34-2", file_path_to_power_data)
+  
+  ## load data ##
+  # bind first and second parts #
+  first_hg_data <- load_high_gamma_data(file_path_to_first_power_data, file_path_to_first_electrode_names)
+  second_hg_data <- load_high_gamma_data(file_path_to_second_power_data, file_path_to_second_electrode_names)
+  second_hg_data$trial <- second_hg_data$tria + 109
+  hg_data <- rbind(first_hg_data, second_hg_data)
+  # load elecs #
+  elecs_to_use <- read.csv(file_path_to_elecs_of_interest)
+  
+  # add behavioral data, remove bad trials, remove behavioral data again #
+  hg_data <- merge.data.frame(hg_data, behave_data_cp34, by.x = "trial", by.y = "round", all.x = T, all.y = F)
+  hg_data <- hg_data %>% filter(!is.na(RT)) %>% select(trial, electrodes, starts_with("time"))
+
+  
+  # filter to good electrodes #
+  hg_data <- hg_data %>% filter(grepl(paste(elecs_to_use$Electrode, collapse = "|"), electrodes))
+  
+  # save baseline #
+  baseline_data <- hg_data[, 1:200]
+  baseline_data <- cbind(baseline_data, hg_data$electrodes, hg_data$trial)
+  write.csv(baseline_data, path(here(), "munge", paste0(band, "baseline_CP34.csv")))
+  
+  # average and baseline #
+  hg_clean <- rolling_window_and_baseline(hg_data, lWin = 200, lOver = 50, choice_locked = F)
+  
+  # with behavior #
+  hg_behave <- merge.data.frame(hg_clean, behave_data_cp34, by.x = "trial", by.y = "round", all.x = T, all.y = F)
+  # clean any missing RTs #
+  hg_behave <- hg_behave %>% filter(!is.na(RT))
+  # save it #
+  write.csv(hg_behave, clean_name)
+
+}
+
+
+# delta #
+band <- "delta"
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "CP34_delta_munge_presentation_locked_rscaler_2575.csv")
+clean_name <- path(here(), "munge", "CP34", "delta_behave_presentation_rscaler_2575_200.csv")
+load_CP34_presentation_data(file_path_to_power_data, clean_name, band)
+# theta #
+band <- "theta"
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "CP34_theta_munge_presentation_locked_rscaler_2575.csv")
+clean_name <- path(here(), "munge", "CP34", "theta_behave_presentation_rscaler_2575_200.csv")
+load_CP34_presentation_data(file_path_to_power_data, clean_name, band)
+# alpha #
+band <- "alpha"
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "CP34_alpha_munge_presentation_locked_rscaler_2575.csv")
+clean_name <- path(here(), "munge", "CP34", "alpha_behave_presentation_rscaler_2575_200.csv")
+load_CP34_presentation_data(file_path_to_power_data, clean_name, band)
+# beta #
+band <- "beta"
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "CP34_beta_munge_presentation_locked_rscaler_2575.csv")
+clean_name <- path(here(), "munge", "CP34", "beta_behave_presentation_rscaler_2575_200.csv")
+load_CP34_presentation_data(file_path_to_power_data, clean_name, band)
+# gamma #
+band <- "gamma"
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "CP34_gamma_munge_presentation_locked_rscaler_2575.csv")
+clean_name <- path(here(), "munge", "CP34", "gamma_behave_presentation_rscaler_2575_200.csv")
+load_CP34_presentation_data(file_path_to_power_data, clean_name, band)
+# hfa #
+band <- "hfa"
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "CP34_hfa_munge_presentation_locked_rscaler_2575.csv")
+clean_name <- path(here(), "munge", "CP34", "hfa_behave_presentation_rscaler_2575_200.csv")
+load_CP34_presentation_data(file_path_to_power_data, clean_name, band)
+
+beep(2)
+```
+
 ## Choice 
 
 ```{r load-hg-data-choice-locked-35, eval=T}
@@ -1553,6 +1639,90 @@ load_IR26_choice_data(file_path_to_power_data, clean_name, band)
 # clean_name <- path(here(), "munge", "IR26", "hfa_behave_choice_rscaler_2575_200.csv")
 # band <- "HFA"
 # load_IR26_choice_data(file_path_to_power_data, clean_name, band)
+
+beep(2)
+```
+
+```{r load-hg-data-choice-locked-CP34, eval=T}
+
+
+### CP34 ~ CHOICE ###
+
+## function to filter to ROI, baseline, compress, and c=merge within behvaioral data ##
+load_CP34_choice_data <- function(file_path_to_power_data, clean_name, band) {
+ # necessary paths #
+  file_path_to_first_electrode_names <- path(here(), "munge", "savio_cluster", "CP34-1_electrodes_choice_locked_rscaler_2575.csv")
+  file_path_to_second_electrode_names <- path(here(), "munge", "savio_cluster", "CP34-2_electrodes_choice_locked_rscaler_2575.csv")
+  file_path_to_elecs_of_interest <- path(here(), "munge", "CP34_elecs_of_interest.csv")
+  
+  ## combine data since it came in two files ##
+  file_path_to_first_power_data <- gsub("CP34", "CP34-1", file_path_to_power_data)
+  file_path_to_second_power_data <- gsub("CP34", "CP34-2", file_path_to_power_data)
+  
+  ## load data ##
+  # bind first and second parts #
+  first_hg_data <- load_high_gamma_data(file_path_to_first_power_data, file_path_to_first_electrode_names)
+  second_hg_data <- load_high_gamma_data(file_path_to_second_power_data, file_path_to_second_electrode_names)
+  second_hg_data$trial <- second_hg_data$tria + 109
+  hg_data <- rbind(first_hg_data, second_hg_data)
+  # load elecs #
+  elecs_to_use <- read.csv(file_path_to_elecs_of_interest)
+  
+
+  
+  # add behavioral data, remove bad trials, remove behavioral data again #
+  hg_data <- merge.data.frame(hg_data, behave_data_cp34, by.x = "trial", by.y = "round", all.x = T, all.y = F)
+  hg_data <- hg_data %>% filter(!is.na(RT)) %>% select(trial, electrodes, starts_with("time"))
+  
+  # filter to good electrodes #
+  hg_data <- hg_data %>% filter(grepl(paste(elecs_to_use$Electrode, collapse = "|"), electrodes))
+  
+  # remove trials that were missing in baseline data #
+
+  
+  # average and baseline #
+  hg_clean <- rolling_window_and_baseline(hg_data, baseline_csv = file_path_to_baseline, lWin = 200, lOver = 50, choice_locked = T)
+  
+  # with behavior #
+  hg_behave <- merge.data.frame(hg_clean, behave_data_cp34, by.x = "trial", by.y = "round", all.x = T, all.y = F)
+  # clean any missing RTs #
+  hg_behave <- hg_behave %>% filter(!is.na(RT))
+  # save it #
+  write.csv(hg_behave, clean_name)
+  
+}
+
+
+# delta #
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "CP34_delta_munge_choice_locked_rscaler_2575.csv")
+clean_name <- path(here(), "munge", "CP34", "delta_behave_choice_rscaler_2575_200.csv")
+band <- "delta"
+load_CP34_choice_data(file_path_to_power_data, clean_name, band)
+# # theta #
+# file_path_to_power_data <- path(here(), "munge", "savio_cluster", "CP34_theta_munge_choice_locked_rscaler_2575.csv")
+# clean_name <- path(here(), "munge", "CP34", "theta_behave_choice_rscaler_2575_200.csv")
+# band <- "theta"
+# load_CP34_choice_data(file_path_to_power_data, clean_name, band)
+# alpha #
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "CP34_alpha_munge_choice_locked_rscaler_2575.csv")
+clean_name <- path(here(), "munge", "CP34", "alpha_behave_choice_rscaler_2575_200.csv")
+band <- "alpha"
+load_CP34_choice_data(file_path_to_power_data, clean_name, band)
+# beta #
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "CP34_beta_munge_choice_locked_rscaler_2575.csv")
+clean_name <- path(here(), "munge", "CP34", "beta_behave_choice_rscaler_2575_200.csv")
+band <- "beta"
+load_CP34_choice_data(file_path_to_power_data, clean_name, band)
+# gamma #
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "CP34_gamma_munge_choice_locked_rscaler_2575.csv")
+clean_name <- path(here(), "munge", "CP34", "gamma_behave_choice_rscaler_2575_200.csv")
+band <- "gamma"
+load_CP34_choice_data(file_path_to_power_data, clean_name, band)
+# # hfa #
+# file_path_to_power_data <- path(here(), "munge", "savio_cluster", "CP34_hfa_munge_choice_locked_rscaler_2575.csv")
+# clean_name <- path(here(), "munge", "CP34", "hfa_behave_choice_rscaler_2575_200.csv")
+# band <- "HFA"
+# load_CP34_choice_data(file_path_to_power_data, clean_name, band)
 
 beep(2)
 ```

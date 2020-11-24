@@ -1,0 +1,1030 @@
+---
+title: "Anatomy Plot Prep"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo <- FALSE,  # don't print the code chunk
+  warning <- FALSE,  # don't print warnings
+  message <- FALSE,  # don't print messages
+  fig.width <- 12,  # set default width of figures
+  fig.height <- 6,  # set default height of figures
+  fig.align <- "center",  # always align figure in center
+  fig.pos <- "H",  # always plot figure at the exact location of the code chunk
+  cache <- TRUE)  # cache results
+
+## libraries ##
+library(tidyverse)
+library(ggplot2)
+library(magrittr)
+# library(ggthemr)
+library(grid)
+library(gtable)
+library(gridExtra)
+library(wesanderson)
+library(ggsci)
+library(zoo)
+library(kableExtra)
+library(lme4)
+library(RColorBrewer)
+library(doParallel)
+library(parallel)
+library(foreach)
+library(here)
+library(fs)
+library(ggcorrplot)
+library(viridis)
+library(beepr)
+library(lmtest)
+
+## hand written functions ##
+source(path(here(), "R", "load_behave_data.R"))
+source(path(here(), "R", "prep_behave_data.R"))
+source(path(here(), "R", "stretch_start_end.R"))
+source(path(here(), "R", "load_high_gamma_data.R"))
+source(path(here(), "R", "rolling_window_and_baseline.R"))
+source(path(here(), "R", "run_permuted_regressions.R"))
+source(path(here(), "R", "compile_results.R"))
+source(path(here(), "R", "run_filtered_anova.R"))
+source(path(here(), "R", "merge_stepped_anova_results.R"))
+source(path(here(), "R", 'mutate_cond.R'))
+
+## plotting helpers ##
+# ggthemr("solarized")
+
+# ## paralellization ##
+# nCores <- 2
+# registerDoParallel(nCores)
+
+```
+
+```{r load-elec-data}
+
+# read in elec data #
+elecs_9 <- read_csv(path(here(), "munge", "savio_cluster", "IR9_electrodes_presentation_locked_rscaler_2575.csv"))
+elecs_10 <- read_csv(path(here(), "munge", "savio_cluster", "IR10_electrodes_presentation_locked_rscaler_2575.csv"))
+elecs_16 <- read_csv(path(here(), "munge", "savio_cluster", "IR16_electrodes_presentation_locked_rscaler_2575.csv"))
+elecs_26 <- read_csv(path(here(), "munge", "savio_cluster", "IR26_electrodes_presentation_locked_rscaler_2575.csv"))
+elecs_28 <- read_csv(path(here(), "munge", "savio_cluster", "IR28_electrodes_presentation_locked_rscaler_2575.csv"))
+elecs_35 <- read_csv(path(here(), "munge", "savio_cluster", "IR35_electrodes_presentation_locked_rscaler_2575.csv"))
+elecs_57 <- read_csv(path(here(), "munge", "savio_cluster", "IR57_electrodes_presentation_locked_rscaler_2575.csv"))
+
+
+# function to clean elec names #
+clean_elecs <- function(df, sub){
+  df <- df %>%
+    rename(electrode = Var1) %>%
+    select(electrode) %>%
+    mutate(electrode = gsub("POL ", "", electrode)) %>%
+    mutate(electrode = gsub(" POL", "", electrode)) %>%
+    mutate(electrode = gsub("-Ref", "", electrode)) %>%
+    mutate(electrode = gsub("-Ref-", "-", electrode)) %>%
+    mutate(sub = sub)
+}
+
+# clean elecs #
+cleaned_elecs_9 <- clean_elecs(elecs_9, "IR9")
+cleaned_elecs_10 <- clean_elecs(elecs_10, "IR10")
+cleaned_elecs_16 <- clean_elecs(elecs_16, "IR16")
+cleaned_elecs_26 <- clean_elecs(elecs_26, "IR26")
+cleaned_elecs_28 <- clean_elecs(elecs_28, "IR28")
+cleaned_elecs_35 <- clean_elecs(elecs_35, "IR35")
+cleaned_elecs_57 <- clean_elecs(elecs_57, "IR57")
+```
+
+
+
+```{r localization-data}
+merge_with_elec_info <- function(df, localizations_sub) {
+## merge df with elec info, stored in localizations_sub
+## creates new var of form ROI1-ROI2  
+## also cleans elec names
+  
+  # clean the names
+  df <- df %>%
+    mutate(electrode = gsub("POL ", "", electrode)) %>%
+    mutate(electrode = gsub(" POL", "", electrode)) %>%
+    mutate(electrode = gsub("-Ref", "", electrode)) %>%
+    mutate(electrode = gsub("-Ref-", "-", electrode)) 
+  
+  # separate two electrodes
+  df <- df %>%
+    mutate(first_elec= gsub("-.*", "", electrode)) %>%
+    mutate(second_elec = gsub(".*-", "", electrode))
+  # join on first electrode
+  df <- left_join(df,
+                 localizations_sub,
+                 by = c("first_elec" = "Electrode"))
+  # rename to `first_region`
+  df <- df %>%
+    rename(first_region = `Loc Meeting`)
+  # join on second electrode and rename
+  df <-  left_join(df,
+             localizations_sub,
+             by = c("second_elec" = "Electrode")) %>%
+    rename(second_region = `Loc Meeting`) 
+  # paste into useful format
+  df <- df %>% mutate(ROI = paste0(first_region, "-", second_region))
+  
+  return(df)
+
+}
+
+
+## separate localtion data ##
+localizations <- read_csv(path(here(), "munge", "combined_electrode_info_with_bob.csv"))
+localizations_28 <- localizations %>% filter(subject == "IR28") %>% select(Electrode, `Loc Meeting`)
+localizations_35 <- localizations %>% filter(subject == "IR35") %>% select(Electrode, `Loc Meeting`)
+localizations_26 <- localizations %>% filter(subject == "IR26") %>% select(Electrode, `Loc Meeting`)
+localizations_9 <- localizations %>% filter(subject == "IR9") %>% select(Electrode, `Loc Meeting`)
+localizations_10 <- localizations %>% filter(subject == "IR10") %>% select(Electrode, `Loc Meeting`)
+localizations_10 <- localizations_10 %>%
+  mutate(Electrode = gsub("POL ", "", Electrode)) %>%
+  mutate(Electrode = gsub(" POL", "", Electrode)) %>%
+  mutate(Electrode = gsub("-Ref", "", Electrode)) %>%
+  mutate(Electrode = gsub("-Ref-", "-", Electrode)) 
+localizations_26 <- localizations %>% filter(subject == "IR26") %>% select(Electrode, `Loc Meeting`)
+localizations_16 <- localizations %>% filter(subject == "IR16") %>% select(Electrode, `Loc Meeting`)
+localizations_57 <- localizations %>% filter(subject == "IR57") %>% select(Electrode, `Loc Meeting`)
+
+
+## merge with bipolar names ##
+named_elecs_9 <- merge_with_elec_info(cleaned_elecs_9, localizations_9)
+named_elecs_10 <- merge_with_elec_info(cleaned_elecs_10, localizations_10)
+named_elecs_16 <- merge_with_elec_info(cleaned_elecs_16, localizations_16)
+named_elecs_26 <- merge_with_elec_info(cleaned_elecs_26, localizations_26)
+named_elecs_28 <- merge_with_elec_info(cleaned_elecs_28, localizations_28)
+named_elecs_35 <- merge_with_elec_info(cleaned_elecs_35, localizations_35)
+named_elecs_57 <- merge_with_elec_info(cleaned_elecs_57, localizations_57)
+
+## merge together ##
+named_elecs <- rbind(named_elecs_9,
+                     named_elecs_10,
+                     named_elecs_16,
+                     named_elecs_26,
+                     named_elecs_28,
+                     named_elecs_35,
+                     named_elecs_57)
+
+```
+
+
+```{r cingulate-only-values}
+# create df for plotting #
+cingulate_df <- named_elecs %>%
+  mutate(cingulate = if_else(grepl("CC", ROI, ignore.case = T), 1,
+                           if_else(grepl("cing", ROI, ignore.case = T), 1, 0))) %>%
+  select(sub, electrode, cingulate)  %>%
+  filter(sub %in% c("IR9", "IR10", "IR16", "IR28", "IR35", "IR57")) %>%
+  mutate(values = if_else(cingulate == 1 & sub == "IR9", 1, 
+                          if_else(cingulate == 1 & sub == "IR10", 2, 
+                                  if_else(cingulate == 1 & sub == "IR16", 3,
+                                          if_else(cingulate == 1 & sub == "IR28", 4,
+                                                  if_else(cingulate == 1 & sub == "IR35", 5,
+                                                          if_else(cingulate == 1 & sub == "IR57", 6, 0))))))) 
+# only cingulate electrodes #
+cingulate_electrodes <- cingulate_df %>% 
+  filter(cingulate == 1) %>%
+  select(electrode, sub)
+
+# all elecs but with values coding cing #
+cingulate_values <- cingulate_df %>% select(sub, electrode, values)
+  
+## write csvs ##
+# write elec specific #
+write_csv(cingulate_electrodes, path(here(), "figures", "anat_values", "cingulate_electrodes.csv"))
+write_csv(cingulate_electrodes %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_cingulate_electrodes.csv"))
+write_csv(cingulate_electrodes %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_cingulate_electrodes.csv"))
+write_csv(cingulate_electrodes %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_cingulate_electrodes.csv"))
+write_csv(cingulate_electrodes %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_cingulate_electrodes.csv"))
+write_csv(cingulate_electrodes %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_cingulate_electrodes.csv"))
+write_csv(cingulate_electrodes %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_cingulate_electrodes.csv"))
+# write calues #
+write_csv(cingulate_values, path(here(), "figures", "anat_values", "cingulate_values.csv"))
+
+
+```
+
+
+```{r merge-cingulate-regressions}
+
+# load_regression results #
+regression_results <- read_csv(path(here(), "results", "compiled_regressions", "all_results_11-20-20.csv"))
+
+
+# merge with values #
+cingulate_regressions <- merge.data.frame(regression_results, cingulate_values, by = c("sub", "electrode"))
+
+# get laterality #
+cingulate_regressions <- cingulate_regressions %>%
+  mutate(lat = if_else(grepl("^L", electrode), "L",
+                       if_else(grepl("^R", electrode), "R", "um"))) %>%
+  # IR28 seems to have switched laterality...
+  mutate(lat = if_else(sub == "IR28" & lat == "L", "R",
+                       if_else(sub == "IR28" & lat == "R", "L", lat))) %>%
+  # set frequency
+  filter(freq == "hfa")
+  
+
+```
+
+# Cingulate #
+
+All our cingulate electrodes are significant by at least one regressor in both choice and presentation epochs
+
+```{r any-sig-cing}
+
+### filter to signifcant cingulate ###
+# any cingulate across all conditions-- all elecs are sig #
+PVAL <- .05
+sig_cing_elecs <- cingulate_regressions %>%
+  filter(values > 0) %>%
+  select(sub, electrode, values, perm_p, epoch, predictor) %>%
+  distinct() %>%
+  mutate(sig = if_else(perm_p < PVAL, 1, 0)) %>%
+  group_by(sub, electrode) %>%
+  mutate(cing_pvals = if_else(sum(sig) > 0 & sub == "IR9", 1, 
+                          if_else(sum(sig) > 0L & sub == "IR10", 2, 
+                                  if_else(sum(sig) > 0 & sub == "IR16", 3,
+                                          if_else(sum(sig) > 0 & sub == "IR28", 4,
+                                                  if_else(sum(sig) > 0 & sub == "IR35", 5,
+                                                          if_else(sum(sig) > 0 & sub == "IR57", 6, 0))))))) %>%
+  mutate(sub = factor(sub, levels = c("IR9", "IR10", "IR16", "IR28", "IR35", "IR57"))) %>%
+  arrange(sub)
+
+# write_csv #
+write_csv(sig_cing_elecs %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "cingulate_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_cingulate_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_cingulate_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_cingulate_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_cingulate_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_cingulate_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_cingulate_sig_hfa_electrodes.csv"))
+  
+  
+  
+  
+```
+
+## Presentation
+
+```{r dis-ineq-sig-cing}
+
+### filter to signifcant cingulate ###
+# bilateral #
+PVAL <- .05
+sig_cing_elecs <- cingulate_regressions %>%
+  filter(epoch == "presentation") %>%
+  filter(predictor == "ineq_disadvent") %>%
+  filter(values > 0) %>%
+  select(sub, electrode, values, perm_p, epoch, predictor) %>%
+  distinct() %>%
+  mutate(sig = if_else(perm_p < PVAL, 1, 0)) %>%
+  group_by(sub, electrode) %>%
+  mutate(cing_pvals = if_else(sum(sig) > 0 & sub == "IR9", 1, 
+                          if_else(sum(sig) > 0L & sub == "IR10", 2, 
+                                  if_else(sum(sig) > 0 & sub == "IR16", 3,
+                                          if_else(sum(sig) > 0 & sub == "IR28", 4,
+                                                  if_else(sum(sig) > 0 & sub == "IR35", 5,
+                                                          if_else(sum(sig) > 0 & sub == "IR57", 6, 0))))))) %>%
+  mutate(sub = factor(sub, levels = c("IR9", "IR10", "IR16", "IR28", "IR35", "IR57"))) %>%
+  arrange(sub)
+
+# write_csv #
+write_csv(sig_cing_elecs, path(here(), "figures", "anat_values", "cingulate_pres_dis_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_cingulate_pres_dis_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_cingulate_pres_dis_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_cingulate_pres_dis_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_cingulate_pres_dis_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_cingulate_pres_dis_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_cingulate_pres_dis_ineq_sig_hfa_electrodes.csv"))
+  
+  
+# left - IDs #
+PVAL <- .05
+sig_cing_elecs <- cingulate_regressions %>%
+  filter(lat == "L") %>%
+  filter(epoch == "presentation") %>%
+  filter(predictor == "ineq_disadvent") %>%
+  filter(values > 0) %>%
+  select(sub, electrode, values, perm_p, epoch, predictor) %>%
+  distinct() %>%
+  mutate(sig = if_else(perm_p < PVAL, 1, 0)) %>%
+  group_by(sub, electrode) %>%
+  mutate(cing_pvals = if_else(sum(sig) > 0 & sub == "IR9", 1, 
+                          if_else(sum(sig) > 0L & sub == "IR10", 2, 
+                                  if_else(sum(sig) > 0 & sub == "IR16", 3,
+                                          if_else(sum(sig) > 0 & sub == "IR28", 4,
+                                                  if_else(sum(sig) > 0 & sub == "IR35", 5,
+                                                          if_else(sum(sig) > 0 & sub == "IR57", 6, 0))))))) %>%
+  mutate(sub = factor(sub, levels = c("IR9", "IR10", "IR16", "IR28", "IR35", "IR57"))) %>%
+  arrange(sub)
+
+# write_csv #
+write_csv(sig_cing_elecs, path(here(), "figures", "anat_values", "cingulate_l_pres_dis_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_cingulate_l_pres_dis_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_cingulate_l_pres_dis_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_cingulate_l_pres_dis_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_cingulate_l_pres_dis_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_cingulate_l_pres_dis_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_cingulate_l_pres_dis_ineq_sig_hfa_electrodes.csv"))
+
+# write_csv #
+write_csv(sig_cing_elecs, path(here(), "figures", "anat_values", "cingulate_l_pres_dis_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_cingulate_l_pres_dis_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_cingulate_l_pres_dis_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_cingulate_l_pres_dis_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_cingulate_l_pres_dis_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_cingulate_l_pres_dis_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_cingulate_l_pres_dis_ineq_sig_hfa_electrodes.csv"))
+  
+# right #
+PVAL <- .05
+sig_cing_elecs <- cingulate_regressions %>%
+  filter(lat == "R") %>%
+  filter(epoch == "presentation") %>%
+  filter(predictor == "ineq_disadvent") %>%
+  filter(values > 0) %>%
+  select(sub, electrode, values, perm_p, epoch, predictor) %>%
+  distinct() %>%
+  mutate(sig = if_else(perm_p < PVAL, 1, 0)) %>%
+  group_by(sub, electrode) %>%
+  mutate(cing_pvals = if_else(sum(sig) > 0 & sub == "IR9", 1, 
+                          if_else(sum(sig) > 0L & sub == "IR10", 2, 
+                                  if_else(sum(sig) > 0 & sub == "IR16", 3,
+                                          if_else(sum(sig) > 0 & sub == "IR28", 4,
+                                                  if_else(sum(sig) > 0 & sub == "IR35", 5,
+                                                          if_else(sum(sig) > 0 & sub == "IR57", 6, 0))))))) %>%
+  mutate(sub = factor(sub, levels = c("IR9", "IR10", "IR16", "IR28", "IR35", "IR57"))) %>%
+  arrange(sub)
+
+# write_csv #
+write_csv(sig_cing_elecs, path(here(), "figures", "anat_values", "cingulate_r_pres_dis_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_cingulate_r_pres_dis_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_cingulate_r_pres_dis_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_cingulate_r_pres_dis_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_cingulate_r_pres_dis_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_cingulate_r_pres_dis_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_cingulate_r_pres_dis_ineq_sig_hfa_electrodes.csv"))
+  
+```
+
+```{r adv-ineq-sig-cing}
+
+### filter to signifcant cingulate ###
+# any cingulate across all conditions-- all elecs are sig #
+PVAL <- .05
+sig_cing_elecs <- cingulate_regressions %>%
+  filter(epoch == "presentation") %>%
+  filter(predictor == "ineq_advent") %>%
+  filter(values > 0) %>%
+  select(sub, electrode, values, perm_p, epoch, predictor) %>%
+  distinct() %>%
+  mutate(sig = if_else(perm_p < PVAL, 1, 0)) %>%
+  group_by(sub, electrode) %>%
+  mutate(cing_pvals = if_else(sum(sig) > 0 & sub == "IR9", 1, 
+                          if_else(sum(sig) > 0L & sub == "IR10", 2, 
+                                  if_else(sum(sig) > 0 & sub == "IR16", 3,
+                                          if_else(sum(sig) > 0 & sub == "IR28", 4,
+                                                  if_else(sum(sig) > 0 & sub == "IR35", 5,
+                                                          if_else(sum(sig) > 0 & sub == "IR57", 6, 0))))))) %>%
+  mutate(sub = factor(sub, levels = c("IR9", "IR10", "IR16", "IR28", "IR35", "IR57"))) %>%
+  arrange(sub)
+
+# write_csv #
+write_csv(sig_cing_elecs, path(here(), "figures", "anat_values", "cingulate_pres_adv_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_cingulate_pres_adv_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_cingulate_pres_adv_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_cingulate_pres_adv_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_cingulate_pres_adv_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_cingulate_pres_adv_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_cingulate_pres_adv_ineq_sig_hfa_electrodes.csv"))
+  
+# left #
+PVAL <- .05
+sig_cing_elecs <- cingulate_regressions %>%
+  filter(lat == "L") %>%
+  filter(epoch == "presentation") %>%
+  filter(predictor == "ineq_advent") %>%
+  filter(values > 0) %>%
+  select(sub, electrode, values, perm_p, epoch, predictor) %>%
+  distinct() %>%
+  mutate(sig = if_else(perm_p < PVAL, 1, 0)) %>%
+  group_by(sub, electrode) %>%
+  mutate(cing_pvals = if_else(sum(sig) > 0 & sub == "IR9", 1, 
+                          if_else(sum(sig) > 0L & sub == "IR10", 2, 
+                                  if_else(sum(sig) > 0 & sub == "IR16", 3,
+                                          if_else(sum(sig) > 0 & sub == "IR28", 4,
+                                                  if_else(sum(sig) > 0 & sub == "IR35", 5,
+                                                          if_else(sum(sig) > 0 & sub == "IR57", 6, 0))))))) %>%
+  mutate(sub = factor(sub, levels = c("IR9", "IR10", "IR16", "IR28", "IR35", "IR57"))) %>%
+  arrange(sub)
+
+# write_csv #
+write_csv(sig_cing_elecs, path(here(), "figures", "anat_values", "cingulate_l_pres_adv_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_cingulate_l_pres_adv_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_cingulate_l_pres_adv_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_cingulate_l_pres_adv_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_cingulate_l_pres_adv_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_cingulate_l_pres_adv_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_cingulate_l_pres_adv_ineq_sig_hfa_electrodes.csv"))
+  
+# right #
+PVAL <- .05
+sig_cing_elecs <- cingulate_regressions %>%
+  filter(lat == "R") %>%
+  filter(epoch == "presentation") %>%
+  filter(predictor == "ineq_advent") %>%
+  filter(values > 0) %>%
+  select(sub, electrode, values, perm_p, epoch, predictor) %>%
+  distinct() %>%
+  mutate(sig = if_else(perm_p < PVAL, 1, 0)) %>%
+  group_by(sub, electrode) %>%
+  mutate(cing_pvals = if_else(sum(sig) > 0 & sub == "IR9", 1, 
+                          if_else(sum(sig) > 0L & sub == "IR10", 2, 
+                                  if_else(sum(sig) > 0 & sub == "IR16", 3,
+                                          if_else(sum(sig) > 0 & sub == "IR28", 4,
+                                                  if_else(sum(sig) > 0 & sub == "IR35", 5,
+                                                          if_else(sum(sig) > 0 & sub == "IR57", 6, 0))))))) %>%
+  mutate(sub = factor(sub, levels = c("IR9", "IR10", "IR16", "IR28", "IR35", "IR57"))) %>%
+  arrange(sub)
+
+# write_csv #
+write_csv(sig_cing_elecs, path(here(), "figures", "anat_values", "cingulate_r_pres_adv_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_cingulate_r_pres_adv_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_cingulate_r_pres_adv_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_cingulate_r_pres_adv_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_cingulate_r_pres_adv_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_cingulate_r_pres_adv_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_cingulate_r_pres_adv_ineq_sig_hfa_electrodes.csv"))
+ 
+  
+  
+```
+
+```{r self_payoff-sig-cing}
+
+### filter to signifcant cingulate ###
+# any cingulate across all conditions-- all elecs are sig #
+PVAL <- .05
+sig_cing_elecs <- cingulate_regressions %>%
+  filter(epoch == "presentation") %>%
+  filter(predictor == "self_payoff") %>%
+  filter(values > 0) %>%
+  select(sub, electrode, values, perm_p, epoch, predictor) %>%
+  distinct() %>%
+  mutate(sig = if_else(perm_p < PVAL, 1, 0)) %>%
+  group_by(sub, electrode) %>%
+  mutate(cing_pvals = if_else(sum(sig) > 0 & sub == "IR9", 1, 
+                          if_else(sum(sig) > 0L & sub == "IR10", 2, 
+                                  if_else(sum(sig) > 0 & sub == "IR16", 3,
+                                          if_else(sum(sig) > 0 & sub == "IR28", 4,
+                                                  if_else(sum(sig) > 0 & sub == "IR35", 5,
+                                                          if_else(sum(sig) > 0 & sub == "IR57", 6, 0))))))) %>%
+  mutate(sub = factor(sub, levels = c("IR9", "IR10", "IR16", "IR28", "IR35", "IR57"))) %>%
+  arrange(sub)
+
+# write_csv #
+write_csv(sig_cing_elecs, path(here(), "figures", "anat_values", "cingulate_pres_self_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_cingulate_pres_self_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_cingulate_pres_self_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_cingulate_pres_self_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_cingulate_pres_self_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_cingulate_pres_self_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_cingulate_pres_self_payoff_sig_hfa_electrodes.csv"))
+  
+  
+# left #
+PVAL <- .05
+sig_cing_elecs <- cingulate_regressions %>%
+  filter(lat == "L") %>%
+  filter(epoch == "presentation") %>%
+  filter(predictor == "self_payoff") %>%
+  filter(values > 0) %>%
+  select(sub, electrode, values, perm_p, epoch, predictor) %>%
+  distinct() %>%
+  mutate(sig = if_else(perm_p < PVAL, 1, 0)) %>%
+  group_by(sub, electrode) %>%
+  mutate(cing_pvals = if_else(sum(sig) > 0 & sub == "IR9", 1, 
+                          if_else(sum(sig) > 0L & sub == "IR10", 2, 
+                                  if_else(sum(sig) > 0 & sub == "IR16", 3,
+                                          if_else(sum(sig) > 0 & sub == "IR28", 4,
+                                                  if_else(sum(sig) > 0 & sub == "IR35", 5,
+                                                          if_else(sum(sig) > 0 & sub == "IR57", 6, 0))))))) %>%
+  mutate(sub = factor(sub, levels = c("IR9", "IR10", "IR16", "IR28", "IR35", "IR57"))) %>%
+  arrange(sub)
+
+# write_csv #
+write_csv(sig_cing_elecs, path(here(), "figures", "anat_values", "cingulate_l_pres_self_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_cingulate_l_pres_self_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_cingulate_l_pres_self_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_cingulate_l_pres_self_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_cingulate_l_pres_self_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_cingulate_l_pres_self_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_cingulate_l_pres_self_payoff_sig_hfa_electrodes.csv"))
+  
+# right #
+PVAL <- .05
+sig_cing_elecs <- cingulate_regressions %>%
+  filter(lat == "R") %>%
+  filter(epoch == "presentation") %>%
+  filter(predictor == "self_payoff") %>%
+  filter(values > 0) %>%
+  select(sub, electrode, values, perm_p, epoch, predictor) %>%
+  distinct() %>%
+  mutate(sig = if_else(perm_p < PVAL, 1, 0)) %>%
+  group_by(sub, electrode) %>%
+  mutate(cing_pvals = if_else(sum(sig) > 0 & sub == "IR9", 1, 
+                          if_else(sum(sig) > 0L & sub == "IR10", 2, 
+                                  if_else(sum(sig) > 0 & sub == "IR16", 3,
+                                          if_else(sum(sig) > 0 & sub == "IR28", 4,
+                                                  if_else(sum(sig) > 0 & sub == "IR35", 5,
+                                                          if_else(sum(sig) > 0 & sub == "IR57", 6, 0))))))) %>%
+  mutate(sub = factor(sub, levels = c("IR9", "IR10", "IR16", "IR28", "IR35", "IR57"))) %>%
+  arrange(sub)
+
+# write_csv #
+write_csv(sig_cing_elecs, path(here(), "figures", "anat_values", "cingulate_r_pres_self_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_cingulate_r_pres_self_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_cingulate_r_pres_self_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_cingulate_r_pres_self_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_cingulate_r_pres_self_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_cingulate_r_pres_self_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_cingulate_r_pres_self_payoff_sig_hfa_electrodes.csv"))
+ 
+    
+  
+```
+
+```{r other_payoff-sig-cing}
+
+### filter to signifcant cingulate ###
+# any cingulate across all conditions-- all elecs are sig #
+PVAL <- .05
+sig_cing_elecs <- cingulate_regressions %>%
+  filter(epoch == "presentation") %>%
+  filter(predictor == "other_payoff") %>%
+  filter(values > 0) %>%
+  select(sub, electrode, values, perm_p, epoch, predictor) %>%
+  distinct() %>%
+  mutate(sig = if_else(perm_p < PVAL, 1, 0)) %>%
+  group_by(sub, electrode) %>%
+  mutate(cing_pvals = if_else(sum(sig) > 0 & sub == "IR9", 1, 
+                          if_else(sum(sig) > 0L & sub == "IR10", 2, 
+                                  if_else(sum(sig) > 0 & sub == "IR16", 3,
+                                          if_else(sum(sig) > 0 & sub == "IR28", 4,
+                                                  if_else(sum(sig) > 0 & sub == "IR35", 5,
+                                                          if_else(sum(sig) > 0 & sub == "IR57", 6, 0))))))) %>%
+  mutate(sub = factor(sub, levels = c("IR9", "IR10", "IR16", "IR28", "IR35", "IR57"))) %>%
+  arrange(sub)
+
+# write_csv #
+write_csv(sig_cing_elecs, path(here(), "figures", "anat_values", "cingulate_pres_other_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_cingulate_pres_other_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_cingulate_pres_other_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_cingulate_pres_other_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_cingulate_pres_other_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_cingulate_pres_other_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_cingulate_pres_other_payoff_sig_hfa_electrodes.csv"))
+  
+# left #
+PVAL <- .05
+sig_cing_elecs <- cingulate_regressions %>%
+  filter(lat == "L") %>%
+  filter(epoch == "presentation") %>%
+  filter(predictor == "other_payoff") %>%
+  filter(values > 0) %>%
+  select(sub, electrode, values, perm_p, epoch, predictor) %>%
+  distinct() %>%
+  mutate(sig = if_else(perm_p < PVAL, 1, 0)) %>%
+  group_by(sub, electrode) %>%
+  mutate(cing_pvals = if_else(sum(sig) > 0 & sub == "IR9", 1, 
+                          if_else(sum(sig) > 0L & sub == "IR10", 2, 
+                                  if_else(sum(sig) > 0 & sub == "IR16", 3,
+                                          if_else(sum(sig) > 0 & sub == "IR28", 4,
+                                                  if_else(sum(sig) > 0 & sub == "IR35", 5,
+                                                          if_else(sum(sig) > 0 & sub == "IR57", 6, 0))))))) %>%
+  mutate(sub = factor(sub, levels = c("IR9", "IR10", "IR16", "IR28", "IR35", "IR57"))) %>%
+  arrange(sub)
+
+# write_csv #
+write_csv(sig_cing_elecs, path(here(), "figures", "anat_values", "cingulate_l_pres_other_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_cingulate_l_pres_other_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_cingulate_l_pres_other_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_cingulate_l_pres_other_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_cingulate_l_pres_other_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_cingulate_l_pres_other_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_cingulate_l_pres_other_payoff_sig_hfa_electrodes.csv"))
+  
+# right #
+PVAL <- .05
+sig_cing_elecs <- cingulate_regressions %>%
+  filter(lat == "R") %>%
+  filter(epoch == "presentation") %>%
+  filter(predictor == "other_payoff") %>%
+  filter(values > 0) %>%
+  select(sub, electrode, values, perm_p, epoch, predictor) %>%
+  distinct() %>%
+  mutate(sig = if_else(perm_p < PVAL, 1, 0)) %>%
+  group_by(sub, electrode) %>%
+  mutate(cing_pvals = if_else(sum(sig) > 0 & sub == "IR9", 1, 
+                          if_else(sum(sig) > 0L & sub == "IR10", 2, 
+                                  if_else(sum(sig) > 0 & sub == "IR16", 3,
+                                          if_else(sum(sig) > 0 & sub == "IR28", 4,
+                                                  if_else(sum(sig) > 0 & sub == "IR35", 5,
+                                                          if_else(sum(sig) > 0 & sub == "IR57", 6, 0))))))) %>%
+  mutate(sub = factor(sub, levels = c("IR9", "IR10", "IR16", "IR28", "IR35", "IR57"))) %>%
+  arrange(sub)
+
+# write_csv #
+write_csv(sig_cing_elecs, path(here(), "figures", "anat_values", "cingulate_r_pres_other_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_cingulate_r_pres_other_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_cingulate_r_pres_other_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_cingulate_r_pres_other_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_cingulate_r_pres_other_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_cingulate_r_pres_other_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_cingulate_r_pres_other_payoff_sig_hfa_electrodes.csv"))
+ 
+    
+  
+  
+```
+
+## Choice
+
+```{r dis-ineq-sig-cing-choice}
+
+### filter to signifcant cingulate ###
+# bilateral #
+PVAL <- .05
+sig_cing_elecs <- cingulate_regressions %>%
+  filter(epoch == "choice") %>%
+  filter(predictor == "ineq_disadvent") %>%
+  filter(values > 0) %>%
+  select(sub, electrode, values, perm_p, epoch, predictor) %>%
+  distinct() %>%
+  mutate(sig = if_else(perm_p < PVAL, 1, 0)) %>%
+  group_by(sub, electrode) %>%
+  mutate(cing_pvals = if_else(sum(sig) > 0 & sub == "IR9", 1, 
+                          if_else(sum(sig) > 0L & sub == "IR10", 2, 
+                                  if_else(sum(sig) > 0 & sub == "IR16", 3,
+                                          if_else(sum(sig) > 0 & sub == "IR28", 4,
+                                                  if_else(sum(sig) > 0 & sub == "IR35", 5,
+                                                          if_else(sum(sig) > 0 & sub == "IR57", 6, 0))))))) %>%
+  mutate(sub = factor(sub, levels = c("IR9", "IR10", "IR16", "IR28", "IR35", "IR57"))) %>%
+  arrange(sub)
+
+# write_csv #
+write_csv(sig_cing_elecs, path(here(), "figures", "anat_values", "cingulate_choice_dis_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_cingulate_choice_dis_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_cingulate_choice_dis_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_cingulate_choice_dis_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_cingulate_choice_dis_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_cingulate_choice_dis_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_cingulate_choice_dis_ineq_sig_hfa_electrodes.csv"))
+  
+  
+# left #
+PVAL <- .05
+sig_cing_elecs <- cingulate_regressions %>%
+  filter(lat == "L") %>%
+  filter(epoch == "choice") %>%
+  filter(predictor == "ineq_disadvent") %>%
+  filter(values > 0) %>%
+  select(sub, electrode, values, perm_p, epoch, predictor) %>%
+  distinct() %>%
+  mutate(sig = if_else(perm_p < PVAL, 1, 0)) %>%
+  group_by(sub, electrode) %>%
+  mutate(cing_pvals = if_else(sum(sig) > 0 & sub == "IR9", 1, 
+                          if_else(sum(sig) > 0L & sub == "IR10", 2, 
+                                  if_else(sum(sig) > 0 & sub == "IR16", 3,
+                                          if_else(sum(sig) > 0 & sub == "IR28", 4,
+                                                  if_else(sum(sig) > 0 & sub == "IR35", 5,
+                                                          if_else(sum(sig) > 0 & sub == "IR57", 6, 0))))))) %>%
+  mutate(sub = factor(sub, levels = c("IR9", "IR10", "IR16", "IR28", "IR35", "IR57"))) %>%
+  arrange(sub)
+
+# write_csv #
+write_csv(sig_cing_elecs, path(here(), "figures", "anat_values", "cingulate_l_choice_dis_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_cingulate_l_choice_dis_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_cingulate_l_choice_dis_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_cingulate_l_choice_dis_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_cingulate_l_choice_dis_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_cingulate_l_choice_dis_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_cingulate_l_choice_dis_ineq_sig_hfa_electrodes.csv"))
+  
+# right #
+PVAL <- .05
+sig_cing_elecs <- cingulate_regressions %>%
+  filter(lat == "R") %>%
+  filter(epoch == "choice") %>%
+  filter(predictor == "ineq_disadvent") %>%
+  filter(values > 0) %>%
+  select(sub, electrode, values, perm_p, epoch, predictor) %>%
+  distinct() %>%
+  mutate(sig = if_else(perm_p < PVAL, 1, 0)) %>%
+  group_by(sub, electrode) %>%
+  mutate(cing_pvals = if_else(sum(sig) > 0 & sub == "IR9", 1, 
+                          if_else(sum(sig) > 0L & sub == "IR10", 2, 
+                                  if_else(sum(sig) > 0 & sub == "IR16", 3,
+                                          if_else(sum(sig) > 0 & sub == "IR28", 4,
+                                                  if_else(sum(sig) > 0 & sub == "IR35", 5,
+                                                          if_else(sum(sig) > 0 & sub == "IR57", 6, 0))))))) %>%
+  mutate(sub = factor(sub, levels = c("IR9", "IR10", "IR16", "IR28", "IR35", "IR57"))) %>%
+  arrange(sub)
+
+# write_csv #
+write_csv(sig_cing_elecs, path(here(), "figures", "anat_values", "cingulate_r_choice_dis_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_cingulate_r_choice_dis_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_cingulate_r_choice_dis_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_cingulate_r_choice_dis_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_cingulate_r_choice_dis_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_cingulate_r_choice_dis_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_cingulate_r_choice_dis_ineq_sig_hfa_electrodes.csv"))
+  
+```
+
+```{r adv-ineq-sig-cing-choice}
+
+### filter to signifcant cingulate ###
+# any cingulate across all conditions-- all elecs are sig #
+PVAL <- .05
+sig_cing_elecs <- cingulate_regressions %>%
+  filter(epoch == "choice") %>%
+  filter(predictor == "ineq_advent") %>%
+  filter(values > 0) %>%
+  select(sub, electrode, values, perm_p, epoch, predictor) %>%
+  distinct() %>%
+  mutate(sig = if_else(perm_p < PVAL, 1, 0)) %>%
+  group_by(sub, electrode) %>%
+  mutate(cing_pvals = if_else(sum(sig) > 0 & sub == "IR9", 1, 
+                          if_else(sum(sig) > 0L & sub == "IR10", 2, 
+                                  if_else(sum(sig) > 0 & sub == "IR16", 3,
+                                          if_else(sum(sig) > 0 & sub == "IR28", 4,
+                                                  if_else(sum(sig) > 0 & sub == "IR35", 5,
+                                                          if_else(sum(sig) > 0 & sub == "IR57", 6, 0))))))) %>%
+  mutate(sub = factor(sub, levels = c("IR9", "IR10", "IR16", "IR28", "IR35", "IR57"))) %>%
+  arrange(sub)
+
+# write_csv #
+write_csv(sig_cing_elecs, path(here(), "figures", "anat_values", "cingulate_choice_adv_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_cingulate_choice_adv_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_cingulate_choice_adv_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_cingulate_choice_adv_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_cingulate_choice_adv_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_cingulate_choice_adv_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_cingulate_choice_adv_ineq_sig_hfa_electrodes.csv"))
+  
+# left #
+PVAL <- .05
+sig_cing_elecs <- cingulate_regressions %>%
+  filter(lat == "L") %>%
+  filter(epoch == "choice") %>%
+  filter(predictor == "ineq_advent") %>%
+  filter(values > 0) %>%
+  select(sub, electrode, values, perm_p, epoch, predictor) %>%
+  distinct() %>%
+  mutate(sig = if_else(perm_p < PVAL, 1, 0)) %>%
+  group_by(sub, electrode) %>%
+  mutate(cing_pvals = if_else(sum(sig) > 0 & sub == "IR9", 1, 
+                          if_else(sum(sig) > 0L & sub == "IR10", 2, 
+                                  if_else(sum(sig) > 0 & sub == "IR16", 3,
+                                          if_else(sum(sig) > 0 & sub == "IR28", 4,
+                                                  if_else(sum(sig) > 0 & sub == "IR35", 5,
+                                                          if_else(sum(sig) > 0 & sub == "IR57", 6, 0))))))) %>%
+  mutate(sub = factor(sub, levels = c("IR9", "IR10", "IR16", "IR28", "IR35", "IR57"))) %>%
+  arrange(sub)
+
+# write_csv #
+write_csv(sig_cing_elecs, path(here(), "figures", "anat_values", "cingulate_l_choice_adv_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_cingulate_l_choice_adv_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_cingulate_l_choice_adv_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_cingulate_l_choice_adv_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_cingulate_l_choice_adv_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_cingulate_l_choice_adv_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_cingulate_l_choice_adv_ineq_sig_hfa_electrodes.csv"))
+  
+# right #
+PVAL <- .05
+sig_cing_elecs <- cingulate_regressions %>%
+  filter(lat == "R") %>%
+  filter(epoch == "choice") %>%
+  filter(predictor == "ineq_advent") %>%
+  filter(values > 0) %>%
+  select(sub, electrode, values, perm_p, epoch, predictor) %>%
+  distinct() %>%
+  mutate(sig = if_else(perm_p < PVAL, 1, 0)) %>%
+  group_by(sub, electrode) %>%
+  mutate(cing_pvals = if_else(sum(sig) > 0 & sub == "IR9", 1, 
+                          if_else(sum(sig) > 0L & sub == "IR10", 2, 
+                                  if_else(sum(sig) > 0 & sub == "IR16", 3,
+                                          if_else(sum(sig) > 0 & sub == "IR28", 4,
+                                                  if_else(sum(sig) > 0 & sub == "IR35", 5,
+                                                          if_else(sum(sig) > 0 & sub == "IR57", 6, 0))))))) %>%
+  mutate(sub = factor(sub, levels = c("IR9", "IR10", "IR16", "IR28", "IR35", "IR57"))) %>%
+  arrange(sub)
+
+# write_csv #
+write_csv(sig_cing_elecs, path(here(), "figures", "anat_values", "cingulate_r_choice_adv_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_cingulate_r_choice_adv_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_cingulate_r_choice_adv_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_cingulate_r_choice_adv_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_cingulate_r_choice_adv_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_cingulate_r_choice_adv_ineq_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_cingulate_r_choice_adv_ineq_sig_hfa_electrodes.csv"))
+ 
+  
+  
+```
+
+```{r self_payoff-sig-cing-choice}
+
+### filter to signifcant cingulate ###
+# any cingulate across all conditions-- all elecs are sig #
+PVAL <- .05
+sig_cing_elecs <- cingulate_regressions %>%
+  filter(epoch == "choice") %>%
+  filter(predictor == "self_payoff") %>%
+  filter(values > 0) %>%
+  select(sub, electrode, values, perm_p, epoch, predictor) %>%
+  distinct() %>%
+  mutate(sig = if_else(perm_p < PVAL, 1, 0)) %>%
+  group_by(sub, electrode) %>%
+  mutate(cing_pvals = if_else(sum(sig) > 0 & sub == "IR9", 1, 
+                          if_else(sum(sig) > 0L & sub == "IR10", 2, 
+                                  if_else(sum(sig) > 0 & sub == "IR16", 3,
+                                          if_else(sum(sig) > 0 & sub == "IR28", 4,
+                                                  if_else(sum(sig) > 0 & sub == "IR35", 5,
+                                                          if_else(sum(sig) > 0 & sub == "IR57", 6, 0))))))) %>%
+  mutate(sub = factor(sub, levels = c("IR9", "IR10", "IR16", "IR28", "IR35", "IR57"))) %>%
+  arrange(sub)
+
+# write_csv #
+write_csv(sig_cing_elecs, path(here(), "figures", "anat_values", "cingulate_choice_self_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_cingulate_choice_self_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_cingulate_choice_self_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_cingulate_choice_self_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_cingulate_choice_self_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_cingulate_choice_self_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_cingulate_choice_self_payoff_sig_hfa_electrodes.csv"))
+  
+  
+# left #
+PVAL <- .05
+sig_cing_elecs <- cingulate_regressions %>%
+  filter(lat == "L") %>%
+  filter(epoch == "choice") %>%
+  filter(predictor == "self_payoff") %>%
+  filter(values > 0) %>%
+  select(sub, electrode, values, perm_p, epoch, predictor) %>%
+  distinct() %>%
+  mutate(sig = if_else(perm_p < PVAL, 1, 0)) %>%
+  group_by(sub, electrode) %>%
+  mutate(cing_pvals = if_else(sum(sig) > 0 & sub == "IR9", 1, 
+                          if_else(sum(sig) > 0L & sub == "IR10", 2, 
+                                  if_else(sum(sig) > 0 & sub == "IR16", 3,
+                                          if_else(sum(sig) > 0 & sub == "IR28", 4,
+                                                  if_else(sum(sig) > 0 & sub == "IR35", 5,
+                                                          if_else(sum(sig) > 0 & sub == "IR57", 6, 0))))))) %>%
+  mutate(sub = factor(sub, levels = c("IR9", "IR10", "IR16", "IR28", "IR35", "IR57"))) %>%
+  arrange(sub)
+
+# write_csv #
+write_csv(sig_cing_elecs, path(here(), "figures", "anat_values", "cingulate_l_choice_self_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_cingulate_l_choice_self_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_cingulate_l_choice_self_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_cingulate_l_choice_self_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_cingulate_l_choice_self_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_cingulate_l_choice_self_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_cingulate_l_choice_self_payoff_sig_hfa_electrodes.csv"))
+  
+# right #
+PVAL <- .05
+sig_cing_elecs <- cingulate_regressions %>%
+  filter(lat == "R") %>%
+  filter(epoch == "choice") %>%
+  filter(predictor == "self_payoff") %>%
+  filter(values > 0) %>%
+  select(sub, electrode, values, perm_p, epoch, predictor) %>%
+  distinct() %>%
+  mutate(sig = if_else(perm_p < PVAL, 1, 0)) %>%
+  group_by(sub, electrode) %>%
+  mutate(cing_pvals = if_else(sum(sig) > 0 & sub == "IR9", 1, 
+                          if_else(sum(sig) > 0L & sub == "IR10", 2, 
+                                  if_else(sum(sig) > 0 & sub == "IR16", 3,
+                                          if_else(sum(sig) > 0 & sub == "IR28", 4,
+                                                  if_else(sum(sig) > 0 & sub == "IR35", 5,
+                                                          if_else(sum(sig) > 0 & sub == "IR57", 6, 0))))))) %>%
+  mutate(sub = factor(sub, levels = c("IR9", "IR10", "IR16", "IR28", "IR35", "IR57"))) %>%
+  arrange(sub)
+
+# write_csv #
+write_csv(sig_cing_elecs, path(here(), "figures", "anat_values", "cingulate_r_choice_self_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_cingulate_r_choice_self_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_cingulate_r_choice_self_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_cingulate_r_choice_self_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_cingulate_r_choice_self_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_cingulate_r_choice_self_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_cingulate_r_choice_self_payoff_sig_hfa_electrodes.csv"))
+ 
+    
+  
+```
+
+```{r other_payoff-sig-cing-choice}
+
+### filter to signifcant cingulate ###
+# any cingulate across all conditions-- all elecs are sig #
+PVAL <- .05
+sig_cing_elecs <- cingulate_regressions %>%
+  filter(epoch == "choice") %>%
+  filter(predictor == "other_payoff") %>%
+  filter(values > 0) %>%
+  select(sub, electrode, values, perm_p, epoch, predictor) %>%
+  distinct() %>%
+  mutate(sig = if_else(perm_p < PVAL, 1, 0)) %>%
+  group_by(sub, electrode) %>%
+  mutate(cing_pvals = if_else(sum(sig) > 0 & sub == "IR9", 1, 
+                          if_else(sum(sig) > 0L & sub == "IR10", 2, 
+                                  if_else(sum(sig) > 0 & sub == "IR16", 3,
+                                          if_else(sum(sig) > 0 & sub == "IR28", 4,
+                                                  if_else(sum(sig) > 0 & sub == "IR35", 5,
+                                                          if_else(sum(sig) > 0 & sub == "IR57", 6, 0))))))) %>%
+  mutate(sub = factor(sub, levels = c("IR9", "IR10", "IR16", "IR28", "IR35", "IR57"))) %>%
+  arrange(sub)
+
+# write_csv #
+write_csv(sig_cing_elecs, path(here(), "figures", "anat_values", "cingulate_choice_other_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_cingulate_choice_other_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_cingulate_choice_other_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_cingulate_choice_other_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_cingulate_choice_other_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_cingulate_choice_other_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_cingulate_choice_other_payoff_sig_hfa_electrodes.csv"))
+  
+# left #
+PVAL <- .05
+sig_cing_elecs <- cingulate_regressions %>%
+  filter(lat == "L") %>%
+  filter(epoch == "choice") %>%
+  filter(predictor == "other_payoff") %>%
+  filter(values > 0) %>%
+  select(sub, electrode, values, perm_p, epoch, predictor) %>%
+  distinct() %>%
+  mutate(sig = if_else(perm_p < PVAL, 1, 0)) %>%
+  group_by(sub, electrode) %>%
+  mutate(cing_pvals = if_else(sum(sig) > 0 & sub == "IR9", 1, 
+                          if_else(sum(sig) > 0L & sub == "IR10", 2, 
+                                  if_else(sum(sig) > 0 & sub == "IR16", 3,
+                                          if_else(sum(sig) > 0 & sub == "IR28", 4,
+                                                  if_else(sum(sig) > 0 & sub == "IR35", 5,
+                                                          if_else(sum(sig) > 0 & sub == "IR57", 6, 0))))))) %>%
+  mutate(sub = factor(sub, levels = c("IR9", "IR10", "IR16", "IR28", "IR35", "IR57"))) %>%
+  arrange(sub)
+
+# write_csv #
+write_csv(sig_cing_elecs, path(here(), "figures", "anat_values", "cingulate_l_choice_other_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_cingulate_l_choice_other_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_cingulate_l_choice_other_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_cingulate_l_choice_other_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_cingulate_l_choice_other_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_cingulate_l_choice_other_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_cingulate_l_choice_other_payoff_sig_hfa_electrodes.csv"))
+  
+# right #
+PVAL <- .05
+sig_cing_elecs <- cingulate_regressions %>%
+  filter(lat == "R") %>%
+  filter(epoch == "choice") %>%
+  filter(predictor == "other_payoff") %>%
+  filter(values > 0) %>%
+  select(-bin, -p, -Fstat, -Beta, -R2) %>%
+  # select(sub, electrode, values, perm_p, epoch, predictor) %>%
+  distinct() %>%
+  mutate(sig = if_else(perm_p < PVAL, 1, 0)) %>%
+  group_by(sub, electrode) %>%
+  mutate(cing_pvals = if_else(sum(sig) > 0 & sub == "IR9", 1, 
+                          if_else(sum(sig) > 0L & sub == "IR10", 2, 
+                                  if_else(sum(sig) > 0 & sub == "IR16", 3,
+                                          if_else(sum(sig) > 0 & sub == "IR28", 4,
+                                                  if_else(sum(sig) > 0 & sub == "IR35", 5,
+                                                          if_else(sum(sig) > 0 & sub == "IR57", 6, 0))))))) %>%
+  mutate(sub = factor(sub, levels = c("IR9", "IR10", "IR16", "IR28", "IR35", "IR57"))) %>%
+  arrange(sub)
+
+# write_csv #
+write_csv(sig_cing_elecs, path(here(), "figures", "anat_values", "cingulate_r_choice_other_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_cingulate_r_choice_other_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_cingulate_r_choice_other_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_cingulate_r_choice_other_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_cingulate_r_choice_other_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_cingulate_r_choice_other_payoff_sig_hfa_electrodes.csv"))
+write_csv(sig_cing_elecs %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_cingulate_r_choice_other_payoff_sig_hfa_electrodes.csv"))
+ 
+    
+  
+  
+```
+
+
