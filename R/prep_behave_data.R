@@ -15,6 +15,7 @@ prep_behave_data = function(path_to_behave_munge){
     mutate(ineq_var_abs = abs(self_var_payoff - other_var_payoff)) %>%
     mutate(ineq_choice_abs = abs(self_payoff - other_payoff)) %>%
     mutate(ineq_foregone_abs = abs(self_foregone - other_foregone)) %>%
+    mutate(ineq_foregone = other_foregone - self_foregone) %>%
     mutate(ineq_disadvent = (as.numeric(other_var_payoff > self_var_payoff)) * (other_var_payoff - self_var_payoff)) %>%
     mutate(ineq_advent = (as.numeric(other_var_payoff < self_var_payoff)) * (other_var_payoff - self_var_payoff)) %>%
     mutate(ineq_disadvent_choice = (as.numeric(other_payoff > self_payoff)) * (other_payoff - self_payoff)) %>%
