@@ -115,7 +115,7 @@ run_permuted_multiple_regressions_par <- function(brain_behave_data, electrodes,
     
     
     # save results to results folder #
-    write.csv(results, path(here(), "results", sub, "insula", paste0(region_name, "_", elec, "_", regressor, "_", tag, "_results.csv")))
+    write.csv(results, path(here(), "results", sub, "insula", paste0(region_name, "_", elec, "_", reg_1, "_", reg_2, "_", tag, "_results.csv")))
     
   }
   
