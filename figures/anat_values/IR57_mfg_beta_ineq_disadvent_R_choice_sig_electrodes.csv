@@ -1,0 +1,17 @@
+sub,electrode,values,perm_p,epoch,predictor,sig,cing_pvals
+IR57,RAC7-RAC8,7,2,choice,ineq_disadvent,0,0
+IR57,RAC8-RAC9,7,2,choice,ineq_disadvent,0,0
+IR57,RIN7-RIN8,7,0.003,choice,ineq_disadvent,1,7
+IR57,RIN8-RIN9,7,0.009,choice,ineq_disadvent,1,7
+IR57,RIN9-RIN10,7,2,choice,ineq_disadvent,0,0
+IR57,ROF7-ROF8,7,2,choice,ineq_disadvent,0,0
+IR57,ROF8-ROF9,7,2,choice,ineq_disadvent,0,0
+IR57,ROF9-ROF10,7,0.002,choice,ineq_disadvent,1,7
+IR57,RSM3-RSM4,7,2,choice,ineq_disadvent,0,0
+IR57,RSM4-RSM5,7,0.008,choice,ineq_disadvent,1,7
+IR57,RSM5-RSM6,7,0,choice,ineq_disadvent,1,7
+IR57,RSM6-RSM7,7,0,choice,ineq_disadvent,1,7
+IR57,RSM7-RSM8,7,0,choice,ineq_disadvent,1,7
+IR57,RTI7-RTI8,7,2,choice,ineq_disadvent,0,0
+IR57,RTI8-RTI9,7,2,choice,ineq_disadvent,0,0
+IR57,RTI9-RTI10,7,0.022,choice,ineq_disadvent,0,0

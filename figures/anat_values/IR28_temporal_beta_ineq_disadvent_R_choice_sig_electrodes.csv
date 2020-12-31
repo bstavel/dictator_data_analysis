@@ -1,0 +1,10 @@
+sub,electrode,values,perm_p,epoch,predictor,sig,cing_pvals
+IR28,LAM5-LAM6,5,2,choice,ineq_disadvent,0,0
+IR28,LAM6-LAM7,5,2,choice,ineq_disadvent,0,0
+IR28,LAM7-LAM8,5,0,choice,ineq_disadvent,1,5
+IR28,LHH5-LHH6,5,2,choice,ineq_disadvent,0,0
+IR28,LHH6-LHH7,5,2,choice,ineq_disadvent,0,0
+IR28,LHH7-LHH8,5,0.025,choice,ineq_disadvent,0,0
+IR28,LHH8-LHH9,5,0.001,choice,ineq_disadvent,1,5
+IR28,LTH7-LTH8,5,0,choice,ineq_disadvent,1,5
+IR28,LTH8-LTH9,5,0.137,choice,ineq_disadvent,0,0

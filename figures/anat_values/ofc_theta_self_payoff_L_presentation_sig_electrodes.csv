@@ -1,0 +1,11 @@
+sub,electrode,values,perm_p,epoch,predictor,sig,cing_pvals
+IR10,LOF11-LOF12,2,2,presentation,self_payoff,0,0
+IR16,LOF1-LOF2,3,2,presentation,self_payoff,0,0
+IR16,LOF2-LOF3,3,0.114,presentation,self_payoff,0,0
+IR16,LOF3-LOF4,3,0,presentation,self_payoff,1,3
+IR28,ROF1-ROF2,5,2,presentation,self_payoff,0,0
+IR35,LOF1-LOF2,6,0.083,presentation,self_payoff,0,0
+IR35,LOF2-LOF3,6,2,presentation,self_payoff,0,0
+IR35,LOF3-LOF4,6,2,presentation,self_payoff,0,0
+IR57,LOF2-LOF3,7,2,presentation,self_payoff,0,0
+IR57,LOF3-LOF4,7,2,presentation,self_payoff,0,0

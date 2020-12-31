@@ -1,0 +1,3 @@
+sub,electrode,values,perm_p,epoch,predictor,sig,cing_pvals
+IR9,RHD4-RHD5,1,2,choice,self_payoff,0,0
+IR9,RHD5-RHD6,1,0.004,choice,self_payoff,1,1

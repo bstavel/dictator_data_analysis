@@ -1,0 +1,8 @@
+sub,electrode,values,perm_p,epoch,predictor,sig,cing_pvals
+IR35,RIN5-RIN6,6,0,choice,self_payoff,1,6
+IR35,RIN6-RIN7,6,2,choice,self_payoff,0,0
+IR35,RIN7-RIN8,6,0.036,choice,self_payoff,0,0
+IR35,RIN8-RIN9,6,0.027,choice,self_payoff,0,0
+IR35,RIN9-RIN10,6,2,choice,self_payoff,0,0
+IR35,ROF5-ROF6,6,0,choice,self_payoff,1,6
+IR35,ROF6-ROF7,6,2,choice,self_payoff,0,0

@@ -1,0 +1,8 @@
+sub,electrode,values,perm_p,epoch,predictor,sig,cing_pvals
+IR9,ROF1-ROF2,1,0.008,choice,ineq_disadvent,1,1
+IR9,ROF2-ROF3,1,2,choice,ineq_disadvent,0,0
+IR9,ROF3-ROF4,1,0.028,choice,ineq_disadvent,0,0
+IR9,ROF4-ROF5,1,2,choice,ineq_disadvent,0,0
+IR9,ROF5-ROF6,1,2,choice,ineq_disadvent,0,0
+IR9,ROF6-ROF7,1,2,choice,ineq_disadvent,0,0
+IR9,ROF7-ROF8,1,2,choice,ineq_disadvent,0,0

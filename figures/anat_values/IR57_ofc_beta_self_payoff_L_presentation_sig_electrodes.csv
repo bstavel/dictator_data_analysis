@@ -1,0 +1,3 @@
+sub,electrode,values,perm_p,epoch,predictor,sig,cing_pvals
+IR57,LOF2-LOF3,7,2,presentation,self_payoff,0,0
+IR57,LOF3-LOF4,7,2,presentation,self_payoff,0,0

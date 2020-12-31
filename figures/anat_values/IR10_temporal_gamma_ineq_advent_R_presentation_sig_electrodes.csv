@@ -1,0 +1,3 @@
+sub,electrode,values,perm_p,epoch,predictor,sig,cing_pvals
+IR10,RAD6-RAD7,2,0,presentation,ineq_advent,1,2
+IR10,RAD7-RAD8,2,2,presentation,ineq_advent,0,0

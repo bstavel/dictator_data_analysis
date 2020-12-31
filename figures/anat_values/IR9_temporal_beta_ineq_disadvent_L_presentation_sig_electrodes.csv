@@ -1,0 +1,14 @@
+sub,electrode,values,perm_p,epoch,predictor,sig,cing_pvals
+IR9,LAD6-LAD7,1,2,presentation,ineq_disadvent,0,0
+IR9,LAD7-LAD8,1,0.112,presentation,ineq_disadvent,0,0
+IR9,LAD8-LAD9,1,2,presentation,ineq_disadvent,0,0
+IR9,LHD5-LHD6,1,2,presentation,ineq_disadvent,0,0
+IR9,LHD6-LHD7,1,2,presentation,ineq_disadvent,0,0
+IR9,LHD7-LHD8,1,2,presentation,ineq_disadvent,0,0
+IR9,LHD8-LHD9,1,2,presentation,ineq_disadvent,0,0
+IR9,LHD9-LHD10,1,2,presentation,ineq_disadvent,0,0
+IR9,LTHD5-LTHD6,1,2,presentation,ineq_disadvent,0,0
+IR9,LTHD6-LTHD7,1,2,presentation,ineq_disadvent,0,0
+IR9,LTHD7-LTHD8,1,0.002,presentation,ineq_disadvent,1,1
+IR9,LTHD8-LTHD9,1,2,presentation,ineq_disadvent,0,0
+IR9,LTHD9-LTHD10,1,0.008,presentation,ineq_disadvent,0,0

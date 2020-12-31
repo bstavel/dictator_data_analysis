@@ -1,0 +1,17 @@
+sub,electrode,values,perm_p,epoch,predictor,sig,cing_pvals
+IR9,RCD1-RCD2,1,2,choice,ineq_advent,0,0
+IR9,RCD1-RCD2,1,2,choice,ineq_disadvent,0,0
+IR9,RCD1-RCD2,1,2,choice,self_payoff,0,0
+IR9,RCD1-RCD2,1,0.118,presentation,ineq_disadvent,0,0
+IR9,RCD1-RCD2,1,2,presentation,self_payoff,0,0
+IR9,RCD1-RCD2,1,2,choice,other_payoff,0,0
+IR9,RCD1-RCD2,1,2,presentation,ineq_advent,0,0
+IR9,RCD1-RCD2,1,2,presentation,other_payoff,0,0
+IR9,RCD2-RCD3,1,2,presentation,ineq_advent,0,0
+IR9,RCD2-RCD3,1,0.138,presentation,ineq_disadvent,0,0
+IR9,RCD2-RCD3,1,0.014,presentation,other_payoff,0,0
+IR9,RCD2-RCD3,1,2,presentation,self_payoff,0,0
+IR9,RCD2-RCD3,1,2,choice,ineq_disadvent,0,0
+IR9,RCD2-RCD3,1,2,choice,other_payoff,0,0
+IR9,RCD2-RCD3,1,2,choice,self_payoff,0,0
+IR9,RCD2-RCD3,1,2,choice,ineq_advent,0,0

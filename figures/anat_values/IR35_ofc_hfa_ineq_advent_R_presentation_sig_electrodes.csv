@@ -1,0 +1,4 @@
+sub,electrode,values,perm_p,epoch,predictor,sig,cing_pvals
+IR35,ROF1-ROF2,6,2,presentation,ineq_advent,0,0
+IR35,ROF2-ROF3,6,2,presentation,ineq_advent,0,0
+IR35,ROF3-ROF4,6,0.006,presentation,ineq_advent,1,6

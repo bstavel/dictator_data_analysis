@@ -1,0 +1,5 @@
+sub,electrode,values,perm_p,epoch,predictor,sig,cing_pvals
+IR16,LCI1-LCI2,3,0,choice,self_payoff,1,3
+IR16,LCI2-LCI3,3,2,choice,self_payoff,0,0
+IR16,LSM1-LSM2,3,0,choice,self_payoff,1,3
+IR16,LSM2-LSM3,3,0.022,choice,self_payoff,0,0

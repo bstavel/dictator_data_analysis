@@ -1,0 +1,8 @@
+sub,electrode,values,perm_p,epoch,predictor,sig,cing_pvals
+IR57,RAM8-RAM9,7,2,presentation,other_payoff,0,0
+IR57,RHH7-RHH8,7,0.001,presentation,other_payoff,1,7
+IR57,RHH8-RHH9,7,2,presentation,other_payoff,0,0
+IR57,RHH9-RHH10,7,0.015,presentation,other_payoff,0,0
+IR57,RTH5-RTH6,7,2,presentation,other_payoff,0,0
+IR57,RTH6-RTH7,7,2,presentation,other_payoff,0,0
+IR57,RTH7-RTH8,7,2,presentation,other_payoff,0,0

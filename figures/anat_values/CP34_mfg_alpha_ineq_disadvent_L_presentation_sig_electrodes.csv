@@ -1,0 +1,3 @@
+sub,electrode,values,perm_p,epoch,predictor,sig,cing_pvals
+CP34,LIH2-LIH3,8,2,presentation,ineq_disadvent,0,0
+CP34,LIH3-LIH4,8,2,presentation,ineq_disadvent,0,0

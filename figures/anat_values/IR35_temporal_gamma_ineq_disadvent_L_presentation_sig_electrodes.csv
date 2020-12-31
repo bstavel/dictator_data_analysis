@@ -1,0 +1,4 @@
+sub,electrode,values,perm_p,epoch,predictor,sig,cing_pvals
+IR35,LAM5-LAM6,6,0,presentation,ineq_disadvent,1,6
+IR35,LAM6-LAM7,6,0,presentation,ineq_disadvent,1,6
+IR35,LAM7-LAM8,6,2,presentation,ineq_disadvent,0,0

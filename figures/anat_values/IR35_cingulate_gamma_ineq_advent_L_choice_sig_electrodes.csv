@@ -1,0 +1,5 @@
+sub,electrode,values,perm_p,epoch,predictor,sig,cing_pvals
+IR35,LAC1-LAC2,6,2,choice,ineq_advent,0,0
+IR35,LAC2-LAC3,6,0,choice,ineq_advent,1,6
+IR35,LAC3-LAC4,6,2,choice,ineq_advent,0,0
+IR35,LPC1-LPC2,6,2,choice,ineq_advent,0,0

@@ -1,0 +1,111 @@
+---
+title: "Multiple Regression Visualization"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo <- FALSE,  # don't print the code chunk
+  warning <- FALSE,  # don't print warnings
+  message <- FALSE,  # don't print messages
+  fig.width <- 5,  # set default width of figures
+  fig.height <- 8,  # set default height of figures
+  fig.align <- "center",  # always align figure in center
+  fig.pos <- "H",  # always plot figure at the exact location of the code chunk
+  cache <- FALSE)  # cache results
+
+## libraries ##
+library(tidyverse)
+library(ggplot2)
+library(magrittr)
+library(ggthemr)
+library(grid)
+library(gtable)
+library(gridExtra)
+library(wesanderson)
+library(ggsci)
+library(zoo)
+library(kableExtra)
+library(lme4)
+library(RColorBrewer)
+library(doParallel)
+library(parallel)
+library(foreach)
+library(here)
+library(fs)
+library(ggcorrplot)
+library(viridis)
+library(lmtest)
+
+## hand written functions ##
+source(path(here(), "R", "load_behave_data.R"))
+source(path(here(), "R", "prep_behave_data.R"))
+source(path(here(), "R", "stretch_start_end.R"))
+source(path(here(), "R", "load_high_gamma_data.R"))
+source(path(here(), "R", "rolling_window_and_baseline.R"))
+source(path(here(), "R", "run_permuted_regressions.R"))
+source(path(here(), "R", "compile_mult_reg_results.R"))
+source(path(here(), "R", "run_filtered_anova.R"))
+source(path(here(), "R", "merge_stepped_anova_results.R"))
+# source('~/Projects/nice_r_functions/ggpaired_pretty.R')
+source(path(here(), "R", 'mutate_cond.R'))
+
+## plotting helpers ##
+ggthemr("solarized")
+
+## parallelization ##
+nCores <- 2
+registerDoParallel(nCores)
+
+```
+
+
+```{r load-pres-results}
+
+### any subject general vars ###
+spec_vars <- c("*", "*")
+regions_to_combine <- c("All")
+
+
+choice_mult_reg_df <- compile_mult_reg_results(regions = regions_to_combine,
+                                           type = "multiple-theta-choice-locked-hilbertRS",
+                                           sub = "IR35",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR35", "post_eda", "multiple_regressions"))
+
+
+presentation_mult_reg_df <- compile_mult_reg_results(regions = regions_to_combine,
+                                           type = "multiple-theta-pres-locked-hilbertRS",
+                                           sub = "IR35",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR35", "post_eda", "multiple_regressions"))
+
+
+presentation_mult_reg_df %>%
+  filter(perm_p < .05) %>%
+  group_by(predictor) %>%
+  select(electrode, predictor) %>%
+  distinct() %>%
+  add_tally() %>%
+  select(n) %>%
+  kable() %>%
+  kable_styling()
+
+
+tmp <- presentation_mult_reg_df %>%
+  filter(perm_p < .05) %>%
+  group_by(predictor) %>%
+  add_tally() %>%
+  select(n, perm_p, electrode) %>%
+  distinct() %>%
+  mutate(predictor = factor(predictor, levels = tmp$predictor[c(1, 3, 2, 4)]))
+
+
+table(tmp$electrode, tmp$predictor) %>% kable() %>% kable_styling()
+```
+
+
+
+
+
+

@@ -1,0 +1,10 @@
+sub,electrode,values,perm_p,epoch,predictor,sig,cing_pvals
+IR57,LAC1-LAC2,7,2,presentation,ineq_disadvent,0,0
+IR57,LAC2-LAC3,7,0,presentation,ineq_disadvent,1,7
+IR57,LAC3-LAC4,7,0,presentation,ineq_disadvent,1,7
+IR57,LAC4-LAC5,7,0.115,presentation,ineq_disadvent,0,0
+IR57,LSMA1-LSMA2,7,0,presentation,ineq_disadvent,1,7
+IR57,LSMA2-LSMA3,7,0.007,presentation,ineq_disadvent,1,7
+IR57,LSMA3-LSMA4,7,0,presentation,ineq_disadvent,1,7
+IR57,LSMA4-LSMA5,7,0,presentation,ineq_disadvent,1,7
+IR57,LSMA5-LSMA6,7,0.002,presentation,ineq_disadvent,1,7

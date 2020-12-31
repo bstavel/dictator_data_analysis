@@ -1,0 +1,4 @@
+sub,electrode,values,perm_p,epoch,predictor,sig,cing_pvals
+IR57,RAM6-RAM7,7,2,choice,self_payoff,0,0
+IR57,RAM7-RAM8,7,0,choice,self_payoff,1,7
+IR57,RAM8-RAM9,7,2,choice,self_payoff,0,0

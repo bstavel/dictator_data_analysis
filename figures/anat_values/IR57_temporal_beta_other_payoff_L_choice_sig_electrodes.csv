@@ -1,0 +1,4 @@
+sub,electrode,values,perm_p,epoch,predictor,sig,cing_pvals
+IR57,LAM5-LAM6,7,2,choice,other_payoff,0,0
+IR57,LTH8-LTH9,7,2,choice,other_payoff,0,0
+IR57,LTH9-LTH10,7,2,choice,other_payoff,0,0

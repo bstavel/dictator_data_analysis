@@ -1,0 +1,7 @@
+sub,electrode,values,perm_p,epoch,predictor,sig,cing_pvals
+IR16,LAM6-LAM7,3,0.159,presentation,ineq_advent,0,0
+IR16,LHH3-LHH4,3,2,presentation,ineq_advent,0,0
+IR16,LHH4-LHH5,3,0.03,presentation,ineq_advent,0,0
+IR16,LTH4-LTH5,3,2,presentation,ineq_advent,0,0
+IR16,LTH5-LTH6,3,2,presentation,ineq_advent,0,0
+IR16,LTH6-LTH7,3,0,presentation,ineq_advent,1,3

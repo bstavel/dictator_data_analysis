@@ -1,0 +1,7 @@
+sub,electrode,values,perm_p,epoch,predictor,sig,cing_pvals
+IR26,RAM4-RAM5,4,0.101,choice,ineq_advent,0,0
+IR26,RAM5-RAM6,4,2,choice,ineq_advent,0,0
+IR26,RAM6-RAM7,4,0.128,choice,ineq_advent,0,0
+IR26,RHP4-RHP5,4,2,choice,ineq_advent,0,0
+IR26,RHP5-RHP6,4,0,choice,ineq_advent,1,4
+IR26,RHP6-RHP7,4,0,choice,ineq_advent,1,4

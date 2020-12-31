@@ -1,0 +1,7 @@
+sub,electrode,values,perm_p,epoch,predictor,sig,cing_pvals
+IR10,RAC4-RAC5,2,0.16,choice,self_payoff,0,0
+IR10,RAC5-RAC6,2,2,choice,self_payoff,0,0
+IR10,RAC6-RAC7,2,2,choice,self_payoff,0,0
+IR10,RAC7-RAC8,2,0.002,choice,self_payoff,1,2
+IR10,RAC8-RAC9,2,2,choice,self_payoff,0,0
+IR10,ROF1-ROF2,2,2,choice,self_payoff,0,0

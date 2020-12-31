@@ -1,0 +1,4 @@
+sub,electrode,values,perm_p,epoch,predictor,sig,cing_pvals
+IR16,LOF1-LOF2,3,0,presentation,other_payoff,1,3
+IR16,LOF2-LOF3,3,2,presentation,other_payoff,0,0
+IR16,LOF3-LOF4,3,0.091,presentation,other_payoff,0,0

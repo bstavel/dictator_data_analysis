@@ -20,7 +20,7 @@ knitr::opts_chunk$set(
 library(tidyverse)
 library(ggplot2)
 library(magrittr)
-library(ggthemr)
+# library(ggthemr)
 library(grid)
 library(gtable)
 library(gridExtra)
@@ -30,21 +30,41 @@ library(zoo)
 library(kableExtra)
 library(lme4)
 library(RColorBrewer)
-library(lme4)
+library(doParallel)
+library(parallel)
+library(foreach)
 library(here)
 library(fs)
 library(ggcorrplot)
+library(viridis)
+library(lmtest)
 
 ## hand written functions ##
 source(path("R", "load_behave_data.R"))
 source(path("R", "prep_behave_data.R"))
-source('~/Projects/nice_r_functions/ggpaired_pretty.R')
-source('~/Projects/nice_r_functions/mutate_cond.R')
+source(path("R", "stretch_start_end.R"))
+source(path("R", "load_high_gamma_data.R"))
+source(path("R", "rolling_window_and_baseline.R"))
+source(path("R", "run_permuted_regressions.R"))
+source(path("R", "compile_results.R"))
+source(path("R", "run_filtered_anova.R"))
+source(path("R", "merge_stepped_anova_results.R"))
+# source('~/Projects/nice_r_functions/ggpaired_pretty.R')
+source(path("R", 'mutate_cond.R'))
+
+## plotting helpers ##
+# ggthemr("solarized")
+
+## paralellization ##
+nCores <- 2
+registerDoParallel(nCores)
 
 ```
 
 
+
 This script is designed as the skeleton/testing ground for the regression scripts we will use in the main analyses, which will look for electrodes in which high gamma encodes different beavrioal measures from the dictator task. I will start by building some dummy data to play with.
+
 
 ```{r behave-prep}
 
@@ -62,232 +82,588 @@ prep_behave_data(path_to_behave_munge)
 # load clean data #
 behave_data <- read.csv(path_to_behave_clean)
 
+### RT regressions ##
+# Am leaving this here in the hoeps you deal with it
+# advent_ineq.lm  <- lmer(ineq_advent ~ RT + (1|SID), data = behave_data)
+# summary(advent_ineq.lm)
+# se <- sqrt(diag(vcov(advent_ineq.lm)))
+# # table of estimates with 95% CI
+# exp(tab <- cbind(Est = fixef(advent_ineq.lm), LL = fixef(advent_ineq.lm) - 1.96 * se, UL = fixef(advent_ineq.lm) + 1.96 *se))
+
+# filter to current subject #
+behave_data_11 <- behave_data %>% filter(SID == "DG_s11")
+behave_data_12 <- behave_data %>% filter(SID == "DG_s12")
+behave_data_08 <- behave_data %>% filter(SID == "DG_s08")
+
+```
+
+```{r behave-analysis}
+getPalette = colorRampPalette(brewer.pal(12, "Set1"))
+behave_data %>%
+  filter(chose_equality != "Equal") %>%
+  group_by(SID, self_var_payoff) %>%
+  mutate(prob_ten = sum(as.numeric(chose_equality == "10-10"))/length(chose_equality) ) %>%
+  ggplot(., aes(x = self_var_payoff, y = prob_ten, color = SID)) + 
+  geom_point() + 
+  geom_line() +
+  scale_color_manual(values = c("grey", getPalette(12))) +
+  theme(panel.background = element_rect(fill = "white"))
+
+behave_data_12 %>%
+  filter(chose_equality != "Equal") %>%
+  group_by(SID, other_var_payoff) %>%
+  mutate(prob_ten = sum(as.numeric(chose_equality == "10-10"))/length(chose_equality) ) %>%
+  ggplot(., aes(x = other_var_payoff, y = prob_ten, color = SID)) + 
+  geom_point() + 
+  geom_line() +
+  scale_color_manual(values = c("grey", getPalette(12))) +
+  theme(panel.background = element_rect(fill = "white"))
+
 ```
 
 ```{r behave_corrs}
 
-behave_correl_data <- behave_data %>%
-  filter(SID == "DG_s10") %>%
-  select(-SID, -round, -ends_with("time"), -RT, -side_chosen, -X)
+behave_correl_data <- behave_data_11 %>%
+  select(self_payoff, other_payoff, self_var_payoff, other_var_payoff, other_foregone, self_foregone, self_diff, other_diff, norm_deviance)
 
 behavioral_cor <- cor(behave_correl_data, use = "pairwise.complete.obs")
 
-ggcorrplot(behavioral_cor,
+cor_plot <- ggcorrplot(behavioral_cor,
            lab = T,
            type = "lower",
            colors = wes_palette("Zissou1", 3, type = "continuous"))
 
-```
-
-I am wondering if it might make sense to start with the most derived var as the spotlight, ie disaventageous versus adventageous inequality.
-
-```{r test-regress}
-
-test_full <- lm(RT ~ self_diff + self_payoff + self_foregone, data <- behave_data)
-summary(test_full)
-
-
-test_part1 <- lm(RT ~ self_diff + self_payoff, data <- behave_data)
-summary(test_part1)
-
-
-test_part2 <- lm(RT ~ self_diff + self_foregone, data <- behave_data)
-summary(test_part2)
-
-###########
-
-
-test_full <- lm(RT ~ self_var_payoff + other_var_payoff + ineq_advent, data <- behave_data)
-summary(test_full)
-
-
-test_part1 <- lm(RT ~ other_payoff + self_payoff + ineq_choice_abs, data <- behave_data)
-summary(test_part1)
-
-
-test_part2 <- lm(RT ~ self_diff + self_foregone, data <- behave_data)
-summary(test_part2)
-
+ggsave(filename = paste0(path(here(), './figures/correlation_ind_vars.png')),
+     device = "png",
+     width = 10,
+     height = 10,
+     units = "cm",
+     dpi = 200,
+     plot =  print(plot(cor_plot)) )
 
 ```
 
-So if the derived vars are sum/subtraction from the other variables in the model, it will be over saturated and won't run. But advent/advent ineq are substantially different. 
 
-```{r dummy-data}
+```{r }
 
-fake_hg <- read.csv('./temp_data.csv', header <- F)
+hg_melt <- hg_data_baselined %>%
+  gather(key = "time", value = "hfa", -electrodes, -trial)
 
-last_idx <- 1
-fake_df <- data.frame()
-for(idx in 1:2280){
-  if(idx %% 10 == 0){
-    temp_df <- fake_hg[1, last_idx:idx]
-    colnames(temp_df) <- colnames(fake_df)
-    fake_df <- rbind(fake_df, temp_df)
-    last_idx <- idx + 1
-  }
+write.csv(hg_melt, "./munge/melted_hfa_time_warp_test.csv")
+```
+
+
+I played a round quite a bit with the gamma visualization by trial depedning on where we cut off the reaction times. 1 seconds dramatically reduces the number of NAs, and looks pretty good visually. That said, it will be very different for different people.
+
+So looking back to the reaction time analysis the cut off to recover most trials is .5 seconds. Since we will do correction via cluster, I think this preserves tha majority of the data. This means findings the max reaction time for each person and cutting bins that are within 500ms of that time. 
+
+But that cuts soooo many bins. So I have chickened out and am gonna run it with .75s seconds before choice
+
+
+```{r hg-eda-means}
+
+ofc_elecs <- elecs_to_use %>% filter(ofc_loc_meeting == 1) %>% select(Electrode)
+insula_elecs <- elecs_to_use %>% filter(insula_loc_meeting == 1) %>% select(Electrode)
+mfg_elecs <- elecs_to_use %>% filter(mfg_loc_meeting == 1) %>% select(Electrode)
+sts_elecs <- elecs_to_use %>% filter(sts_loc_meeting == 1) %>% select(Electrode)
+hinal_elecs <- elecs_to_use %>% filter(hinal_loc_meeting == 1) %>% select(Electrode)
+ca1_elecs <- elecs_to_use %>% filter(ca1_loc_meeting == 1) %>% select(Electrode)
+
+hg_eda_behave <- merge.data.frame(hg_eda, behave_data, by.y = "round", by.x = "trial")
+
+hg_eda_summary <- hg_eda_behave %>%
+  group_by(electrodes) %>%
+  summarise_at(vars(starts_with("pre"), starts_with("post")), list(function(x) mean(x, na.rm = T), function(x) mean(x, na.rm = T) - sd(x, na.rm = T), function(x) mean(x, na.rm = T) + sd(x, na.rm = T))) %>%
+  gather(key = "bin", value = "gamma", -electrodes) %>%
+  mutate(function_type = if_else(grepl("_fn1", bin), "mean", if_else(grepl("_fn2", bin), "min", "max"))) %>%
+  mutate(bin = gsub("pre_", "-", gsub("post_", "", bin))) %>%
+  mutate(bin = as.numeric(gsub("_.*", "", bin))) %>%
+  spread(key = function_type, value = gamma)
+
+
+hg_eda_summary %>%
+  filter(grepl(paste(ofc_elecs$Electrode, collapse = "|"), electrodes)) %>%
+  # mutate(advent = if_else(ineq_disadvent > 0, "Advantageous", "Disadvantageous")) %>%
+  ggplot(., aes(x = bin, y = mean, color = electrodes, fill = electrodes)) +
+  geom_point(alpha = .4) +
+  geom_line(alpha = .4) + 
+  # geom_ribbon(aes(ymin = min, ymax = max), alpha = .1) +
+  # geom_vline(xintercept = 1.2613816 * 1000) +
+  theme(panel.background = element_rect(fill = "white")) + 
+  # facet_wrap(~advent) +
+  ggtitle("OFC")
+
+hg_eda_summary %>%
+  filter(grepl(paste(insula_elecs$Electrode, collapse = "|"), electrodes)) %>%
+  ggplot(., aes(x = bin, y = mean, color = electrodes, fill = electrodes)) +
+  geom_point(alpha = .4) +
+  geom_line(alpha = .4) +
+  # geom_vline(xintercept = 1.2613816 * 1000) +
+  theme(panel.background = element_rect(fill = "white")) + 
+  scale_fill_manual(values = getPalette(9)) +
+  scale_color_manual(values = getPalette(9)) +
+  labs(y = "high gamma") +
+  ggtitle("Insula")
+
+hg_eda_summary %>%
+  filter(grepl(paste(mfg_elecs$Electrode, collapse = "|"), electrodes)) %>%
+  ggplot(., aes(x = bin, y = mean, color = electrodes, fill = electrodes)) +
+  geom_point(alpha = .4) +
+  geom_line(alpha = .4) + 
+  # geom_vline(xintercept = 1.2613816 * 1000) +
+  theme(panel.background = element_rect(fill = "white")) + 
+  scale_fill_manual(values = getPalette(25)) +
+  scale_color_manual(values = getPalette(25)) +
+  ggtitle("MFG")
+
+hg_eda_summary %>%
+  filter(grepl(paste(sts_elecs$Electrode, collapse = "|"), electrodes)) %>%
+  ggplot(., aes(x = bin, y = mean, color = electrodes, fill = electrodes)) +
+  geom_point(alpha = .4) +
+  geom_line(alpha = .4) + 
+  # geom_vline(xintercept = 1.2613816 * 100) +
+  theme(panel.background = element_rect(fill = "white")) + 
+  scale_fill_manual(values = getPalette(15)) +
+  scale_color_manual(values = getPalette(15)) +
+  ggtitle("STS")
+
+hg_eda_summary %>%
+  filter(grepl(paste(hinal_elecs$Electrode, collapse = "|"), electrodes)) %>%
+  ggplot(., aes(x = bin, y = mean, color = electrodes, fill = electrodes)) +
+  geom_point(alpha = .4) +
+  geom_line(alpha = .4) + 
+  # geom_vline(xintercept = 1.2613816 * 10) +
+  theme(panel.background = element_rect(fill = "white")) + 
+  scale_fill_manual(values = getPalette(9)) +
+  scale_color_manual(values = getPalette(9)) +
+  ggtitle("Perihinal & Entrohinal")
+
+hg_eda_summary %>%
+  filter(grepl(paste(ca1_elecs$Electrode, collapse = "|"), electrodes)) %>%
+  ggplot(., aes(x = bin, y = mean, color = electrodes, fill = electrodes)) +
+  geom_point(alpha = .4) +
+  geom_line(alpha = .4) + 
+  # geom_vline(xintercept = 1.2613816 * 100) +
+  theme(panel.background = element_rect(fill = "white")) + 
+  scale_fill_manual(values = getPalette(9)) +
+  scale_color_manual(values = getPalette(9)) +
+  ggtitle("CA1")
+
+```
+
+```{r hg_plots_binned}
+
+### PRESENTATION-LOCKED ###
+
+## load data ##
+file_path_to_hg_data <- path(here(), "munge", "IR19", "hg_behave_presentation_locked_extended_150_insula.csv")
+hg_behave <- read.csv(file_path_to_hg_data)
+
+## plot it ##
+
+for(elec in unique(hg_behave$electrodes)) {
+
+rt_plot <- hg_behave %>%
+  filter(electrodes == elec) %>%
+  arrange(desc(RT)) %>%
+  mutate(trial = factor(trial, levels = trial)) %>%
+  gather(key = "bin", value = "gamma", starts_with("bin")) %>%
+  mutate(bin = (as.numeric(gsub("bin_", "", bin)) - 2) * 50) %>%
+  ggplot(., aes(x = bin, y = trial, color = gamma, fill = gamma)) +
+  geom_tile() + 
+  geom_point(aes(y = trial, x = RT*1000), color = "white", size = 1) +
+  geom_vline(xintercept = 0, color = "white") +
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank()) + 
+  scale_fill_viridis(limits = c(-.5, 1), begin = 0, end = 1)   +
+  scale_color_viridis(limits = c(-.5, 1), begin = 0, end = 1) +
+  ggtitle(paste0(elec))
+  
+  ggsave(filename = paste0('./figures/IR35/insula/PRESENTATION/', elec, ".png"),
+     device = "png",
+     width = 10,
+     height = 10,
+     units = "cm",
+     dpi = 200,
+     plot =  print(plot(rt_plot)) ) 
+  
   
 }
 
-fake_df <- data.frame(fake_df)
-row.names(fake_df) <- 1:228
-colnames(fake_df) <- paste0("bin_", 1:10)
+### CHOICE-LOCKED ###
 
-fake_behave <- behave_data %>% filter(SID == "DG_s10")
+## load data ##
+file_path_to_hg_data <- path(here(), "munge", "IR19", "hg_behave_choice_locked_cut_fixation_150.csv")
+hg_behave <- read.csv(file_path_to_hg_data)
 
-brain_behave_data_elec <- cbind(fake_df, fake_behave)
+## plot it ##
 
-```
-
-
-```{r regressions}
-
-# save info needed for regressions #
-niter <- 1000
-nBins <- colnames(fake_df)
-electrodes <- elec_notes$Electrode[!is.na(elec_notes$Electrode)]
-electrodes <- electrodes[1:100]
-# brain_behave_data is a df with nrow <- trials * elecs
-
-# create results dfs #
-results_advantageous <- data.frame(matrix(nrow = length(electrodes)*length(nBins), ncol = 7))
-results_disadvantageous <- data.frame(matrix(nrow = length(electrodes)*length(nBins), ncol = 7))
-
-colnames(results_advantageous) <- c("electrode", "bin", "R2", "absBeta", "Fstat", "p", "perm_p")
-colnames(results_disadvantageous) <- c("electrode", "bin", "R2", "absBeta", "Fstat", "p", "perm_p")
-
-# fill results dfs with electrode & bin info #
-results_advantageous$electrode <- sort(rep(as.character(electrodes), length(nBins)))
-results_advantageous$bin <- rep(nBins, length(electrodes))
-
-results_disadvantageous$electrode <- sort(rep(as.character(electrodes), length(nBins)))
-results_disadvantageous$bin <- rep(nBins, length(electrodes))
-
-
-for (elec in electrodes) {
+for(elec in unique(hg_behave$electrodes)) {
+elec <- "LPC7-LPC8"
+rt_plot <- hg_behave %>%
+  mutate(electrodes = gsub("POL ", "", electrodes)) %>%
+  mutate(electrodes = gsub(" POL", "", electrodes)) %>%
+  mutate(electrodes = gsub("-Ref", "", electrodes)) %>%
+  mutate(electrodes = gsub("-Ref-", "-", electrodes)) %>%
+  filter(electrodes == elec & side_chosen == "Left") %>%
+  arrange(desc(RT)) %>%
+  mutate(trial = factor(trial, levels = trial)) %>%
+  gather(key = "bin", value = "gamma", starts_with("pre"), starts_with("post")) %>%
+  mutate(bin = gsub("post_", "", bin)) %>%
+  mutate(bin = (as.numeric(gsub("pre_", "-", bin))) * 50) %>%
+  ggplot(., aes(x = bin, y = trial, color = gamma, fill = gamma)) +
+  geom_tile() + 
+  geom_point(aes(y = trial, x = -RT*1000), color = "white", size = 1) +
+  geom_vline(xintercept = 0, color = "white") +
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank()) + 
+  scale_fill_viridis(limits = c(-.5, 1), begin = 0, end = 1)   +
+  scale_color_viridis(limits = c(-.5, 1), begin = 0, end = 1) +
+  ggtitle(paste0(elec))
   
-  # filter to single electrode #
-  brain_behave_data_elec <- brain_behave_data %>% filter(electrode == elec)
-  brain_behave_data_elec <- brain_behave_data_elec[complete.cases(brain_behave_data_elec), ]
-
-  # initialize temp vars #
-  r2_disadv <- NULL
-  fstat_disadv <- NULL
-  abs_beta_disadv <- NULL
-  lm_pval_disadv <- NULL
-  r2_adv <- NULL
-  fstat_adv <- NULL
-  abs_beta_adv <- NULL
-  lm_pval_adv <- NULL
+  ggsave(filename = paste0('./figures/IR19/CHOICE/', elec, ".png"),
+     device = "png",
+     width = 10,
+     height = 10,
+     units = "cm",
+     dpi = 200,
+     plot =  print(plot(rt_plot)) ) 
   
-  for (bin in nBins) {
-    # run models #
-    bin_vec <- brain_behave_data_elec[, bin]
-    model_disadvant <- summary(lm(bin_vec ~ ineq_disadvent, data = brain_behave_data_elec))
-    model_advant <- summary(lm(bin_vec ~ ineq_advent, data = brain_behave_data_elec))
-    
-    # store info from models #
-    r2_disadv[bin] <- model_disadvant$r.squared
-    fstat_disadv[bin] <- model_disadvant$fstatistic[1]
-    abs_beta_disadv[bin] <- abs(model_disadvant$coefficients[2, 1])
-    lm_pval_disadv[bin] <- model_disadvant$coefficients[2,4]
-    
-    r2_adv[bin] <- model_advant$r.squared
-    fstat_adv[bin] <- model_advant$fstatistic[1]
-    abs_beta_adv[bin] <- abs(model_advant$coefficients[2,1])
-    lm_pval_adv[bin] <- model_advant$coefficients[2,4]
-  }
   
-  # Find out the longest stretch in which pval < 0.05 and create sum-of-F-stats statistic
-  stretch <- lm_pval < 0.05
-  indices <- stretch_start_end(stretch)  # what does stretch_start_end do???
-  
-  # if there is no stretch, take the max beta and max f statistic #
-  if(is.na(indices[1])) {
-    beta_stretch_disadv <- max(abs_beta_disadv)
-    fstat_stretch_disadv <- max(fstat_disadv)
-
-    beta_stretch_adv <- max(abs_beta_adv)
-    fstat_stretch_adv <- max(fstat_adv)
-
-  # if there is a stretch, sum the betas and the f statistics #
-  } else {
-    beta_stretch_disadv <- sum(abs_beta_disadv[indices[1]:indices[2]]) # Summary stat
-    fstat_stretch_disadv <- sum(fstat_disadv[indices[1]:indices[2]]) # Summary stat
-    
-    beta_stretch_adv <- sum(abs_beta_adv[indices[1]:indices[2]]) # Summary stat
-    fstat_stretch_adv <- sum(fstat_adv[indices[1]:indices[2]]) # Summary stat    
-  }
-  
-  # Create null distribution by shuffling labels #
-  beta_stretch_null <- fstat_stretch_null <- fstat_null <- 0
-  for(h in 1:niter) {
-    abs_beta_null <- lm_pval_null <- 0
-    for (bin in 1:nBins) { # This is the slooooow step
-      
-      # if(remove_outliers) {
-      #   temp <- data.frame(peak=peak)
-      #   temp <- remove_outliers(temp,peak)
-      #   peak <- temp$peak
-      # }
-      
-      # run models #
-      null_lm_disadv <- summary(lm(bin ~ sample(ineq_disadvent)))
-      null_lm_disadv <- summary(lm(bin ~ sample(ineq_disadvent)))
-      
-      # save info from models #
-      null_fstat_disadv[i] <- null_lm_disadv$fstatistic[1]
-      null_abs_beta_disadv[i] <- abs(null_lm_disadv$coefficients[2,1])
-      null_lm_pval_disadv[i] <- null_lm_disadv$coefficients[2,4]
-      
-      null_fstat_adv[i] <- null_lm_adv$fstatistic[1]
-      null_abs_beta_adv[i] <- abs(null_lm_adv$coefficients[2,1])
-      null_lm_pval_adv[i] <- null_lm_adv$coefficients[2,4]      
-    }
-    
-    # Find out the longest stretch in which pval < 0.05 and create sum-of-F-stats statistic
-    stretch <- lm_pval_null < 0.05
-    indices <- stretch_start_end(stretch)
-    if(is.na(indices[1])) {
-      # if no stretch just take the max vals #
-      null_beta_stretch_disadv[h] <- max(null_abs_beta_disadv)
-      null_fstat_stretch_disadv[h] <- max(null_fstat_disadv)
-
-      null_beta_stretch_adv[h] <- max(null_abs_beta_adv)
-      null_fstat_stretch_adv[h] <- max(null_fstat_adv)
-
-      } else {
-      # if a stretch take the sum of f stats #  
-      null_beta_stretch_disadv[h] <- sum(null_abs_beta_disadv[indices[1]:indices[2]]) # Summary stat
-      null_fstat_stretch_disadv[h] <- sum(null_fstat_disadv[indices[1]:indices[2]]) # Summary stat
-      
-      null_beta_stretch_adv[h] <- sum(null_abs_beta_adv[indices[1]:indices[2]]) # Summary stat
-      null_fstat_stretch_adv[h] <- sum(null_fstat_adv[indices[1]:indices[2]]) # Summary stat
-
-    }
-    # if(fstat_stretch_null[h] > 140) { break }
-  }
-  
-  # our test statistic for the permutation test is the sum of f tests #
-  perm_pval_disadv <- sum(null_fstat_stretch_disadv > fstat_stretch_disadv)/niter
-  perm_pval_adv <- sum(null_fstat_stretch_adv > fstat_stretch_adv)/niter
-  
-  # save vals in results df #
-  results_advantageous <- results_advantageous %>% 
-    mutate_cond(electrode == elec, R2 = r2_adv, absBeta = abs_beta_adv, Fstat = fstat_adv, p = lm_pval_adv, perm_p = perm_pval_adv)
-    
-  results_disadvantageous <- results_disadvantageous %>% 
-    mutate_cond(electrode == elec, R2 = r2_disadv, absBeta = abs_beta_disadv, Fstat = fstat_disadv, p = lm_pval_disadv, perm_p = perm_pval_disadv)
-
-
 }
 
-# save results to results folder #
-write.csv(results_disadvantageous, path(here(), "results", "results_disadvantageous.csv"))
-write.csv(results_advantageous, path(here(), "results", "results_advantageous.csv"))
+
+```
+
+```{r hg_plots}
+
+file_path_to_electrode_names <- path(here(), "munge", "IR39_electrodes_presentation_locked_extended.csv")
+file_path_to_hg_data <- path(here(), "munge", "IR39_hg_munge_presentation_locked_extended.csv")
+file_path_to_elecs_of_interest <- path(here(), "munge", "IR39_elecs_of_interest_insula.csv")
+
+# load data #
+# IR39
+# hg_data_full <- load_high_gamma_data(file_path_to_hg_data, file_path_to_electrode_names, "V2702", "V2703")
+# IR35
+hg_data_full <- load_high_gamma_data(file_path_to_hg_data, file_path_to_electrode_names)
+elecs_to_use <- read.csv(file_path_to_elecs_of_interest)
+
+indicies <- hg_data_full %>% select(trial, electrodes)
+hg_data <- hg_data_full %>% select(starts_with("time"))
+
+baseline_df <- hg_data[, 1:200]
+baseline <- apply(baseline_df, 1, function(x) mean(x, na.rm = T))
+
+hg_data_tmp <- hg_data
+hg_data_baselined <- apply(hg_data_tmp, 2, function(col) t(as.vector(col - baseline)))
+hg_data_baselined <- as.data.frame(hg_data_baselined)
+hg_data_baselined <- cbind(hg_data_baselined, indicies)
+
+test_time_warp <- hg_data_baselined %>% filter(electrodes == "LIN1-LIN2")
+
+hg_raw_plot <- merge.data.frame(hg_data_baselined, behave_data, by.x = "trial", by.y = "round", all.x = T, all.y = F)
+
+ofc_elecs <- elecs_to_use %>% filter(ofc_loc_meeting == 1) %>% select(Electrode)
+insula_elecs <- elecs_to_use %>% filter(insula_loc_meeting == 1) %>% select(Electrode)
+mfg_elecs <- elecs_to_use %>% filter(mfg_loc_meeting == 1) %>% select(Electrode)
+sts_elecs <- elecs_to_use %>% filter(sts_loc_meeting == 1) %>% select(Electrode)
+hinal_elecs <- elecs_to_use %>% filter(hinal_loc_meeting == 1) %>% select(Electrode)
+ca1_elecs <- elecs_to_use %>% filter(ca1_loc_meeting == 1) %>% select(Electrode)
+
+elecs_of_interest <- c(as.character(ofc_elecs$Electrode), as.character(insula_elecs$Electrode), as.character(sts_elecs$Electrode))
+
+elec_names <- unique(hg_raw_plot$electrodes[grepl(paste(elecs_of_interest, collapse = "|"), hg_raw_plot$electrodes)])
+
+hg_bin_plot <- hg_raw_plot %>%
+  select(electrodes, RT, trial, starts_with("time")) %>%
+  arrange(desc(RT))
+
+advent_plot_df <- hg_raw_plot %>%
+  mutate(advent = if_else(ineq_disadvent > 0, "Advantageous", "Inadvantageous")) %>%
+  filter(advent == "Advantageous") %>%
+  select(electrodes, RT, advent, trial, starts_with("time")) %>%
+  arrange(desc(RT))
+
+disadvent_plot_df <- hg_raw_plot %>%
+  mutate(advent = if_else(ineq_disadvent > 0, "Advantageous", "Disadvantageous")) %>%
+  filter(advent == "Disadvantageous") %>%
+  select(electrodes, RT, advent, trial, starts_with("time")) %>%
+  arrange(desc(RT)) 
+
+advent_choice_plot_df <- hg_raw_plot %>%
+  filter(chose_equality == "Advent") %>%
+  select(electrodes, RT, chose_equality, trial, starts_with("time")) %>%
+  arrange(desc(RT))
+
+ten_ten_plot_df <- hg_raw_plot %>%
+  filter(chose_equality == "10-10") %>%
+  select(electrodes, RT, chose_equality, trial, starts_with("time")) %>%
+  arrange(desc(RT)) 
+
+for(elec in elec_names) {
+
+  
+adv_plot <- hg_bin_plot %>%
+  filter(electrodes == elec) %>%
+  mutate(trial = factor(trial, levels = trial)) %>%
+  gather(key = "time", value = "gamma", -electrodes, -trial, -RT) %>%
+  mutate(time = (as.numeric(gsub("time_", "", time))) -200 ) %>%
+  # group_by(RT) %>%
+  # mutate(time = time - RT*1000) %>%
+  # mutate(time = time) %>%
+  ggplot(., aes(x = time, y = trial, color = gamma, fill = gamma)) +
+  geom_tile() + 
+  # geom_point(aes(y = trial, x = -RT*1000), color = "white", size = 1) +
+  geom_point(aes(y = trial, x = RT*1000), color = "white", size = 1) +
+  geom_vline(xintercept = 0, color = "white") +
+  # geom_vline(xintercept = -400, color = "white") +
+  # geom_vline(xintercept = -600, color = "white") +
+  # geom_vline(xintercept = -800, color = "white") +
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank()) + 
+  scale_fill_viridis(limits = c(-1, 2), begin = 0, end = 1)   +
+  scale_color_viridis(limits = c(-1, 2), begin = 0, end = 1) +
+  ggtitle(paste0(elec, " -- Advantageous"))
+ 
+dis_plot  <- disadvent_plot_df %>%
+  filter(electrodes == elec) %>%
+  mutate(trial = factor(trial, levels = trial)) %>%
+  gather(key = "time", value = "gamma", -electrodes, -trial, -RT, -advent) %>%
+  mutate(time = (as.numeric(gsub("time_", "", time))) -200 ) %>%
+  # group_by(RT) %>%
+  # mutate(time = time - RT*1000) %>%
+  ggplot(., aes(x = time, y = trial, color = gamma, fill = gamma)) +
+  geom_tile() + 
+  geom_point(aes(y = trial, x = RT*1000), color = "white", size = 1) +
+  geom_vline(xintercept = 0, color = "white") +
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank()) + 
+  scale_fill_viridis(limits = c(-1, 2), begin = 0, end = 1)   +
+  scale_color_viridis(limits = c(-1, 2), begin = 0, end = 1) +
+  ggtitle(paste0(elec, " -- Disadantageous"))
+
+  ggsave(filename = paste0('./figures/IR39/', elec, "_adv.png"),
+     device = "png",
+     width = 10,
+     height = 10,
+     units = "cm",
+     dpi = 200,
+     plot =  print(plot(adv_plot)) ) 
+  
+    ggsave(filename = paste0('./figures/IR39/', elec, "_dis.png"),
+     device = "png",
+     width = 10,
+     height = 10,
+     units = "cm",
+     dpi = 200,
+     plot =  print(plot(dis_plot)) ) 
+
+} 
 
 
 ```
+
+```{r other-bin_plots}
+hg_behave_plot_100_bins <- read.csv(path(here(), "munge", "IR35", "hg_behave_presentation_locked_extended.csv"))
+hg_behave_plot_200_bins <- hg_behave
+# hg_behave_plot_150_bins <- hg_behave
+colnames(hg_behave_plot_200_bins) <- gsub("pre_", "_-", colnames(hg_behave_plot_200_bins))
+colnames(hg_behave_plot_200_bins) <- gsub("post", "", colnames(hg_behave_plot_200_bins))
+
+hg_behave_plot_100_bins %>%
+  # mutate(advent = if_else(ineq_disadvent > 0, "Advantageous", "Inadvantageous")) %>%
+  # filter(advent == "Inadvantageous") %>%
+  select(electrodes, RT, trial, starts_with("bin_")) %>%
+  arrange(desc(RT)) %>%
+  filter(electrodes == "LIN3-LIN4") %>%
+  mutate(trial = factor(trial, levels = trial)) %>%
+  gather(key = "time", value = "gamma", -electrodes, -trial, -RT) %>%
+  mutate(time = (as.numeric(gsub("bin_", "", time)))) %>%
+  ggplot(., aes(x = time, y = trial, color = gamma, fill = gamma)) +
+  geom_tile() + 
+  # geom_point(aes(y = trial, x = -RT*150), color = "white", size = 1) +
+  geom_vline(xintercept = 0, color = "white") +
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank()) + 
+  scale_fill_viridis(limits = c(-1, 1.5), begin = 0, end = 1)   +
+  scale_color_viridis(limits = c(-1, 1.5), begin = 0, end = 1) +
+  ggtitle(paste0(elec))
+
+hg_behave_plot_150_bins %>%
+  # mutate(advent = if_else(ineq_disadvent > 0, "Advantageous", "Inadvantageous")) %>%
+  # filter(advent == "Inadvantageous") %>%
+  select(electrodes, RT, trial, starts_with("bin_")) %>%
+  arrange(desc(RT)) %>%
+  filter(electrodes == "LIN3-LIN4") %>%
+  mutate(trial = factor(trial, levels = trial)) %>%
+  gather(key = "time", value = "gamma", -electrodes, -trial, -RT) %>%
+  mutate(time = (as.numeric(gsub("bin_", "", time)))) %>%
+  ggplot(., aes(x = time, y = trial, color = gamma, fill = gamma)) +
+  geom_tile() + 
+  # geom_point(aes(y = trial, x = -RT*150), color = "white", size = 1) +
+  geom_vline(xintercept = 0, color = "white") +
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank()) + 
+  scale_fill_viridis(limits = c(-1, 1.5), begin = 0, end = 1)   +
+  scale_color_viridis(limits = c(-1, 1.5), begin = 0, end = 1) +
+  ggtitle(paste0(elec))
+
+hg_behave_plot_200_bins %>%
+  # mutate(advent = if_else(ineq_disadvent > 0, "Advantageous", "Inadvantageous")) %>%
+  # filter(advent == "Inadvantageous") %>%
+  select(electrodes, RT, trial, starts_with("bin_")) %>%
+  arrange(desc(RT)) %>%
+  filter(electrodes == "LIN3-LIN4") %>%
+  mutate(trial = factor(trial, levels = trial)) %>%
+  gather(key = "time", value = "gamma", -electrodes, -trial, -RT) %>%
+  mutate(time = (as.numeric(gsub("bin_", "", time)))) %>%
+  ggplot(., aes(x = time, y = trial, color = gamma, fill = gamma)) +
+  geom_tile() + 
+  # geom_point(aes(y = trial, x = -RT*150), color = "white", size = 1) +
+  geom_vline(xintercept = 0, color = "white") +
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank()) + 
+  scale_fill_viridis(limits = c(-1, 1.5), begin = 0, end = 1)   +
+  scale_color_viridis(limits = c(-1, 1.5), begin = 0, end = 1) +
+  ggtitle(paste0(elec))
+
+
+hg_raw_plot %>%
+    gather(key = "time", value = "gamma", -electrodes, -trial, -RT) %>%
+    mutate(time = (as.numeric(gsub("time_", "", time))) -200 ) %>%
+    group_by(electrodes, RT, trial) %>%
+    mutate(time = time - RT*1000) %>%
+    filter(electrodes == elec) %>%
+    arrange(desc(RT)) %>%
+    ggplot(., aes(x = time, y = trial, color = gamma, fill = gamma)) +
+    geom_tile() + 
+    geom_point(aes(y = trial, x = -RT*1000), color = "white", size = 1) +
+    # geom_point(aes(y = trial, x = RT*1000), color = "white", size = 1) +
+    geom_vline(xintercept = -200, color = "white") +
+    geom_vline(xintercept = -400, color = "white") +
+    geom_vline(xintercept = -600, color = "white") +
+    geom_vline(xintercept = -800, color = "white") +
+    theme(axis.text.y = element_blank(), axis.ticks.y = element_blank()) + 
+    scale_fill_viridis(limits = c(-1, 2), begin = 0, end = 1)   +
+    scale_color_viridis(limits = c(-1, 2), begin = 0, end = 1)
+
+```
+
+```{r scatter-plots}
+
+
+scatter_prep <- hg_raw_plot %>%
+  select(electrodes, trial, ineq_var_abs, starts_with("time")) %>%
+  mutate(electrodes = as.character(electrodes)) %>%
+  filter(electrodes %in% as.character(elec_names)) %>%
+  gather(key = "time", value = "gamma", -electrodes, -trial, -ineq_var_abs) %>%
+  # mutate(time = as.numeric(gsub("time_", "", time))) %>%
+  group_by(trial, electrodes) %>%
+  mutate(median_gamma = median(gamma, na.rm = T)) %>%
+  mutate(upper_gamma = median(gamma[gamma > median_gamma], na.rm = T)) %>%
+  mutate(upper_quart = mean(gamma[gamma > upper_gamma], na.rm  = T)) %>%
+  select(-time, -gamma, -median_gamma, -upper_gamma) 
+
+scatter_prep %>% filter(!duplicated(upper_quart)) %>%
+    ggplot(., aes(x = ineq_var_abs, y = upper_quart)) +
+    geom_point() + 
+    facet_wrap(~electrodes) +
+    ggtitle(paste0("Absolute Inequality"))
+
+
+scatter_prep_ineq <- hg_raw_plot %>%
+  select(electrodes, trial, ineq_advent, ineq_disadvent, starts_with("time")) %>%
+  mutate(electrodes = as.character(electrodes)) %>%
+  filter(electrodes %in% as.character(elec_names)) %>%
+  gather(key = "time", value = "gamma", -electrodes, -trial, -ineq_advent, -ineq_disadvent) %>%
+  # mutate(time = as.numeric(gsub("time_", "", time))) %>%
+  group_by(trial, electrodes) %>%
+  mutate(median_gamma = median(gamma, na.rm = T)) %>%
+  mutate(upper_gamma = median(gamma[gamma > median_gamma], na.rm = T)) %>%
+  mutate(upper_quart = mean(gamma[gamma > upper_gamma], na.rm  = T)) %>%
+  select(-time, -gamma, -median_gamma, -upper_gamma) 
+
+scatter_prep_ineq %>% filter(!duplicated(upper_quart)) %>%
+    gather(key= "inequality", value = "quantity", -electrodes, -trial, -upper_quart) %>%
+    ggplot(., aes(x = quantity, y = upper_quart, color = inequality)) +
+    geom_point() + 
+    facet_wrap(~electrodes) +
+    ggtitle(paste0("Absolute Inequality"))
+
+
+
+```
+
+```{r regressions, eval=FALSE}
+
+# see ./analysis/batch_regression_script_par.R for current regression analyses #
+
+```
+
+```{r fake, eval=FALSE}
+
+fake_adv <- read.csv(path(here(), "results", "fake_results_advantageous.csv"))
+fake_dis <- read.csv(path(here(), "results", "fake_results_disadvantageous.csv"))
+
+fake_adv %>%
+  select (-X) %>%
+  kable() %>%
+  add_header_above(c("FAKE: Advantageous Inequity" = 8)) %>%
+  kable_styling(position = "center")
+
+
+fake_dis %>%
+  select (-X) %>%
+  kable() %>%
+  add_header_above(c("FAKE: Disadvantageous Inequity" = 8)) %>%
+  kable_styling(position = "center")
+
+```
+
+```{r specific-roi}
+
+insula_info <- read.csv(path(here(), "munge", "insula_second_local_39-19-35.csv"))
+
+## modify elec names ##
+# presentation #
+presentation_results_19 <- presentation_results_19 %>% 
+  mutate(electrode = gsub("-Ref-", "-", electrode)) %>%
+  mutate(electrode = gsub("-Ref", "-19", electrode))
+presentation_results_35 <- presentation_results_35 %>%
+  mutate(electrode = paste0(electrode, "-35"))
+presentation_results_39 <- presentation_results_39 %>%
+  mutate(electrode = paste0(electrode, "-39"))
+# choice #
+choice_results_19 <- choice_results_19 %>% 
+  mutate(electrode = gsub("-Ref-", "-", electrode)) %>%
+  mutate(electrode = gsub("-Ref", "-19", electrode))
+choice_results_35 <- choice_results_35 %>%
+  mutate(electrode = paste0(electrode, "-35"))
+choice_results_39 <- choice_results_39 %>%
+  mutate(electrode = paste0(electrode, "-39"))
+
+## combine and plot ##
+# presentation #
+presentation_results_full <- rbind(presentation_results_19, presentation_results_35, presentation_results_39)
+combined_active_plots(presentation_results_full, "All-Presentation", 4)
+# choice #
+choice_results_full <- rbind(choice_results_19, choice_results_35, choice_results_39)
+combined_active_plots_choice(choice_results_full, "All-Choice", 4)
+```
+
+
+```{r behavioral-info}
+
+print("IR19")
+table(behave_data_08$chose_equality)
+print("IR35")
+table(behave_data_11$chose_equality)
+print("IR39")
+table(behave_data_12$chose_equality)
+
+
+behave_data_11 %>%
+  mutate(norm_deviance = if_else( (chose_equality == "Advent") | (chose_equality == "Equal") |(chose_equality == "10-10" & self_foregone <= 10) , 0, 1)) %>%
+  ggplot(., aes(x = self_payoff, self_foregone)) +
+  geom_point(alpha = .5, size = 3) +
+  facet_wrap(~norm_deviance)
+
+```
+
+
 
 
 # Prediction HG -> choice

@@ -1,0 +1,610 @@
+title: "Cingulate Electrodes And Disadvantageous Inequity"
+---
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo <- FALSE,  # don't print the code chunk
+  warning <- FALSE,  # don't print warnings
+  message <- FALSE,  # don't print messages
+  fig.width <- 12,  # set default width of figures
+  fig.height <- 6,  # set default height of figures
+  fig.align <- "center",  # always align figure in center
+  fig.pos <- "H",  # always plot figure at the exact location of the code chunk
+  cache <- TRUE)  # cache results
+
+## libraries ##
+library(tidyverse)
+library(ggplot2)
+library(magrittr)
+library(ggthemr)
+library(grid)
+library(gtable)
+library(gridExtra)
+library(wesanderson)
+library(ggsci)
+library(zoo)
+library(kableExtra)
+library(lme4)
+library(RColorBrewer)
+library(doParallel)
+library(parallel)
+library(foreach)
+library(here)
+library(fs)
+library(ggcorrplot)
+library(viridis)
+library(beepr)
+library(lmtest)
+
+## hand written functions ##
+source(path(here(), "R", "load_behave_data.R"))
+source(path(here(), "R", "prep_behave_data.R"))
+source(path(here(), "R", "stretch_start_end.R"))
+source(path(here(), "R", "load_high_gamma_data.R"))
+source(path(here(), "R", "rolling_window_and_baseline.R"))
+source(path(here(), "R", "run_permuted_regressions.R"))
+source(path(here(), "R", "compile_results.R"))
+source(path(here(), "R", "run_filtered_anova.R"))
+source(path(here(), "R", "merge_stepped_anova_results.R"))
+source(path(here(), "R", 'mutate_cond.R'))
+
+## plotting helpers ##
+ggthemr("solarized")
+
+# ## paralellization ##
+# nCores <- 2
+# registerDoParallel(nCores)
+
+```
+
+
+
+```{r load-data, echo = F}
+
+## electrode information
+elec_info_L_pres <- read_csv(path(here(), "figures", "anat_values", "cingulate_theta_ineq_disadvent_L_presentation_sig_electrodes.csv"))
+elec_info_R_pres <- read_csv(path(here(), "figures", "anat_values", "cingulate_theta_ineq_disadvent_R_presentation_sig_electrodes.csv"))
+elec_info_L_choice <- read_csv(path(here(), "figures", "anat_values", "cingulate_theta_ineq_disadvent_L_choice_sig_electrodes.csv"))
+elec_info_R_choice <- read_csv(path(here(), "figures", "anat_values", "cingulate_theta_ineq_disadvent_R_choice_sig_electrodes.csv"))
+
+
+elec_info_R_choice <- read_csv(path(here(), "figures", "anat_values", "temporal_theta_ineq_disadvent_R_choice_sig_electrodes.csv"))
+
+## combine hemispheres
+elec_info_pres <- rbind(elec_info_L_pres, elec_info_R_pres)
+elec_info_choice <- rbind(elec_info_L_choice, elec_info_R_choice)
+
+## behave _data 
+path_to_behave_clean <- fs::path(here(), "munge", "clean_behavioral_data.csv")
+behave_data <- read_csv(path_to_behave_clean)
+behave_data <- behave_data %>%
+  mutate(trial_type = if_else(self_var_payoff == other_var_payoff, "equality",
+                              if_else(self_var_payoff > other_var_payoff,
+                                      "Advantageous", "Disadvantageous"))) 
+
+behave_data_35 <- behave_data %>% filter(SID == "DG_s11") %>% mutate(sub = "IR35")
+behave_data_28 <- behave_data %>% filter(SID == "DG_s10") %>% mutate(sub = "IR28")
+behave_data_16 <- behave_data %>% filter(SID == "DG_s06") %>% mutate(sub = "IR16")
+behave_data_10 <- behave_data %>% filter(SID == "DG_s04") %>% mutate(sub = "IR10")
+behave_data_57 <- behave_data %>% filter(SID == "DG_s13") %>% mutate(sub = "IR57")
+behave_data_26 <- behave_data %>% filter(SID == "DG_s09") %>% mutate(sub = "IR26")
+behave_data_09 <- behave_data %>% filter(SID == "DG_s03") %>% mutate(sub = "IR09")
+behave_data_cp34 <- behave_data %>% filter(SID == "DG_s14") %>% mutate(sub = "CP34")
+behave_data_short <- rbind(behave_data_10, behave_data_16, behave_data_28, behave_data_35, behave_data_57, behave_data_09, behave_data_26, behave_data_cp34)
+
+
+dis_trials <- behave_data_35$round[behave_data_35$trial_type == "Disadvantageous"]
+adv_trials <- behave_data_35$round[behave_data_35$trial_type == "Advantageous"]
+
+```
+
+
+```{r create-scale-for-self-payoff}
+
+behave_data_35 %>%
+  ggplot(., aes(x = self_var_payoff)) +
+  geom_histogram(binwidth = 1) +
+  theme(panel.background = element_rect(fill = "white"))
+
+below_ten <- behave_data_35 %>% filter(self_var_payoff < 10) %>% pull(round)
+ten_trials <- behave_data_35 %>% filter(self_var_payoff == 10) %>% pull(round)
+below_15 <- behave_data_35 %>% filter(self_var_payoff > 10 & self_var_payoff <= 15) %>% pull(round)
+below_20 <- behave_data_35 %>% filter(self_var_payoff > 15 & self_var_payoff <= 20) %>% pull(round)
+below_25 <- behave_data_35 %>% filter(self_var_payoff > 20 & self_var_payoff <= 25) %>% pull(round)
+above_25 <- behave_data_35 %>% filter(self_var_payoff > 25) %>% pull(round)
+above_s25_below_o10 <- behave_data_35 %>% filter(self_var_payoff > 25 & other_var_payoff < 10) %>% pull(round)
+above_s25_above_o10 <- behave_data_35 %>% filter(self_var_payoff > 25 & other_var_payoff > 10) %>% pull(round)
+
+```
+
+
+```{r function-to-load-power-data, echo = F}
+
+elec_specific_power_data <- function(elecs, epoch, freq, sig = T) {
+  
+  # get patient data 
+  subs <- elecs$sub %>% unique()
+  
+  ## load and filter sub data
+  cingulate_power_data <- NULL
+  for(cur_sub in subs) {
+    print(cur_sub)
+    ## load power data
+    # deal with cp34
+    if(cur_sub == "CP34") {
+      next
+      # necessary paths #
+      # elec_name_path_1 <- path(here(), "munge", "savio_cluster", "CP34-1_electrodes_presentation_locked_rscaler_2575.csv")
+      # elec_name_path_2 <- path(here(), "munge", "savio_cluster", "CP34-2_electrodes_presentation_locked_rscaler_2575.csv")
+      # file_path_to_first_power_data <- path(here(), "munge", "savio_cluster", paste0(cur_sub, "-1_theta_munge_", epoch, "_locked_rscaler_2575.csv"))
+      # file_path_to_second_power_data <- path(here(), "munge", "savio_cluster", paste0(cur_sub, "-2_theta_munge_", epoch, "_locked_rscaler_2575.csv"))
+      # 
+      # # bind first and second parts #
+      # first_power_data <- load_high_gamma_data(file_path_to_first_power_data, elec_name_path_1)
+      # second_power_data <- load_high_gamma_data(file_path_to_second_power_data, elec_name_path_2)
+      # second_power_data$trial <- second_power_data$trial + 109
+      # power_data <- rbind(first_power_data, second_power_data)
+      # power_data$sub <- cur_sub
+    } else {
+      power_path <- path(here(), "munge", "savio_cluster", paste0(cur_sub, "_theta_munge_", epoch, "_locked_rscaler_2575.csv"))
+      elec_name_path <- path(here(), "munge", "savio_cluster", paste0(cur_sub, "_electrodes_", epoch, "_locked_rscaler_2575.csv"))
+      power_data <- load_high_gamma_data(power_path, elec_name_path)
+      power_data$sub <- cur_sub
+    
+      ## filter
+      if(sig == T) {
+        tmp_elecs <- elecs %>% filter(sub == cur_sub & cing_pvals > 0)
+      } else {
+        tmp_elecs <- elecs %>% filter(sub == cur_sub & cing_pvals == 0)
+      }
+      
+      data_to_save <- power_data %>%
+      mutate(sub = cur_sub) %>%
+      mutate(electrodes = gsub("POL ", "", electrodes)) %>%
+      mutate(electrodes = gsub(" POL", "", electrodes)) %>%
+      mutate(electrodes = gsub("-Ref", "", electrodes)) %>%
+      mutate(electrodes = gsub("-Ref-", "-", electrodes)) %>% 
+      filter(electrodes %in% tmp_elecs$electrode)
+      
+    
+    
+    if(cur_sub == subs[1]){
+      cingulate_power_data <- data_to_save %>% select(trial, electrodes, sub, starts_with("time")[1:2199])
+    } else {
+      data_to_save <- data_to_save %>% select(trial, electrodes, sub, starts_with("time")[1:2199])
+      cingulate_power_data <- rbind(cingulate_power_data, data_to_save)
+    }
+  
+   }
+  }
+  return(cingulate_power_data)
+}
+
+
+
+
+cingulate_power_data_sig <- elec_specific_power_data(elecs = elec_info_pres,
+                                                 epoch = "presentation",
+                                                 freq = "theta",
+                                                 sig = T)
+
+
+cingulate_power_data_choice_sig <- elec_specific_power_data(elecs = elec_info_pres,
+                                                 epoch = "choice",
+                                                 freq = "theta",
+                                                 sig = T)
+
+
+cingulate_power_data_nSig <- elec_specific_power_data(elecs = elec_info_pres,
+                                                 epoch = "presentation",
+                                                 freq = "theta",
+                                                 sig = F)
+
+
+cingulate_power_data_choice_nSig <- elec_specific_power_data(elecs = elec_info_pres,
+                                                 epoch = "choice",
+                                                 freq = "theta",
+                                                 sig = F)
+```
+
+```{r baselining}
+
+baseline_power_data <- function(df, epoch, pres_df = NULL) {
+  
+  if(epoch == "presentation") {
+      # get first 200 ms, average for each sub, trial, and elec
+      baseline_df <- df %>%
+        select(trial, electrodes, sub, starts_with("time")[1:200]) %>%
+        group_by(trial, electrodes, sub) %>%
+        gather(key = "time", value = "power", starts_with("time")) %>%
+        mutate(baseline = mean(power)) %>%
+        select(trial, electrodes, sub, baseline) %>%
+        distinct()
+      
+      # join baseline with original df, and subtract baseline from each time point #
+      clean_data <- full_join(df, baseline_df, 
+                                           by = c("trial", "electrodes", "sub")) %>%
+        mutate(across(starts_with("time"), function(x) x - baseline)) %>%
+        select(-baseline)
+      
+      
+  } else {
+    
+      # get first 200 ms, average for each sub, trial, and elec
+      baseline_df <- pres_df %>%
+        select(trial, electrodes, sub, starts_with("time")[1:200]) %>%
+        group_by(trial, electrodes, sub) %>%
+        gather(key = "time", value = "power", starts_with("time")) %>%
+        mutate(baseline = mean(power)) %>%
+        select(trial, electrodes, sub, baseline) %>%
+        distinct()
+      
+      # join baseline with original df, and subtract baseline from each time point #
+      clean_data <- left_join(df, baseline_df, 
+                                           by = c("trial", "electrodes", "sub")) %>%
+        mutate(across(starts_with("time"), function(x) x - baseline)) %>%
+        select(-baseline)
+    
+  }
+  
+  return(clean_data)
+
+}
+
+# create df of all sig and non sig elecs #
+all_pres_data <- rbind(cingulate_power_data_sig, cingulate_power_data_nSig)
+
+
+# baseline each df we need #
+base_cingulate_power_data_sig <- baseline_power_data(df = cingulate_power_data_sig,
+                                                 epoch = "presentation")
+
+
+base_cingulate_power_data_choice_sig <- baseline_power_data(df = cingulate_power_data_choice_sig,
+                                                 epoch = "choice",
+                                                 pres_df = all_pres_data)
+
+
+base_cingulate_power_data_nSig <- baseline_power_data(df = cingulate_power_data_nSig,
+                                                 epoch = "presentation")
+
+
+base_cingulate_power_data_choice_nSig <- baseline_power_data(df = cingulate_power_data_choice_nSig,
+                                                 epoch = "choice",
+                                                 pres_df = all_pres_data)
+
+
+```
+
+
+```{r visualization-function, echo = F}
+
+plot_averaged_envelope <- function(df, epoch, verion, title, exclude = NULL){
+  
+  if(epoch == "Presentation") {
+    
+    if(verion == "full") {
+
+      averaged_data <- df %>%
+          filter(trial < 200) %>%
+          mutate(trial_type = if_else(trial %in% dis_trials, "Disadvantageous", 
+                                      if_else(trial %in% adv_trials, "Advantageous", "Equality"))) %>%
+          gather(key = "time", value = "power", starts_with("time")) %>%
+          group_by(trial_type, sub, time) %>%
+          mutate(sub_lower_sem = mean(power, na.rm = T) - 2*(sd(power, na.rm = T)/n())) %>%
+          mutate(sub_upper_sem = mean(power, na.rm = T) + 2*(sd(power, na.rm = T)/n())) %>%
+          mutate(sub_mean_power = mean(power, na.rm = T)) %>%
+          group_by(trial_type, time) %>%
+          mutate(lower_sem = mean(sub_mean_power) - 2*(sd(sub_mean_power)/n())) %>%
+          mutate(upper_sem = mean(sub_mean_power) + 2*(sd(sub_mean_power)/n())) %>%
+          mutate(mean_power = mean(sub_mean_power)) %>%
+          mutate(time = as.numeric(gsub("time_", "", time)) - 200)
+      
+      averaged_datta_clean <- averaged_data %>%
+        select(time, mean_power, lower_sem, upper_sem, trial_type) %>%
+        distinct()
+      
+      averaged_datta_clean %>%
+          ggplot(., aes(x = time, y = mean_power, color = trial_type, fill = trial_type)) +
+          geom_line() +
+          geom_ribbon(aes(ymin = lower_sem, ymax = upper_sem), alpha = .7) +
+          theme(panel.background = element_rect(fill = "white")) +
+          ggtitle(title)
+      
+    } else {
+      averaged_data <- df %>%
+          filter(trial < 200) %>%
+          mutate(trial_type = if_else(trial %in% dis_trials, "Disadvantageous", if_else(trial %in% adv_trials, "Advantageous", "Equality"))) %>%
+          filter(trial_type != exclude) %>%
+          gather(key = "time", value = "power", starts_with("time")) %>%
+          group_by(trial_type, sub, time) %>%
+          mutate(sub_lower_sem = mean(power, na.rm = T) - 2*(sd(power, na.rm = T)/n())) %>%
+          mutate(sub_upper_sem = mean(power, na.rm = T) + 2*(sd(power, na.rm = T)/n())) %>%
+          mutate(sub_mean_power = mean(power, na.rm = T)) %>%
+          group_by(trial_type, time) %>%
+          mutate(lower_sem = mean(sub_mean_power) - 2*(sd(sub_mean_power)/n())) %>%
+          mutate(upper_sem = mean(sub_mean_power) + 2*(sd(sub_mean_power)/n())) %>%
+          mutate(mean_power = mean(sub_mean_power)) %>%
+          group_by(time) %>%
+          mutate(pval = t.test(power ~ trial_type)$p.value) 
+      
+      averaged_datta_clean <- averaged_data %>%
+        select(time, mean_power, lower_sem, upper_sem, trial_type, pval) %>%
+        distinct() %>%
+        mutate(sig = if_else(pval < .05, .4, 0))  %>%
+        mutate(time = as.numeric(gsub("time_", "", time)) - 200)
+      
+      averaged_datta_clean %>%
+          ggplot(.) +
+          geom_line(aes(x = time, y = mean_power, color = trial_type, fill = trial_type)) +
+          geom_ribbon(aes(x = time, y = mean_power, ymin = lower_sem, ymax = upper_sem, fill = trial_type), alpha = .7) +
+          geom_vline(xintercept = 0, color = "black") +
+          geom_col(aes(x = time, y = sig), alpha = .2, fill = "grey") +
+          theme(panel.background = element_rect(fill = "white")) +
+          ylim(0, .4) +
+          ggtitle(title)
+    
+      }
+      
+  } else {
+     if(verion == "full") {
+
+        averaged_data <- df %>%
+            filter(trial < 200) %>%
+            mutate(trial_type = if_else(trial %in% dis_trials, "Disadvantageous", if_else(trial %in% adv_trials, "Advantageous", "Equality"))) %>%
+            gather(key = "time", value = "power", starts_with("time")) %>%
+            group_by(trial_type, sub, time) %>%
+            mutate(sub_lower_sem = mean(power, na.rm = T) - 2*(sd(power, na.rm = T)/n())) %>%
+            mutate(sub_upper_sem = mean(power, na.rm = T) + 2*(sd(power, na.rm = T)/n())) %>%
+            mutate(sub_mean_power = mean(power, na.rm = T)) %>%
+            group_by(trial_type, time) %>%
+            mutate(lower_sem = mean(sub_mean_power) - 2*(sd(sub_mean_power)/n())) %>%
+            mutate(upper_sem = mean(sub_mean_power) + 2*(sd(sub_mean_power)/n())) %>%
+            mutate(mean_power = mean(sub_mean_power)) %>%
+            mutate(time = as.numeric(gsub("time_", "", time)) - 750)
+        
+        averaged_datta_clean <- averaged_data %>%
+          select(time, mean_power, lower_sem, upper_sem, trial_type) %>%
+          distinct()
+        
+        averaged_datta_clean %>%
+            ggplot(., aes(x = time, y = mean_power, color = trial_type, fill = trial_type)) +
+            geom_line() +
+          geom_vline(xintercept = 0, color = "black") +
+            geom_ribbon(aes(ymin = lower_sem, ymax = upper_sem), alpha = .7) +
+            theme(panel.background = element_rect(fill = "white")) +
+            ggtitle(title)
+      
+    } else {
+
+          averaged_data <- df %>%
+        filter(trial < 200) %>%
+        mutate(trial_type = if_else(trial %in% dis_trials, "Disadvantageous", if_else(trial %in% adv_trials, "Advantageous", "Equality"))) %>%
+        filter(trial_type != exclude) %>%
+        gather(key = "time", value = "power", starts_with("time")) %>%
+        group_by(trial_type, sub, time) %>%
+        mutate(sub_lower_sem = mean(power, na.rm = T) - 2*(sd(power, na.rm = T)/n())) %>%
+        mutate(sub_upper_sem = mean(power, na.rm = T) + 2*(sd(power, na.rm = T)/n())) %>%
+        mutate(sub_mean_power = mean(power, na.rm = T)) %>%
+        group_by(trial_type, time) %>%
+        mutate(lower_sem = mean(sub_mean_power) - 2*(sd(sub_mean_power)/n())) %>%
+        mutate(upper_sem = mean(sub_mean_power) + 2*(sd(sub_mean_power)/n())) %>%
+        mutate(mean_power = mean(sub_mean_power)) %>%
+        group_by(time) %>%
+        mutate(pval = t.test(power ~ trial_type)$p.value) 
+    
+      averaged_datta_clean <- averaged_data %>%
+        select(time, mean_power, lower_sem, upper_sem, trial_type, pval) %>%
+        distinct() %>%
+        mutate(sig = if_else(pval < .05, .4, 0))  %>%
+        mutate(time = as.numeric(gsub("time_", "", time)) - 750)
+      
+      averaged_datta_clean %>%
+          ggplot(.) +
+          geom_line(aes(x = time, y = mean_power, color = trial_type, fill = trial_type)) +
+          geom_ribbon(aes(x = time, y = mean_power, ymin = lower_sem, ymax = upper_sem, fill = trial_type), alpha = .7) +
+          geom_vline(xintercept = 0, color = "black") +
+          geom_col(aes(x = time, y = sig), alpha = .2, fill = "grey") +
+          theme(panel.background = element_rect(fill = "white")) +
+          ylim(0, .4) +
+          ggtitle(title)
+    
+      }  
+  }
+
+}
+
+```
+
+## Dis. Inequity, Adv. Inequity, and Equality Trial Theta Power Envelopes
+
+*Presentation*
+
+```{r vis-presentation-full, echo = F}
+
+ggthemr("solarized")
+plot_averaged_envelope(base_cingulate_power_data_sig, 
+                       epoch ="Presentation", 
+                       verion = "full", 
+                       title = "Presentation ~ All Types ~ Sig")
+
+
+plot_averaged_envelope(base_cingulate_power_data_nSig, 
+                       epoch ="Presentation", 
+                       verion = "full", 
+                       title= "Presentation ~ All Types ~ Not Sig")
+
+```
+
+*Choice*
+
+```{r vis-choice-full}
+
+plot_averaged_envelope(base_cingulate_power_data_choice_sig, 
+                       epoch ="Choice", 
+                       verion = "full", 
+                       title = "Choice ~ Full ~ Sig")
+plot_averaged_envelope(base_cingulate_power_data_choice_nSig, 
+                       epoch ="Choice", 
+                       verion = "full", 
+                       title = "Choice ~ Full ~ Not Sig")
+
+```
+
+## T.Tests Between Adv. and Dis. Inequity
+
+*Presentation*
+
+```{r vis-presentation-ttest, echo = F}
+
+plot_averaged_envelope(base_cingulate_power_data_sig, epoch ="Presentation", verion = "ttest", exclude = "Equality", title = "Presentation ~ T. Tests ~ Sig")
+plot_averaged_envelope(base_cingulate_power_data_nSig, epoch ="Presentation", verion = "ttest", exclude = "Equality", title = "Presentation ~ T. Tests ~ Not Sig")
+
+```
+
+*Choice*
+
+```{r vis-choice-ttest, echo = F}
+
+plot_averaged_envelope(base_cingulate_power_data_choice_sig, epoch ="Choice", verion = "ttest", exclude = "Equality", title = "Choice ~ T. Tests ~ Sig")
+plot_averaged_envelope(base_cingulate_power_data_choice_nSig, epoch ="Choice", verion = "ttest", exclude = "Equality", title = "Choice ~ T. Tests ~ Not Sig")
+
+```
+
+
+## T.Tests Between Dis. Inequity and Equality Trials
+
+Interestingly, it seems that the Equality power envelope seems higher than than either of the two ineq. types. These plots get at whether and when this difference is sig.
+
+
+```{r pres-dis-vs-equal, echo = F}
+
+ggthemr("light")
+plot_averaged_envelope(cingulate_power_data_sig, epoch ="Presentation", verion = "ttest", exclude = "Advantageous", title = "Presentation ~ T. Tests ~ Equ. vs Dis. ~ Sig")
+plot_averaged_envelope(cingulate_power_data_nSig, epoch ="Presentation", verion = "ttest", exclude = "Advantageous", title = "Presentation ~ T. Tests ~ Equ. vs Dis. ~ Not Sig")
+
+
+```
+
+```{r choice-dis-vs-equal, echo = F}
+
+ggthemr("light")
+plot_averaged_envelope(cingulate_power_data_choice_sig, epoch ="Choice", verion = "ttest", exclude = "Advantageous", title = "Choice ~ T. Tests ~ Equ. vs Dis. ~ Sig")
+plot_averaged_envelope(cingulate_power_data_choice_nSig, epoch ="Choice", verion = "ttest", exclude = "Advantageous", title = "Choice ~ T. Tests ~ Equ. vs Dis. ~ Not Sig")
+
+
+```
+
+## T.Tests Between Adv. Inequity and Equality Trials
+
+```{r pres-adv-vs-equal, echo = F}
+
+ggthemr("light")
+plot_averaged_envelope(cingulate_power_data_sig, epoch ="Presentation", verion = "ttest", exclude = "Disadvantageous", title = "Presentation ~ T. Tests ~ Equ. vs Adv. ~ Sig")
+plot_averaged_envelope(cingulate_power_data_nSig, epoch ="Presentation", verion = "ttest", exclude = "Disadvantageous", title = "Presentation ~ T. Tests ~ Equ. vs Ad.v ~ Not Sig")
+
+
+```
+
+```{r choice-adv-vs-equal, echo = F}
+
+ggthemr("light")
+plot_averaged_envelope(cingulate_power_data_choice_sig, epoch ="Choice", verion = "ttest", exclude = "Disadvantageous", title = "Choice ~ T. Tests ~ Equ. vs Adv. ~ Sig")
+plot_averaged_envelope(cingulate_power_data_choice_nSig, epoch ="Choice", verion = "ttest", exclude = "Disadvantageous", title = "Choice ~ T. Tests ~ Equ. vs Ad.v ~ Not Sig")
+
+
+```
+
+
+
+## Stacked Plots
+
+There is a small bump in the advantageous trials at the beginning of the presentation epoch. Does this scale with value?
+
+```{r stacked_plots}
+ggthemr("flat dark")
+
+ averaged_pres_data <- base_cingulate_power_data_sig %>%
+    filter(trial < 200) %>%
+    # mutate(trial_type = if_else(trial %in% dis_trials, "Disadvantageous", if_else(trial %in% adv_trials, "Advantageous", "Equality"))) %>%
+    mutate(payoff_type = if_else(trial %in% below_ten, "below_10", 
+                          if_else(trial %in% ten_trials, "ten",
+                               if_else(trial %in% below_15, "below_15",
+                                       if_else(trial %in% below_20, "below_20", 
+                                               if_else(trial %in% below_25, "below_25",
+                                                       if_else(trial %in% above_s25_below_o10, "above_adv_25",
+                                                               if_else(trial %in% above_s25_above_o10, "above_dis_25",
+                                                                       "huh")))))))) %>%
+    gather(key = "time", value = "power", starts_with("time")) %>%
+    group_by(payoff_type, sub, time) %>%
+    mutate(sub_lower_sem = mean(power, na.rm = T) - 2*(sd(power, na.rm = T)/n())) %>%
+    mutate(sub_upper_sem = mean(power, na.rm = T) + 2*(sd(power, na.rm = T)/n())) %>%
+    mutate(sub_mean_power = mean(power, na.rm = T)) %>%
+    group_by(payoff_type, time) %>%
+    mutate(lower_sem = mean(sub_mean_power) - 2*(sd(sub_mean_power)/n())) %>%
+    mutate(upper_sem = mean(sub_mean_power) + 2*(sd(sub_mean_power)/n())) %>%
+    mutate(mean_power = mean(sub_mean_power)) %>%
+    mutate(time = as.numeric(gsub("time_", "", time)) - 200)
+      
+averaged_data_pres_clean <- averaged_pres_data %>%
+  select(time, mean_power, lower_sem, upper_sem, payoff_type) %>%
+  distinct() %>%
+  mutate(payoff_type = factor(payoff_type, levels = c("below_10", "ten", "below_15", "below_20", "below_25", "above_adv_25", "above_dis_25")))
+
+
+averaged_data_pres_clean %>%
+  filter(payoff_type %in% c("below_15", "below_20", "below_25", "above_adv_25", "above_dis_25")) %>%
+  filter(time < 1000) %>%
+  ggplot(., aes(x = time, y = mean_power, color = payoff_type, fill = payoff_type)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = lower_sem, ymax = upper_sem), alpha = .7) +
+  theme(panel.background = element_rect(fill = "white")) 
+
+
+```
+
+
+
+
+
+
+
+
+
+```{r random-sample, echo = F, eval = F}
+dis_trials <- dis_trials[dis_trials < 200]
+adv_trials <- dis_trials[adv_trials < 200]
+
+fake_dis <- sample(1:200, length(dis_trials))
+fake_adv <- sample(c(1:200)[!(1:200 %in% fake_dis)], length(adv_trials))
+
+averaged_data_fake <- cingulate_power_data_choice %>%
+    filter(trial < 200) %>%
+    mutate(trial_type = if_else(trial %in% fake_dis, "Disadvantageous", if_else(trial %in% fake_adv, "Advantageous", "Equality"))) %>%
+    filter(trial_type != "Equality") %>%
+    gather(key = "time", value = "power", starts_with("time")) %>%
+    group_by(time, trial_type) %>%
+    mutate(mean_power = mean(power)) %>%
+    mutate(lower_sem = mean(power) - 2*(sd(power)/n())) %>%
+    mutate(upper_sem = mean(power) + 2*(sd(power)/n())) %>%
+    group_by(time) %>%
+    mutate(pval = t.test(power ~ trial_type)$p.value) 
+
+averaged_datta_clean_fake <- averaged_data_fake %>%
+  select(time, mean_power, lower_sem, upper_sem, trial_type, pval) %>%
+  distinct() %>%
+  mutate(sig = if_else(pval < .05, .4, 0))  %>%
+  mutate(time = as.numeric(gsub("time_", "", time)) - 750)
+
+averaged_datta_clean_fake %>%
+    ggplot(.) +
+    geom_line(aes(x = time, y = mean_power, color = trial_type, fill = trial_type)) +
+    geom_ribbon(aes(x = time, y = mean_power, ymin = lower_sem, ymax = upper_sem, group = trial_type), alpha = .7) +
+    geom_vline(xintercept = 0, color = "black") +
+    geom_col(aes(x = time, y = sig), alpha = .2, fill = "grey") +
+    theme(panel.background = element_rect(fill = "white"))
+
+
+```

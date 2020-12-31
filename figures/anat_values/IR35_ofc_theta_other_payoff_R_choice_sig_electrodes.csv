@@ -1,0 +1,4 @@
+sub,electrode,values,perm_p,epoch,predictor,sig,cing_pvals
+IR35,ROF1-ROF2,6,2,choice,other_payoff,0,0
+IR35,ROF2-ROF3,6,2,choice,other_payoff,0,0
+IR35,ROF3-ROF4,6,0,choice,other_payoff,1,6

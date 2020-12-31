@@ -1,0 +1,10 @@
+sub,electrode,values,perm_p,epoch,predictor,sig,cing_pvals
+IR57,LAC1-LAC2,7,2,presentation,other_payoff,0,0
+IR57,LAC2-LAC3,7,2,presentation,other_payoff,0,0
+IR57,LAC3-LAC4,7,0.131,presentation,other_payoff,0,0
+IR57,LAC4-LAC5,7,2,presentation,other_payoff,0,0
+IR57,LSMA1-LSMA2,7,0,presentation,other_payoff,1,7
+IR57,LSMA2-LSMA3,7,2,presentation,other_payoff,0,0
+IR57,LSMA3-LSMA4,7,2,presentation,other_payoff,0,0
+IR57,LSMA4-LSMA5,7,2,presentation,other_payoff,0,0
+IR57,LSMA5-LSMA6,7,2,presentation,other_payoff,0,0

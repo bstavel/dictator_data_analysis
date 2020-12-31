@@ -1,0 +1,4 @@
+sub,electrode,values,perm_p,epoch,predictor,sig,cing_pvals
+IR35,LAM5-LAM6,6,2,presentation,other_payoff,0,0
+IR35,LAM6-LAM7,6,0.1,presentation,other_payoff,0,0
+IR35,LAM7-LAM8,6,2,presentation,other_payoff,0,0

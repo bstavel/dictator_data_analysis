@@ -1,0 +1,7 @@
+sub,electrode,values,perm_p,epoch,predictor,sig,cing_pvals
+IR10,LAD2-LAD3,2,2,choice,ineq_advent,0,0
+IR10,LAD3-LAD4,2,2,choice,ineq_advent,0,0
+IR10,LAD4-LAD5,2,2,choice,ineq_advent,0,0
+IR10,LHD1-LHD2,2,2,choice,ineq_advent,0,0
+IR10,LHD2-LHD3,2,2,choice,ineq_advent,0,0
+IR10,LHD3-LHD4,2,0.143,choice,ineq_advent,0,0
