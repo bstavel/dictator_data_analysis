@@ -111,7 +111,9 @@ behave_data_10 <- behave_data %>% filter(SID == "DG_s04") %>% mutate(sub = "IR10
 behave_data_57 <- behave_data %>% filter(SID == "DG_s13") %>% mutate(sub = "IR57")
 behave_data_26 <- behave_data %>% filter(SID == "DG_s09") %>% mutate(sub = "IR26")
 behave_data_09 <- behave_data %>% filter(SID == "DG_s03") %>% mutate(sub = "IR09")
-behave_data_short <- rbind(behave_data_10, behave_data_16, behave_data_19, behave_data_28, behave_data_35, behave_data_39, behave_data_57, behave_data_09, behave_data_26)
+behave_data_cp34 <- behave_data %>% filter(SID == "DG_s14")
+behave_data_da8 <- behave_data %>% filter(SID == "DG_s15")
+behave_data_short <- rbind(behave_data_10, behave_data_16, behave_data_19, behave_data_28, behave_data_35, behave_data_39, behave_data_57, behave_data_09, behave_data_26, behave_data_cp34, behave_data_da8)
 ```
 
 ```{r trial-types-plots, echo = F, fig.width = 10, fig.height = 8}

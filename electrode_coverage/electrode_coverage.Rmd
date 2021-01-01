@@ -147,6 +147,15 @@ cp34_notes$`Out of Brain` <- 0
 cp34_notes$Epileptic <- 0
 cp34_notes$subject <- "CP34"
 
+
+# DA8 #
+DA8_notes <- readxl::read_xlsx("/Users/bstavel/Projects/knight_server/remote/ecog/DATA_FOLDER/Davis/DA8/Notes/DA8_Elec_Notes_localized.xlsx")
+DA8_notes$`Loc Meeting` <- DA8_notes$AAL # using AAL since it is a grid case
+DA8_notes$Discard <- 0
+DA8_notes$`Out of Brain` <- 0
+DA8_notes$Epileptic <- 0
+DA8_notes$subject <- "DA8"
+
 # GP51 #
 ## missing data ##
 
