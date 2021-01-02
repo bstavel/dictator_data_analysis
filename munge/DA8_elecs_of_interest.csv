@@ -1,4 +1,4 @@
-﻿Label,Coordinates,Discard,Epileptic,Out of Brain,Notes,Loc Meeting,AFNI,AAL,BrainWeb,JuBrain,VTPM,Brainnetome,Yeo7,Yeo17,Desikan-Killiany,Destrieux
+﻿Electrode,Coordinates,Discard,Epileptic,Out of Brain,Notes,Loc Meeting,AFNI,AAL,BrainWeb,JuBrain,VTPM,Brainnetome,Yeo7,Yeo17,Desikan-Killiany,Destrieux
 LAM1,-20.4848     -4.65988     -22.3222,0,0,0,,amygdala,Amygdala (71%),Hippocampus_L (52%),grey_matter (100%),Amyg (LB) (68%),no_label_found,"Hipp, Left Hippocampus rHipp, rostral hippocampus (59%)",no_label_found,no_label_found,Left-Amygdala (89%),Left-Amygdala (89%)
 LAM2,-25.053     -5.03633     -21.2691,0,0,0,,anterior ca1(?),Amygdala (77%),Hippocampus_L (57%),grey_matter (100%),Amyg (LB) (99%),no_label_found,"Amyg, Left Amygdala mAmyg, medial amygdala (42%)",no_label_found,no_label_found,Left-Amygdala (100%),Left-Amygdala (100%)
 LAM3,-30.1367     -6.16081      -21.269,0,0,0,,white matter,Parahippocampal Gyrus (80%),Hippocampus_L (46%),grey_matter (59%),Amyg (LB) (100%),no_label_found,"Hipp, Left Hippocampus rHipp, rostral hippocampus (51%)",no_label_found,no_label_found,Left-Amygdala (94%),Left-Amygdala (94%)

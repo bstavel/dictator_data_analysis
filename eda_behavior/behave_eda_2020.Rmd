@@ -60,7 +60,7 @@ solarized_palette <- c(
         '#2aa198', '#b58900',
        '#6c71c4', '#d33682')
 
-getPalette = colorRampPalette(brewer.pal(3, "Set1"))
+getPalette = colorRampPalette(brewer.pal(12, "Set1"))
 
 ## parallelization ##
 nCores <- 4
@@ -111,8 +111,8 @@ behave_data_10 <- behave_data %>% filter(SID == "DG_s04") %>% mutate(sub = "IR10
 behave_data_57 <- behave_data %>% filter(SID == "DG_s13") %>% mutate(sub = "IR57")
 behave_data_26 <- behave_data %>% filter(SID == "DG_s09") %>% mutate(sub = "IR26")
 behave_data_09 <- behave_data %>% filter(SID == "DG_s03") %>% mutate(sub = "IR09")
-behave_data_cp34 <- behave_data %>% filter(SID == "DG_s14")
-behave_data_da8 <- behave_data %>% filter(SID == "DG_s15")
+behave_data_cp34 <- behave_data %>% filter(SID == "DG_s14") %>% mutate(sub = "CP34")
+behave_data_da8 <- behave_data %>% filter(SID == "DG_s15") %>% mutate(sub = "DA8")
 behave_data_short <- rbind(behave_data_10, behave_data_16, behave_data_19, behave_data_28, behave_data_35, behave_data_39, behave_data_57, behave_data_09, behave_data_26, behave_data_cp34, behave_data_da8)
 ```
 
@@ -165,7 +165,7 @@ behave_data_short %>%
   ggplot(., aes(x = mean_other_payoff, y = mean_inequity, color = sub)) +
   geom_point(size = 4) +
   theme(panel.background = element_rect(fill = "white")) +
-  scale_color_manual(values = getPalette(9)) +
+  scale_color_manual(values = getPalette(11)) +
   labs( y = "Inequity", x = "Average Other Payoff", color = "subject")
 
 
@@ -177,7 +177,7 @@ behave_data_short %>%
   ggplot(., aes(x = mean_self_payoff, y = mean_dis_inequity, color = sub)) +
   geom_point(size = 4) +
   theme(panel.background = element_rect(fill = "white")) +
-  scale_color_manual(values = getPalette(9)) +
+  scale_color_manual(values = getPalette(11)) +
   labs( y = "Dis. Inequity", x = "Average Self Payoff", color = "subject")
 
 behave_data_short %>%
@@ -187,7 +187,7 @@ behave_data_short %>%
   ggplot(., aes(x = mean_self_payoff, y = mean_adv_inequity, color = sub)) +
   geom_point(size = 4) +
   theme(panel.background = element_rect(fill = "white")) +
-  scale_color_manual(values = getPalette(9)) +
+  scale_color_manual(values = getPalette(11)) +
   labs( y = "Adv. Inequity", x = "Average Self Payoff", color = "subject")
 ```
 
@@ -197,7 +197,7 @@ behave_data_short %>%
   ggplot(., aes(x = sub, y = other_payoff, fill = sub)) +
   geom_violin() +
   geom_boxplot(width=0.1) +
-  scale_fill_manual(values = getPalette(9)) +
+  scale_fill_manual(values = getPalette(11)) +
   theme(panel.background = element_rect(fill = "white"))
 
 
@@ -205,21 +205,21 @@ behave_data_short %>%
   ggplot(., aes(x = sub, y = self_payoff, fill = sub)) +
   geom_violin() +
   geom_boxplot(width=0.1) +
-  scale_fill_manual(values = getPalette(9)) +
+  scale_fill_manual(values = getPalette(11)) +
   theme(panel.background = element_rect(fill = "white"))
 
 behave_data_short %>%
   ggplot(., aes(x = sub, y = other_foregone, fill = sub)) +
   geom_violin() +
   geom_boxplot(width=0.1) +
-  scale_fill_manual(values = getPalette(9)) +
+  scale_fill_manual(values = getPalette(11)) +
   theme(panel.background = element_rect(fill = "white"))
 
 behave_data_short %>%
   ggplot(., aes(x = sub, y = self_foregone, fill = sub)) +
   geom_violin() +
   geom_boxplot(width=0.1) +
-  scale_fill_manual(values = getPalette(9)) +
+  scale_fill_manual(values = getPalette(11)) +
   theme(panel.background = element_rect(fill = "white"))
 
 
@@ -227,7 +227,7 @@ behave_data_short %>%
 #   ggplot(., aes(x = self_payoff, y = self_foregone, fill = sub)) +
 #   geom_violin() +
 #   geom_boxplot(width=0.1) +
-#   scale_fill_manual(values = getPalette(9)) +
+#   scale_fill_manual(values = getPalette(11)) +
 #   theme(panel.background = element_rect(fill = "white"))
 
 ```
