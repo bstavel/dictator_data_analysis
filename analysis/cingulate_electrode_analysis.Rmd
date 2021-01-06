@@ -120,6 +120,54 @@ above_s25_above_o10 <- behave_data_35 %>% filter(self_var_payoff > 25 & other_va
 ```
 
 
+```{r other-type-sig, eval = F}
+### any subject general vars ###
+spec_vars <- c("*", "*")
+abs_beta_val <- F
+regions_to_combine <- c("All")
+
+theta_presentation_results_19 <- compile_results(regions = regions_to_combine, 
+                                           type = "theta-pres-locked-hilbertRS", 
+                                           sub = "IR19", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR19", "post_eda"), 
+                                           absBeta = abs_beta_val)
+
+theta_presentation_results_39 <- compile_results(regions = regions_to_combine, 
+                                           type = "theta-pres-locked-hilbertRS", 
+                                           sub = "IR39", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR39", "post_eda"), 
+                                           absBeta = abs_beta_val)
+
+theta_choice_results_19 <- compile_results(regions = regions_to_combine, 
+                                           type = "theta-choice-locked-hilbertRS", 
+                                           sub = "IR19", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR19", "post_eda"), 
+                                           absBeta = abs_beta_val)
+
+theta_choice_results_39 <- compile_results(regions = regions_to_combine, 
+                                           type = "theta-choice-locked-hilbertRS", 
+                                           sub = "IR39", 
+                                           spec_vars = spec_vars, 
+                                           path = path(here(), "results", "IR39", "post_eda"), 
+                                           absBeta = abs_beta_val)
+
+
+
+alternate_type_elecs <- rbind(theta_presentation_results_19 %>% mutate(sub = "IR19") %>% mutate(epoch = "presentation"),
+                              theta_presentation_results_39 %>% mutate(sub = "IR39") %>% mutate(epoch = "presentation"),
+                              theta_choice_results_19 %>% mutate(sub = "IR19") %>% mutate(epoch = "choice"),
+                              theta_choice_results_39 %>% mutate(sub = "IR39") %>% mutate(epoch = "choice"))
+
+mutate(cingulate = if_else(grepl("CC", ROI, ignore.case = T), 1,
+                           if_else(grepl("cing", ROI, ignore.case = T), 1, 0))) %>%
+
+
+```
+
+
 ```{r function-to-load-power-data, echo = F}
 
 elec_specific_power_data <- function(elecs, epoch, freq, sig = T) {

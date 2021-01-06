@@ -60,52 +60,560 @@ registerDoParallel(nCores)
 ```
 
 
-```{r load-pres-results}
+```{r load-all-results}
 
 ### any subject general vars ###
 spec_vars <- c("*", "*")
 regions_to_combine <- c("All")
 
+## IR57 ##
+choice_mult_reg_df_57 <- compile_mult_reg_results(regions = regions_to_combine,
+                                           type = "multiple-theta-choice-locked-hilbertRS",
+                                           sub = "IR57",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR57", "post_eda", "multiple_regressions"))
 
-choice_mult_reg_df <- compile_mult_reg_results(regions = regions_to_combine,
+
+presentation_mult_reg_df_57 <- compile_mult_reg_results(regions = regions_to_combine,
+                                           type = "multiple-theta-pres-locked-hilbertRS",
+                                           sub = "IR57",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR57", "post_eda", "multiple_regressions"))
+
+
+## IR35 ##
+choice_mult_reg_df_35 <- compile_mult_reg_results(regions = regions_to_combine,
                                            type = "multiple-theta-choice-locked-hilbertRS",
                                            sub = "IR35",
                                            spec_vars = spec_vars,
                                            path = path(here(), "results", "IR35", "post_eda", "multiple_regressions"))
 
 
-presentation_mult_reg_df <- compile_mult_reg_results(regions = regions_to_combine,
+presentation_mult_reg_df_35 <- compile_mult_reg_results(regions = regions_to_combine,
                                            type = "multiple-theta-pres-locked-hilbertRS",
                                            sub = "IR35",
                                            spec_vars = spec_vars,
                                            path = path(here(), "results", "IR35", "post_eda", "multiple_regressions"))
 
 
-presentation_mult_reg_df %>%
-  filter(perm_p < .05) %>%
-  group_by(predictor) %>%
-  select(electrode, predictor) %>%
-  distinct() %>%
-  add_tally() %>%
-  select(n) %>%
-  kable() %>%
-  kable_styling()
+## IR28 ##
+choice_mult_reg_df_28 <- compile_mult_reg_results(regions = regions_to_combine,
+                                           type = "multiple-theta-choice-locked-hilbertRS",
+                                           sub = "IR28",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR28", "post_eda", "multiple_regressions"))
 
 
-tmp <- presentation_mult_reg_df %>%
-  filter(perm_p < .05) %>%
-  group_by(predictor) %>%
-  add_tally() %>%
-  select(n, perm_p, electrode) %>%
-  distinct() %>%
-  mutate(predictor = factor(predictor, levels = tmp$predictor[c(1, 3, 2, 4)]))
+presentation_mult_reg_df_28 <- compile_mult_reg_results(regions = regions_to_combine,
+                                           type = "multiple-theta-pres-locked-hilbertRS",
+                                           sub = "IR28",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR28", "post_eda", "multiple_regressions"))
+
+## IR26 ##
+choice_mult_reg_df_26 <- compile_mult_reg_results(regions = regions_to_combine,
+                                           type = "multiple-theta-choice-locked-hilbertRS",
+                                           sub = "IR26",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR26", "post_eda", "multiple_regressions"))
 
 
-table(tmp$electrode, tmp$predictor) %>% kable() %>% kable_styling()
+presentation_mult_reg_df_26 <- compile_mult_reg_results(regions = regions_to_combine,
+                                           type = "multiple-theta-pres-locked-hilbertRS",
+                                           sub = "IR26",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR26", "post_eda", "multiple_regressions"))
+
+
+## IR16 ##
+choice_mult_reg_df_16 <- compile_mult_reg_results(regions = regions_to_combine,
+                                           type = "multiple-theta-choice-locked-hilbertRS",
+                                           sub = "IR16",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR16", "post_eda", "multiple_regressions"))
+
+
+presentation_mult_reg_df_16 <- compile_mult_reg_results(regions = regions_to_combine,
+                                           type = "multiple-theta-pres-locked-hilbertRS",
+                                           sub = "IR16",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR16", "post_eda", "multiple_regressions"))
+
+
+## IR10 ##
+choice_mult_reg_df_10 <- compile_mult_reg_results(regions = regions_to_combine,
+                                           type = "multiple-theta-choice-locked-hilbertRS",
+                                           sub = "IR10",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR10", "post_eda", "multiple_regressions"))
+
+
+presentation_mult_reg_df_10 <- compile_mult_reg_results(regions = regions_to_combine,
+                                           type = "multiple-theta-pres-locked-hilbertRS",
+                                           sub = "IR10",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR10", "post_eda", "multiple_regressions"))
+
+
+## IR9 ##
+choice_mult_reg_df_9 <- compile_mult_reg_results(regions = regions_to_combine,
+                                           type = "multiple-theta-choice-locked-hilbertRS",
+                                           sub = "IR9",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR9", "post_eda", "multiple_regressions"))
+
+
+presentation_mult_reg_df_9 <- compile_mult_reg_results(regions = regions_to_combine,
+                                           type = "multiple-theta-pres-locked-hilbertRS",
+                                           sub = "IR9",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR9", "post_eda", "multiple_regressions"))
+
+
+
 ```
 
 
 
+```{r add-crit-info}
+
+# presentation dfs #
+presentation_mult_reg_df_57 <- presentation_mult_reg_df_57 %>% mutate(sub = "IR57") %>% mutate(epoch = "presentation")
+presentation_mult_reg_df_35 <- presentation_mult_reg_df_35 %>% mutate(sub = "IR35") %>% mutate(epoch = "presentation")
+presentation_mult_reg_df_28 <- presentation_mult_reg_df_28 %>% mutate(sub = "IR28") %>% mutate(epoch = "presentation")
+presentation_mult_reg_df_26 <- presentation_mult_reg_df_26 %>% mutate(sub = "IR26") %>% mutate(epoch = "presentation")
+presentation_mult_reg_df_16 <- presentation_mult_reg_df_16 %>% mutate(sub = "IR16") %>% mutate(epoch = "presentation")
+presentation_mult_reg_df_10 <- presentation_mult_reg_df_10 %>% mutate(sub = "IR10") %>% mutate(epoch = "presentation")
+presentation_mult_reg_df_9 <- presentation_mult_reg_df_9 %>% mutate(sub = "IR9") %>% mutate(epoch = "presentation")
+
+
+# choice dfs #
+choice_mult_reg_df_57 <- choice_mult_reg_df_57 %>% mutate(sub = "IR57") %>% mutate(epoch = "choice")
+choice_mult_reg_df_35 <- choice_mult_reg_df_35 %>% mutate(sub = "IR35") %>% mutate(epoch = "choice")
+choice_mult_reg_df_28 <- choice_mult_reg_df_28 %>% mutate(sub = "IR28") %>% mutate(epoch = "choice")
+choice_mult_reg_df_26 <- choice_mult_reg_df_26 %>% mutate(sub = "IR26") %>% mutate(epoch = "choice")
+choice_mult_reg_df_16 <- choice_mult_reg_df_16 %>% mutate(sub = "IR16") %>% mutate(epoch = "choice")
+choice_mult_reg_df_10 <- choice_mult_reg_df_10 %>% mutate(sub = "IR10") %>% mutate(epoch = "choice")
+choice_mult_reg_df_9 <- choice_mult_reg_df_9 %>% mutate(sub = "IR9") %>% mutate(epoch = "choice")
+
+
+
+```
+
+
+```{r add-localization}
+
+merge_with_elec_info <- function(df, localizations_sub) {
+## merge df with elec info, stored in localizations_sub
+## creates new var of form ROI1-ROI2  
+## also cleans elec names
+  
+  # clean the names
+  df <- df %>%
+    mutate(electrode = gsub("POL ", "", electrode)) %>%
+    mutate(electrode = gsub(" POL", "", electrode)) %>%
+    mutate(electrode = gsub("-Ref", "", electrode)) %>%
+    mutate(electrode = gsub("-Ref-", "-", electrode)) 
+  
+  # separate two electrodes
+  df <- df %>%
+    mutate(first_elec= gsub("-.*", "", electrode)) %>%
+    mutate(second_elec = gsub(".*-", "", electrode))
+  # join on first electrode
+  df <- left_join(df,
+                 localizations_sub,
+                 by = c("first_elec" = "Electrode"))
+  # rename to `first_region`
+  df <- df %>%
+    rename(first_region = `Loc Meeting`)
+  # join on second electrode and rename
+  df <-  left_join(df,
+             localizations_sub,
+             by = c("second_elec" = "Electrode")) %>%
+    rename(second_region = `Loc Meeting`) 
+  # paste into useful format
+  df <- df %>% mutate(ROI = paste0(first_region, "-", second_region))
+  
+  return(df)
+
+}
+
+
+## get region names ##
+localizations <- read_csv(path(here(), "munge", "combined_electrode_info_with_bob.csv"))
+localizations_28 <- localizations %>% filter(subject == "IR28") %>% select(Electrode, `Loc Meeting`)
+localizations_35 <- localizations %>% filter(subject == "IR35") %>% select(Electrode, `Loc Meeting`)
+localizations_57 <- localizations %>% filter(subject == "IR57") %>% select(Electrode, `Loc Meeting`)
+localizations_9 <- localizations %>% filter(subject == "IR9") %>% select(Electrode, `Loc Meeting`)
+localizations_10 <- localizations %>% filter(subject == "IR10") %>% select(Electrode, `Loc Meeting`)
+localizations_10 <- localizations_10 %>%
+  mutate(Electrode = gsub("POL ", "", Electrode)) %>%
+  mutate(Electrode = gsub(" POL", "", Electrode)) %>%
+  mutate(Electrode = gsub("-Ref", "", Electrode)) %>%
+  mutate(Electrode = gsub("-Ref-", "-", Electrode)) 
+localizations_26 <- localizations %>% filter(subject == "IR26") %>% select(Electrode, `Loc Meeting`)
+localizations_16 <- localizations %>% filter(subject == "IR16") %>% select(Electrode, `Loc Meeting`)
+localizations_cp34 <- localizations %>% filter(subject == "CP34") %>% select(Electrode, `Loc Meeting`)
+
+
+## merge dfs ##
+presentation_mult_reg_df_9 <- merge_with_elec_info(presentation_mult_reg_df_9, localizations_9)
+presentation_mult_reg_df_10 <- merge_with_elec_info(presentation_mult_reg_df_10, localizations_10)
+presentation_mult_reg_df_16 <- merge_with_elec_info(presentation_mult_reg_df_16, localizations_16)
+presentation_mult_reg_df_26 <- merge_with_elec_info(presentation_mult_reg_df_26, localizations_26)
+presentation_mult_reg_df_28 <- merge_with_elec_info(presentation_mult_reg_df_28, localizations_28)
+presentation_mult_reg_df_35 <- merge_with_elec_info(presentation_mult_reg_df_35, localizations_35)
+presentation_mult_reg_df_57 <- merge_with_elec_info(presentation_mult_reg_df_57, localizations_57)
+
+choice_mult_reg_df_9 <- merge_with_elec_info(choice_mult_reg_df_9, localizations_9)
+choice_mult_reg_df_10 <- merge_with_elec_info(choice_mult_reg_df_10, localizations_10)
+choice_mult_reg_df_16 <- merge_with_elec_info(choice_mult_reg_df_16, localizations_16)
+choice_mult_reg_df_26 <- merge_with_elec_info(choice_mult_reg_df_26, localizations_26)
+choice_mult_reg_df_28 <- merge_with_elec_info(choice_mult_reg_df_28, localizations_28)
+choice_mult_reg_df_35 <- merge_with_elec_info(choice_mult_reg_df_35, localizations_35)
+choice_mult_reg_df_57 <- merge_with_elec_info(choice_mult_reg_df_57, localizations_57)
+
+```
+
+
+```{r merge-all-dfs}
+
+all_pres_mult_reg_results <- rbind(presentation_mult_reg_df_9, 
+                              presentation_mult_reg_df_10,
+                              presentation_mult_reg_df_16,
+                              presentation_mult_reg_df_26,
+                              presentation_mult_reg_df_28,
+                              presentation_mult_reg_df_35,
+                              presentation_mult_reg_df_57)
+                              
+all_choice_mult_reg_results <- rbind(choice_mult_reg_df_9, 
+                              choice_mult_reg_df_10,
+                              choice_mult_reg_df_16,
+                              choice_mult_reg_df_26,
+                              choice_mult_reg_df_28,
+                              choice_mult_reg_df_35,
+                              choice_mult_reg_df_57)
+
+
+```
+
+
+```{r prep-for-matlab-plots}
+
+prepped_pres_mult_reg_results <- all_pres_mult_reg_results %>%
+  select(sub, epoch, electrode, first_region, second_region, ROI, perm_p, predictor) %>%
+  pivot_wider(names_from = predictor, values_from = perm_p, values_fn = function(x) unique(x)) %>%
+  mutate(pres_results = if_else(ineq_disadvent_other_var_payoff < 0.05 & other_var_payoff_ineq_disadvent < 0.05, 3, 
+                                if_else(ineq_disadvent_other_var_payoff < 0.05, 2, 
+                                        if_else(other_var_payoff_ineq_disadvent < 0.05, 1, 0)))) %>%
+  mutate(choice_results = if_else(ineq_foregone_other_foregone < 0.05 & other_foregone_ineq_foregone < 0.05, 3, 
+                                if_else(ineq_foregone_other_foregone < 0.05, 2, 
+                                        if_else(other_foregone_ineq_foregone < 0.05, 1, 0)))) %>%
+  mutate(choice_legend = if_else(choice_results == 3, "Both", 
+                                 if_else(choice_results == 2, "Ineq Foregone", 
+                                         if_else(choice_results == 1, "Other Foregone", "Neither")))) %>%
+  mutate(pres_legend = if_else(pres_results == 3, "Both", 
+                                 if_else(pres_results == 2, "Ineq Disadvant", 
+                                         if_else(pres_results == 1, "Other Var", "Neither"))))
+
+
+
+prepped_choice_mult_reg_results <- all_choice_mult_reg_results %>%
+  select(sub, epoch, electrode, first_region, second_region, ROI, perm_p, predictor) %>%
+  pivot_wider(names_from = predictor, values_from = perm_p, values_fn = function(x) unique(x)) %>%
+  mutate(pres_results = if_else(ineq_disadvent_other_var_payoff < 0.05 & other_var_payoff_ineq_disadvent < 0.05, 3, 
+                                if_else(ineq_disadvent_other_var_payoff < 0.05, 2, 
+                                        if_else(other_var_payoff_ineq_disadvent < 0.05, 1, 0)))) %>%
+  mutate(choice_results = if_else(ineq_foregone_other_foregone < 0.05 & other_foregone_ineq_foregone < 0.05, 3, 
+                                if_else(ineq_foregone_other_foregone < 0.05, 2, 
+                                        if_else(other_foregone_ineq_foregone < 0.05, 1, 0)))) %>%
+  mutate(choice_legend = if_else(choice_results == 3, "Both", 
+                                 if_else(choice_results == 2, "Ineq Foregone", 
+                                         if_else(choice_results == 1, "Other Foregone", "Neither")))) %>%
+  mutate(pres_legend = if_else(pres_results == 3, "Both", 
+                                 if_else(pres_results == 2, "Ineq Disadvant", 
+                                         if_else(pres_results == 1, "Other Var", "Neither"))))
+
+```
+
+
+```{r write-results}
+
+## pres ##
+write_csv(prepped_pres_mult_reg_results, path(here(), "figures", "anat_values", "presentation_multiple_reg_results.csv"))
+write_csv(prepped_pres_mult_reg_results %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_presentation_multiple_reg_results.csv"))
+write_csv(prepped_pres_mult_reg_results %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_presentation_multiple_reg_results.csv"))
+write_csv(prepped_pres_mult_reg_results %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_presentation_multiple_reg_results.csv"))
+write_csv(prepped_pres_mult_reg_results %>% filter(sub == "IR26"), path(here(), "figures", "anat_values", "IR26_presentation_multiple_reg_results.csv"))
+write_csv(prepped_pres_mult_reg_results %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_presentation_multiple_reg_results.csv"))
+write_csv(prepped_pres_mult_reg_results %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_presentation_multiple_reg_results.csv"))
+write_csv(prepped_pres_mult_reg_results %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_presentation_multiple_reg_results.csv"))
+## chocie ##
+write_csv(prepped_choice_mult_reg_results, path(here(), "figures", "anat_values", "choice_pres-regs_multiple_reg_results.csv"))
+write_csv(prepped_choice_mult_reg_results %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_choice_pres-regs_multiple_reg_results.csv"))
+write_csv(prepped_choice_mult_reg_results %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_choice_pres-regs_multiple_reg_results.csv"))
+write_csv(prepped_choice_mult_reg_results %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_choice_pres-regs_multiple_reg_results.csv"))
+write_csv(prepped_choice_mult_reg_results %>% filter(sub == "IR26"), path(here(), "figures", "anat_values", "IR26_choice_pres-regs_multiple_reg_results.csv"))
+write_csv(prepped_choice_mult_reg_results %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_choice_pres-regs_multiple_reg_results.csv"))
+write_csv(prepped_choice_mult_reg_results %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_choice_pres-regs_multiple_reg_results.csv"))
+write_csv(prepped_choice_mult_reg_results %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_choice_pres-regs_multiple_reg_results.csv"))
+
+
+### only sig ###
+sig_pres_mult_reg_results <- prepped_pres_mult_reg_results %>% filter(pres_results > 0)
+sig_choice_mult_reg_results <- prepped_choice_mult_reg_results %>% filter(choice_results > 0)
+## pres ##
+write_csv(sig_pres_mult_reg_results, path(here(), "figures", "anat_values", "sig_presentation_multiple_reg_results.csv"))
+write_csv(sig_pres_mult_reg_results %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_sig_presentation_multiple_reg_results.csv"))
+write_csv(sig_pres_mult_reg_results %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_sig_presentation_multiple_reg_results.csv"))
+write_csv(sig_pres_mult_reg_results %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_sig_presentation_multiple_reg_results.csv"))
+write_csv(sig_pres_mult_reg_results %>% filter(sub == "IR26"), path(here(), "figures", "anat_values", "IR26_sig_presentation_multiple_reg_results.csv"))
+write_csv(sig_pres_mult_reg_results %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_sig_presentation_multiple_reg_results.csv"))
+write_csv(sig_pres_mult_reg_results %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_sig_presentation_multiple_reg_results.csv"))
+write_csv(sig_pres_mult_reg_results %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_sig_presentation_multiple_reg_results.csv"))
+## chocie ##
+write_csv(sig_choice_mult_reg_results, path(here(), "figures", "anat_values", "sig_choice_multiple_reg_results.csv"))
+write_csv(sig_choice_mult_reg_results %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_sig_choice_multiple_reg_results.csv"))
+write_csv(sig_choice_mult_reg_results %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_sig_choice_multiple_reg_results.csv"))
+write_csv(sig_choice_mult_reg_results %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_sig_choice_multiple_reg_results.csv"))
+write_csv(sig_choice_mult_reg_results %>% filter(sub == "IR26"), path(here(), "figures", "anat_values", "IR26_sig_choice_multiple_reg_results.csv"))
+write_csv(sig_choice_mult_reg_results %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_sig_choice_multiple_reg_results.csv"))
+write_csv(sig_choice_mult_reg_results %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_sig_choice_multiple_reg_results.csv"))
+write_csv(sig_choice_mult_reg_results %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_sig_choice_multiple_reg_results.csv"))
+
+
+### only sig ###
+sig_pres_mult_reg_results <- prepped_pres_mult_reg_results %>% filter(choice_results > 0)
+sig_choice_mult_reg_results <- prepped_choice_mult_reg_results %>% filter(pres_results > 0)
+## pres ##
+write_csv(sig_pres_mult_reg_results, path(here(), "figures", "anat_values", "sig_presentation_choice-regs_multiple_reg_results.csv"))
+write_csv(sig_pres_mult_reg_results %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_sig_presentation_choice-regs_multiple_reg_results.csv"))
+write_csv(sig_pres_mult_reg_results %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_sig_presentation_choice-regs_multiple_reg_results.csv"))
+write_csv(sig_pres_mult_reg_results %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_sig_presentation_choice-regs_multiple_reg_results.csv"))
+write_csv(sig_pres_mult_reg_results %>% filter(sub == "IR26"), path(here(), "figures", "anat_values", "IR26_sig_presentation_choice-regs_multiple_reg_results.csv"))
+write_csv(sig_pres_mult_reg_results %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_sig_presentation_choice-regs_multiple_reg_results.csv"))
+write_csv(sig_pres_mult_reg_results %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_sig_presentation_choice-regs_multiple_reg_results.csv"))
+write_csv(sig_pres_mult_reg_results %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_sig_presentation_choice-regs_multiple_reg_results.csv"))
+## choice ##
+write_csv(sig_choice_mult_reg_results, path(here(), "figures", "anat_values", "sig_choice_pres-regs_multiple_reg_results.csv"))
+write_csv(sig_choice_mult_reg_results %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_sig_choice_pres-regs_multiple_reg_results.csv"))
+write_csv(sig_choice_mult_reg_results %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_sig_choice_pres-regs_multiple_reg_results.csv"))
+write_csv(sig_choice_mult_reg_results %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_sig_choice_pres-regs_multiple_reg_results.csv"))
+write_csv(sig_choice_mult_reg_results %>% filter(sub == "IR26"), path(here(), "figures", "anat_values", "IR26_sig_choice_pres-regs_multiple_reg_results.csv"))
+write_csv(sig_choice_mult_reg_results %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_sig_choice_pres-regs_multiple_reg_results.csv"))
+write_csv(sig_choice_mult_reg_results %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_sig_choice_pres-regs_multiple_reg_results.csv"))
+write_csv(sig_choice_mult_reg_results %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_sig_choice_pres-regs_multiple_reg_results.csv"))
+
+
+
+```
+
+
+```{r tables}
+
+kable(table(factor(prepped_pres_mult_reg_results$pres_legend, levels = c("Both", "Ineq Disadvant", "Other Var", "Neither"))), col.names = c("Pres Vars", "Freq"), caption = "Presentation Epoch") %>% kable_styling()
+kable(table(factor(prepped_choice_mult_reg_results$choice_legend, levels = c("Both", "Ineq Foregone", "Other Foregone", "Neither"))), col.names = c("Choice Vars", "Freq"), caption = "Choice Epoch") %>% kable_styling()
+kable(table(factor(prepped_pres_mult_reg_results$choice_legend, levels = c("Both", "Ineq Foregone", "Other Foregone", "Neither"))), col.names = c("Choice Vars", "Freq"), caption = "Presentation Epoch") %>% kable_styling()
+kable(table(factor(prepped_choice_mult_reg_results$pres_legend, levels = c("Both", "Ineq Disadvant", "Other Var", "Neither"))), col.names = c("Pres Vars", "Freq"), caption = "Choice Epoch") %>% kable_styling()
+
+```
+
+
+```{r cing-tables}
+
+
+cing_prepped_pres_mult_reg_results <- prepped_pres_mult_reg_results %>% 
+  mutate(cingulate = if_else(grepl("CC", ROI, ignore.case = T), 1,
+                           if_else(grepl("cing", ROI, ignore.case = T), 1, 0))) %>%
+  filter(cingulate ==1)
+
+cing_prepped_choice_mult_reg_results <- prepped_choice_mult_reg_results %>% 
+  mutate(cingulate = if_else(grepl("CC", ROI, ignore.case = T), 1,
+                           if_else(grepl("cing", ROI, ignore.case = T), 1, 0))) %>%
+  filter(cingulate ==1)
+
+cing_prepped_pres_mult_reg_results <- prepped_pres_mult_reg_results %>% 
+  mutate(cingulate = if_else(grepl("CC", ROI, ignore.case = T), 1,
+                           if_else(grepl("cing", ROI, ignore.case = T), 1, 0))) %>%
+  filter(cingulate ==1)
+
+cing_prepped_choice_mult_reg_results <- prepped_choice_mult_reg_results %>% 
+  mutate(cingulate = if_else(grepl("CC", ROI, ignore.case = T), 1,
+                           if_else(grepl("cing", ROI, ignore.case = T), 1, 0))) %>%
+  filter(cingulate ==1)
+
+table(cing_prepped_pres_mult_reg_results$pres_legend)
+table(cing_prepped_choice_mult_reg_results$choice_legend)
+table(cing_prepped_pres_mult_reg_results$choice_legend)
+table(cing_prepped_choice_mult_reg_results$pres_legend)
+
+```
+```{r combined-averaged-betas}
+## select need ed values for plots from full df and merge back into prepped results ##
+betas_pres_mult_reg_results <- all_pres_mult_reg_results %>%
+  select(electrode, bin, R2, Beta_1, Beta_2, Fstat, p_1, p_2, perm_p, predictor, sub)
+
+betas_choice_mult_reg_results <- all_choice_mult_reg_results %>%
+  select(electrode, bin, R2, Beta_1, Beta_2, Fstat, p_1, p_2, perm_p, predictor, sub)
+  
+# merge #
+betas_pres_mult_reg_results <- full_join(betas_pres_mult_reg_results, prepped_pres_mult_reg_results)
+betas_choice_mult_reg_results <- full_join(betas_choice_mult_reg_results, prepped_choice_mult_reg_results)
+
+
+## VIF ##
+tmp <- betas_pres_mult_reg_results %>%
+  mutate(vif = 1/(1-R2)) %>%
+  ggplot(., aes(x = vif)) +
+  geom_histogram() 
+
+```
+
+
+```{r plot-bets, warning=F}
+
+
+betas_pres_mult_reg_plot_df <- betas_pres_mult_reg_results %>%
+  group_by(sub, bin, predictor, pres_legend) %>%
+  mutate(sub_lower_beta_1_sem = mean(Beta_1, na.rm = T) - 2*(sd(Beta_1, na.rm = T)/n())) %>%
+  mutate(sub_upper_beta_1_sem = mean(Beta_1, na.rm = T) + 2*(sd(Beta_1, na.rm = T)/n())) %>%
+  mutate(sub_mean_beta_1 = mean(Beta_1, na.rm = T)) %>%
+  group_by(predictor, pres_legend, bin) %>%
+  mutate(lower_sem_beta_1 = mean(sub_mean_beta_1) - 2*(sd(sub_mean_beta_1)/n())) %>%
+  mutate(upper_sem_beta_1 = mean(sub_mean_beta_1) + 2*(sd(sub_mean_beta_1)/n())) %>%
+  mutate(mean_beta_1 = mean(sub_mean_beta_1)) %>%
+  mutate_cond(pres_results == 2 & predictor == "other_var_payoff_ineq_disadvent", mean_beta_1 = NA, lower_sem_beta_1 = NA, upper_sem_beta_1 = NA) %>%
+  mutate_cond(pres_results == 1 & predictor == "ineq_disadvent_other_var_payoff", mean_beta_1 = NA, lower_sem_beta_1 = NA, upper_sem_beta_1 = NA) %>%
+  mutate(bin = as.numeric(gsub("bin_", "", bin)))
+
+betas_choice_mult_reg_plot_df <- betas_choice_mult_reg_results %>%
+  group_by(sub, bin, predictor, choice_legend) %>%
+  mutate(sub_lower_beta_1_sem = mean(Beta_1, na.rm = T) - 2*(sd(Beta_1, na.rm = T)/n())) %>%
+  mutate(sub_upper_beta_1_sem = mean(Beta_1, na.rm = T) + 2*(sd(Beta_1, na.rm = T)/n())) %>%
+  mutate(sub_mean_beta_1 = mean(Beta_1, na.rm = T)) %>%
+  group_by(predictor, choice_legend, bin) %>%
+  mutate(lower_sem_beta_1 = mean(sub_mean_beta_1) - 2*(sd(sub_mean_beta_1)/n())) %>%
+  mutate(upper_sem_beta_1 = mean(sub_mean_beta_1) + 2*(sd(sub_mean_beta_1)/n())) %>%
+  mutate(mean_beta_1 = mean(sub_mean_beta_1)) %>%
+  mutate_cond(choice_results == 2 & predictor == "ineq_foregone_other_foregone", mean_beta_1 = NA, lower_sem_beta_1 = NA, upper_sem_beta_1 = NA) %>%
+  mutate_cond(choice_results == 1 & predictor == "other_foregone_ineq_foregone", mean_beta_1 = NA, lower_sem_beta_1 = NA, upper_sem_beta_1 = NA) %>%
+  mutate(bin = as.numeric(gsub("post_", "", gsub("pre_", "-", bin))))
+
+
+ggthemr("solarized")
+betas_pres_mult_reg_plot_df %>%
+  filter(predictor %in% c("ineq_disadvent_other_var_payoff", "other_var_payoff_ineq_disadvent")) %>%
+  ggplot(., aes(x = bin, y = mean_beta_1, color = predictor, fill = predictor)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = lower_sem_beta_1, ymax = upper_sem_beta_1), alpha = .7) +
+  theme(panel.background = element_rect(fill = "white")) +
+  xlim(0, 30) +
+  facet_wrap(~pres_legend) +
+  ggtitle("All Regions ~ Pres Epoch ~ Pres Variables")
+
+
+ggthemr("light")
+betas_choice_mult_reg_plot_df %>%
+  filter(predictor %in% c("ineq_foregone_other_foregone", "other_foregone_ineq_foregone")) %>%
+  ggplot(., aes(x = bin, y = mean_beta_1, color = predictor, fill = predictor)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = lower_sem_beta_1, ymax = upper_sem_beta_1), alpha = .7) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "black")  +
+  theme(panel.background = element_rect(fill = "white")) +
+  xlim(-15, 20) +
+  facet_wrap(~choice_legend) +
+  ggtitle("All Regions ~ Choice Epoch ~ Choice Variables")
+
+```
+
+
+```{r sub-regions, warning=F}
+
+roi_betas_pres_mult_reg_plot_df <- betas_pres_mult_reg_results %>%
+  filter(predictor %in% c("ineq_disadvent_other_var_payoff", "other_var_payoff_ineq_disadvent")) %>%
+  gather(key = "elec_num", value = "elec_name", first_region, second_region) %>%
+  mutate(ofc = if_else(grepl("ofc", elec_name, ignore.case = T), 1,
+                             if_else(grepl("orbit", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(frontopolar = if_else(grepl("polar", elec_name, ignore.case = T), 1,
+                             if_else(grepl("frontopolar", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(insula = if_else(grepl("insula", elec_name, ignore.case = T), 1,
+                           if_else(grepl("insular", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(mfg = if_else(grepl("mfg", elec_name, ignore.case = T), 1,
+                     if_else(grepl("medial frontal", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(temporal_gyr = if_else(grepl("[i|s|m]tg", elec_name, ignore.case = T), 1,
+                     if_else(grepl("temporal gyrus", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(cingulate = if_else(grepl("CC", elec_name, ignore.case = T), 1,
+                           if_else(grepl("cing", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(sts = if_else(grepl("sts", elec_name, ignore.case = T), 1,
+                 if_else(grepl("superior temporal", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(hipp_formation = if_else(grepl("hinal", elec_name, ignore.case = T), 1,
+                           if_else(grepl("ca1", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(amyg = if_else(grepl("amyg", elec_name, ignore.case = T), 1,
+                           if_else(grepl("ca1", elec_name, ignore.case = T), 1, 0))) %>%
+  gather(key = "region", value = "exists",  ofc, frontopolar, insula, mfg, cingulate, sts, hipp_formation, amyg, temporal_gyr) %>%
+  filter(exists == 1) %>%
+  group_by(sub, bin, predictor, pres_legend, region) %>%
+  mutate(sub_lower_beta_1_sem = mean(Beta_1, na.rm = T) - 2*(sd(Beta_1, na.rm = T)/n())) %>%
+  mutate(sub_upper_beta_1_sem = mean(Beta_1, na.rm = T) + 2*(sd(Beta_1, na.rm = T)/n())) %>%
+  mutate(sub_mean_beta_1 = mean(Beta_1, na.rm = T)) %>%
+  group_by(predictor, pres_legend, bin, region) %>%
+  mutate(lower_sem_beta_1 = mean(sub_mean_beta_1) - 2*(sd(sub_mean_beta_1)/n())) %>%
+  mutate(upper_sem_beta_1 = mean(sub_mean_beta_1) + 2*(sd(sub_mean_beta_1)/n())) %>%
+  mutate(mean_beta_1 = mean(sub_mean_beta_1)) %>%
+  mutate_cond(pres_results == 2 & predictor == "other_var_payoff_ineq_disadvent", mean_beta_1 = NA, lower_sem_beta_1 = NA, upper_sem_beta_1 = NA) %>%
+  mutate_cond(pres_results == 1 & predictor == "ineq_disadvent_other_var_payoff", mean_beta_1 = NA, lower_sem_beta_1 = NA, upper_sem_beta_1 = NA) %>%
+  mutate(bin = as.numeric(gsub("bin_", "", bin)))
+
+ggthemr("solarized")
+roi_betas_pres_mult_reg_plot_df %>%
+  filter(region == "cingulate") %>%
+  ggplot(., aes(x = bin, y = mean_beta_1, color = predictor, fill = predictor)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = lower_sem_beta_1, ymax = upper_sem_beta_1), alpha = .7) +
+  theme(panel.background = element_rect(fill = "white")) +
+  facet_wrap(~pres_legend) +
+  ggtitle("Cingulate")
+
+roi_betas_pres_mult_reg_plot_df %>%
+  filter(region == "ofc") %>%
+  ggplot(., aes(x = bin, y = mean_beta_1, color = predictor, fill = predictor)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = lower_sem_beta_1, ymax = upper_sem_beta_1), alpha = .7) +
+  theme(panel.background = element_rect(fill = "white")) +
+  facet_wrap(~pres_legend) +
+  ggtitle("OFC")
+
+roi_betas_pres_mult_reg_plot_df %>%
+  filter(region == "mfg") %>%
+  ggplot(., aes(x = bin, y = mean_beta_1, color = predictor, fill = predictor)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = lower_sem_beta_1, ymax = upper_sem_beta_1), alpha = .7) +
+  theme(panel.background = element_rect(fill = "white")) +
+  facet_wrap(~pres_legend) +
+  ggtitle("MFG")
+
+roi_betas_pres_mult_reg_plot_df %>%
+  filter(region == "temporal_gyr") %>%
+  ggplot(., aes(x = bin, y = mean_beta_1, color = predictor, fill = predictor)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = lower_sem_beta_1, ymax = upper_sem_beta_1), alpha = .7) +
+  theme(panel.background = element_rect(fill = "white")) +
+  facet_wrap(~pres_legend) +
+  ggtitle("Temporal")
+
+roi_betas_pres_mult_reg_plot_df %>%
+  filter(region == "sts") %>%
+  ggplot(., aes(x = bin, y = mean_beta_1, color = predictor, fill = predictor)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = lower_sem_beta_1, ymax = upper_sem_beta_1), alpha = .7) +
+  theme(panel.background = element_rect(fill = "white")) +
+  facet_wrap(~pres_legend) +
+  ggtitle("STS")
+
+
+
+
+```
 
 
 

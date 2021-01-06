@@ -113,9 +113,44 @@ plot_behave_cors <- function(df){
              colors = wes_palette("Zissou1", 3, type = "continuous"))
 }
 
-plot_behave_cors(behave_data)
+plot_behave_cors(behave_data_09)
+plot_behave_cors(behave_data_10)
+plot_behave_cors(behave_data_16)
+plot_behave_cors(behave_data_26)
+plot_behave_cors(behave_data_28)
+plot_behave_cors(behave_data_35)
+plot_behave_cors(behave_data_57)
 
 ```
+```{r factorizing-mult-reg-vars}
+
+
+behave_data_35 %>%
+  filter(ineq_disadvent > 0) %>%
+  ggplot(., aes(x = ineq_disadvent)) +
+  geom_histogram() +
+  theme(panel.background = element_rect(fill = "white"))
+
+behave_data_35 %>%
+  ggplot(., aes(x = other_var_payoff)) +
+  geom_histogram() +
+  theme(panel.background = element_rect(fill = "white"))
+
+
+
+behave_data %>%
+  ggplot(., aes(x = ineq_foregone)) +
+  geom_histogram() +
+  theme(panel.background = element_rect(fill = "white"))
+
+
+behave_data %>%
+  ggplot(., aes(x = other_foregone)) +
+  geom_histogram() +
+  theme(panel.background = element_rect(fill = "white"))
+
+```
+
 
 ```{r behave-sim, eval = F}
 
