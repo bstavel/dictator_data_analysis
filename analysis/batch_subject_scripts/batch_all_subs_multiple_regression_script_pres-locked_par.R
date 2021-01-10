@@ -26,7 +26,7 @@ source(path(here(), "R", "run_filtered_anova.R"))
 source(path(here(), "R", 'mutate_cond.R'))
 
 ## paralellization ##
-nCores <- 10
+nCores <- 32
 registerDoParallel(nCores)
 
 ## regression parameters ##

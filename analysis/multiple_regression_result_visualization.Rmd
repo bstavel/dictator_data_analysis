@@ -309,10 +309,10 @@ prepped_pres_mult_reg_results <- all_pres_mult_reg_results %>%
   mutate(choice_results = if_else(ineq_foregone_other_foregone < 0.05 & other_foregone_ineq_foregone < 0.05, 3, 
                                 if_else(ineq_foregone_other_foregone < 0.05, 2, 
                                         if_else(other_foregone_ineq_foregone < 0.05, 1, 0)))) %>%
-  mutate(choice_legend = if_else(choice_results == 3, "Both", 
+  mutate(choice_legend = if_else(choice_results == 3, "Self foregone", 
                                  if_else(choice_results == 2, "Ineq Foregone", 
                                          if_else(choice_results == 1, "Other Foregone", "Neither")))) %>%
-  mutate(pres_legend = if_else(pres_results == 3, "Both", 
+  mutate(pres_legend = if_else(pres_results == 3, "Self Var", 
                                  if_else(pres_results == 2, "Ineq Disadvant", 
                                          if_else(pres_results == 1, "Other Var", "Neither"))))
 
@@ -327,10 +327,10 @@ prepped_choice_mult_reg_results <- all_choice_mult_reg_results %>%
   mutate(choice_results = if_else(ineq_foregone_other_foregone < 0.05 & other_foregone_ineq_foregone < 0.05, 3, 
                                 if_else(ineq_foregone_other_foregone < 0.05, 2, 
                                         if_else(other_foregone_ineq_foregone < 0.05, 1, 0)))) %>%
-  mutate(choice_legend = if_else(choice_results == 3, "Both", 
+  mutate(choice_legend = if_else(choice_results == 3, "Self foregone", 
                                  if_else(choice_results == 2, "Ineq Foregone", 
                                          if_else(choice_results == 1, "Other Foregone", "Neither")))) %>%
-  mutate(pres_legend = if_else(pres_results == 3, "Both", 
+  mutate(pres_legend = if_else(pres_results == 3, "Self Var", 
                                  if_else(pres_results == 2, "Ineq Disadvant", 
                                          if_else(pres_results == 1, "Other Var", "Neither"))))
 
@@ -411,10 +411,10 @@ write_csv(sig_choice_mult_reg_results %>% filter(sub == "IR57"), path(here(), "f
 
 ```{r tables}
 
-kable(table(factor(prepped_pres_mult_reg_results$pres_legend, levels = c("Both", "Ineq Disadvant", "Other Var", "Neither"))), col.names = c("Pres Vars", "Freq"), caption = "Presentation Epoch") %>% kable_styling()
-kable(table(factor(prepped_choice_mult_reg_results$choice_legend, levels = c("Both", "Ineq Foregone", "Other Foregone", "Neither"))), col.names = c("Choice Vars", "Freq"), caption = "Choice Epoch") %>% kable_styling()
-kable(table(factor(prepped_pres_mult_reg_results$choice_legend, levels = c("Both", "Ineq Foregone", "Other Foregone", "Neither"))), col.names = c("Choice Vars", "Freq"), caption = "Presentation Epoch") %>% kable_styling()
-kable(table(factor(prepped_choice_mult_reg_results$pres_legend, levels = c("Both", "Ineq Disadvant", "Other Var", "Neither"))), col.names = c("Pres Vars", "Freq"), caption = "Choice Epoch") %>% kable_styling()
+kable(table(factor(prepped_pres_mult_reg_results$pres_legend, levels = c("Self Var", "Ineq Disadvant", "Other Var", "Neither"))), col.names = c("Pres Vars", "Freq"), caption = "Presentation Epoch") %>% kable_styling()
+kable(table(factor(prepped_choice_mult_reg_results$choice_legend, levels = c("Self foregone", "Ineq Foregone", "Other Foregone", "Neither"))), col.names = c("Choice Vars", "Freq"), caption = "Choice Epoch") %>% kable_styling()
+kable(table(factor(prepped_pres_mult_reg_results$choice_legend, levels = c("Self foregone", "Ineq Foregone", "Other Foregone", "Neither"))), col.names = c("Choice Vars", "Freq"), caption = "Presentation Epoch") %>% kable_styling()
+kable(table(factor(prepped_choice_mult_reg_results$pres_legend, levels = c("Self Var", "Ineq Disadvant", "Other Var", "Neither"))), col.names = c("Pres Vars", "Freq"), caption = "Choice Epoch") %>% kable_styling()
 
 ```
 
@@ -615,5 +615,19 @@ roi_betas_pres_mult_reg_plot_df %>%
 
 ```
 
+```{r cingulate-betas}
+
+ggthemr("flat")
+roi_betas_pres_mult_reg_plot_df %>%
+  filter(region == "temporal_gyr") %>%
+  filter(pres_legend == "Ineq Disadvant" & predictor == "ineq_disadvent_other_var_payoff") %>%
+  ggplot(., aes(x = bin, y = sub_mean_beta_1, color = sub, fill = sub)) +
+  geom_line() +
+  # geom_ribbon(aes(ymin = sub_lower_beta_1_sem, ymax = sub_upper_beta_1_sem), alpha = .7) +
+  theme(panel.background = element_rect(fill = "white")) +
+  xlim(0, 30) +
+  ggtitle("Temproal")
+
+```
 
 
