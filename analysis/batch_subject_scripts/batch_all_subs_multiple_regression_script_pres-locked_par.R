@@ -35,7 +35,7 @@ niter <- 1000
 
 ## subs to run ##
 #subs <- c("IR9", "IR10", "IR16", "IR26", "IR28", sub, "IR57", "CP34") # already ran IR35
-subs <- c("IR9", "IR10", "IR16", "IR26", "IR28",  "IR57", "CP34")
+subs <- c("IR35")
 
 for(sub in subs){
   # Null main file out each time #
