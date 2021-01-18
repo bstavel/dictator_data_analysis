@@ -63,7 +63,7 @@ run_permuted_interaction_regressions_par <- function(brain_behave_data, electrod
     }
     
     # only run permutation testing if fstratch is above 7, otherwise extremeley unlikely to be sig
-    if( chisq_stretch > 5 ) {
+    if( chisq_stretch > 7 ) {
       # Create null distribution by shuffling labels #
       null_chisq_stretch <- NULL
       null_chisq_stretch <- foreach(h = 1:niter, .inorder=FALSE) %dopar% {
@@ -86,7 +86,7 @@ run_permuted_interaction_regressions_par <- function(brain_behave_data, electrod
           
           null_base_model <- lm(bin_vec ~ reg_1_vec[randomization] + reg_2_vec[randomization])
           null_interaction_model <- lm(bin_vec ~ reg_1_vec[randomization] + reg_2_vec[randomization] + reg_1_vec[randomization]*reg_2_vec[randomization])
-          null_model_comp <- lrtest(base_model, interaction_model)
+          null_model_comp <- lrtest(null_base_model, null_interaction_model)
           
           # save info from models #
           null_chisq[bin] <- null_model_comp$Chisq[2]
@@ -119,7 +119,7 @@ run_permuted_interaction_regressions_par <- function(brain_behave_data, electrod
     
     # save vals in results df #
     results <- results %>% 
-      mutate(Beta_1 = beta_1, Beta_2 = beta_2, Beta_Inter = beta_inter, Chi_Sq = chisq, p_1 = lm_pval_1, p_2 = lm_pval_2, p_inter = lm_pval_inter, cstretch = chisq_stretch, perm_p = perm_pval)
+      mutate(Beta_1 = beta_1, Beta_2 = beta_2, Beta_Inter = beta_inter, Chi_Sq = chisq, p_1 = lm_pval_1, p_2 = lm_pval_2, p_inter = model_com_pval, cstretch = chisq_stretch, perm_p = perm_pval)
     
     
     # save results to results folder #
