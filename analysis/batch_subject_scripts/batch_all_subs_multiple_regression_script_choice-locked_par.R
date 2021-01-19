@@ -35,8 +35,7 @@ niter <- 1000
 
 
 ## subs to run ##
-#subs <- c("IR9", "IR10", "IR16", "IR26", "IR28", "IR35", "IR57", "CP34") # already ran IR35
-subs <- c("IR9", "IR10", "IR16", "IR26", "IR28",  "IR57", "CP34")
+subs <- c("IR9", "IR10", "IR16", "IR26", "IR28", "IR35", "IR57", "CP34") 
 
 for(sub in subs){
   # Null main file out each time #
@@ -69,6 +68,8 @@ for(sub in subs){
   # pres #
   # run_permuted_multiple_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = c("ineq_disadvent", "self_var_payoff"), nBins, region_name =  "All", niter, sub = sub, tag = "multiple-theta-choice-locked-hilbertRS")
   # run_permuted_multiple_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = c("self_var_payoff", "ineq_disadvent"), nBins, region_name =  "All", niter, sub = sub, tag = "multiple-theta-choice-locked-hilbertRS")
+  run_permuted_multiple_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = c("other_var_payoff", "self_var_payoff"), nBins, region_name =  "All", niter, sub = sub, tag = "multiple-theta-choice-locked-hilbertRS")
+  run_permuted_multiple_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = c("self_var_payoff", "other_var_payoff"), nBins, region_name =  "All", niter, sub = sub, tag = "multiple-theta-choice-locked-hilbertRS")
   # # choice #
   # run_permuted_multiple_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = c("ineq_foregone", "self_foregone"), nBins, region_name =  "All", niter, sub = sub, tag = "multiple-theta-choice-locked-hilbertRS")
   # run_permuted_multiple_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = c("self_foregone", "ineq_foregone"), nBins, region_name =  "All", niter, sub = sub, tag = "multiple-theta-choice-locked-hilbertRS")
@@ -84,16 +85,16 @@ for(sub in subs){
   # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_foregone", nBins, region_name =  "All", niter, sub = sub, tag = "theta-choice-locked-hilbertRS")
   # # other foregone #
   # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_foregone", nBins, region_name =  "All", niter, sub = sub, tag = "theta-choice-locked-hilbertRS")
-  # self var paroff #
-  run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff", nBins, region_name =  "All", niter, sub = sub, tag = "theta-choice-locked-hilbertRS")
+  # # self var paroff #
+  # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff", nBins, region_name =  "All", niter, sub = sub, tag = "theta-choice-locked-hilbertRS")
   # # other var payoff #
   # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff", nBins, region_name =  "All", niter, sub = sub, tag = "theta-choice-locked-hilbertRS")
   # # self diff #
   # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_diff", nBins, region_name =  "All", niter, sub = sub, tag = "theta-choice-locked-hilbertRS")
   # # other diff #
   # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_diff", nBins, region_name =  "All", niter, sub = sub, tag = "theta-choice-locked-hilbertRS")
-  # trial_type #
-  run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "trial_type", nBins, region_name =  "All", niter, sub = sub, tag = "theta-pres-locked-hilbertRS")
+  # # trial_type #
+  # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "trial_type", nBins, region_name =  "All", niter, sub = sub, tag = "theta-pres-locked-hilbertRS")
   
   
   ### HFA ###
