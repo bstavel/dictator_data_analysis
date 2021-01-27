@@ -63,7 +63,7 @@ run_permuted_interaction_regressions_par <- function(brain_behave_data, electrod
     }
     
     # only run permutation testing if fstratch is above 7, otherwise extremeley unlikely to be sig
-    if( chisq_stretch > 7 ) {
+    if( chisq_stretch > 5 ) {
       # Create null distribution by shuffling labels #
       null_chisq_stretch <- NULL
       null_chisq_stretch <- foreach(h = 1:niter, .inorder=FALSE) %dopar% {
