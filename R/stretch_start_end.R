@@ -30,6 +30,9 @@ stretch_start_end <- function(stretch) {
         # if streak counter is length of stetch, set indicies #
         if (streak_counter == length(stretch)) {
         run_indices <- c(1, length(stretch))
+        } else if(idx == length(stretch)) {
+          # if at the end of the vector and sig, end the stretch
+          run_indices <- c(beg_idx, idx)
         }
       # if stretch idx is 0, end previous streaks, if max streak finishes store indices #
       } else if (stretch[idx] == F) {

@@ -364,7 +364,7 @@ prepped_choice_mult_reg_results <- all_choice_mult_reg_results %>%
 ```
 
 
-```{r write-results}
+```{r write-results, eval = F}
 
 ## pres ##
 write_csv(prepped_pres_mult_reg_results, path(here(), "figures", "anat_values", "presentation_multiple_reg_results.csv"))
@@ -475,6 +475,7 @@ table(cing_prepped_pres_mult_reg_results$choice_legend)
 table(cing_prepped_choice_mult_reg_results$pres_legend)
 
 ```
+
 ```{r combined-averaged-betas}
 ## select need ed values for plots from full df and merge back into prepped results ##
 betas_pres_mult_reg_results <- all_pres_mult_reg_results %>%
@@ -493,6 +494,12 @@ tmp <- betas_pres_mult_reg_results %>%
   mutate(vif = 1/(1-R2)) %>%
   ggplot(., aes(x = vif)) +
   geom_histogram() 
+
+
+## save for interaction analyses #
+write_csv(betas_pres_mult_reg_results, path(here(), "results", "multiple_regressions", "betas_pres_mult_reg_results.csv"))
+write_csv(betas_choice_mult_reg_results, path(here(), "results", "multiple_regressions", "betas_choice_mult_reg_results.csv"))
+
 
 ```
 

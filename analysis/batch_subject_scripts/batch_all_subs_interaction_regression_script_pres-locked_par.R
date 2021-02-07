@@ -27,12 +27,12 @@ source(path(here(), "R", "run_filtered_anova.R"))
 source(path(here(), "R", 'mutate_cond.R'))
 
 ## paralellization ##
-nCores <- 3
+nCores <- 20
 registerDoParallel(nCores)
 
 ## regression parameters ##
 # save info needed for regressions #
-niter <- 10
+niter <- 1000
 
 ## subs to run ##
 subs <- c("IR9", "IR10", "IR16", "IR26", "IR28", "IR35", "IR57", "CP34")
@@ -59,17 +59,24 @@ for(sub in subs){
     mutate(trial_type = if_else(self_var_payoff == other_var_payoff, "equality",
                                 if_else(self_var_payoff > other_var_payoff,
                                         "Advantageous", "Disadvantageous"))) %>%
-    filter(trial_type != "trial_type") %>%
-    mutate(more_or_less = if_else(abs(ineq_advent) > 0, 1, 0))
+    filter(trial_type != "equality") %>%
+    mutate(more_or_less = if_else(abs(ineq_advent) > 0, 1, -1)) %>% 
+    mutate(more_or_none = if_else(abs(ineq_advent) > 0, 1, 0)) %>% 
+    mutate(less_or_none = if_else(abs(ineq_advent) > 0, 0, 1)) 
+    
   all_electrodes <- unique(brain_behave_data$electrodes)
   # bin names #
-  nBins <- colnames(power_behave %>% select(starts_with("bin_")))
+  nBins <- colnames(power_behave %>% select(starts_with("bin_")))[1:27]
   
   ## run regressions ##
   
   ## allocentric vs egocentric ##
   # pres #
   run_permuted_interaction_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = c("self_var_payoff", "more_or_less"), nBins, region_name =  "All", niter, sub = sub, tag = "interaction-theta-pres-locked-hilbertRS")
+  # pres #
+  run_permuted_interaction_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = c("self_var_payoff", "more_or_none"), nBins, region_name =  "All", niter, sub = sub, tag = "interaction-theta-pres-locked-hilbertRS")
+  # pres #
+  run_permuted_interaction_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = c("self_var_payoff", "less_or_none"), nBins, region_name =  "All", niter, sub = sub, tag = "interaction-theta-pres-locked-hilbertRS")
   # choice #
   run_permuted_interaction_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = c("self_payoff", "more_or_less"), nBins, region_name =  "All", niter, sub = sub, tag = "interaction-theta-pres-locked-hilbertRS")
   # # adv ineq #
@@ -103,21 +110,28 @@ for(sub in subs){
   power_behave <-  read.csv(path_hp_clean)
   # merge with elecs #
   brain_behave_data <- power_behave %>%
-    filter(grepl(paste(all_elecs$Electrode, collapse = "|"), electrodes))  %>%
+    filter(grepl(paste(all_elecs$Electrode, collapse = "|"), electrodes)) %>%
     mutate(trial_type = if_else(self_var_payoff == other_var_payoff, "equality",
                                 if_else(self_var_payoff > other_var_payoff,
                                         "Advantageous", "Disadvantageous"))) %>%
-    filter(trial_type != "trial_type") %>%
-    mutate(more_or_less = if_else(abs(ineq_advent) > 0, 1, 0))
+    filter(trial_type != "equality") %>%
+    mutate(more_or_less = if_else(abs(ineq_advent) > 0, 1, -1)) %>% 
+    mutate(more_or_none = if_else(abs(ineq_advent) > 0, 1, 0)) %>% 
+    mutate(less_or_none = if_else(abs(ineq_advent) > 0, 0, 1)) 
+  
   all_electrodes <- unique(brain_behave_data$electrodes)
   # bin names #
-  nBins <- colnames(power_behave %>% select(starts_with("bin_")))
-
+  nBins <- colnames(power_behave %>% select(starts_with("bin_")))[1:27]
+  
   ## run regressions ##
 
   ## allocentric vs egocentric ##
   # pres #
   run_permuted_interaction_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = c("self_var_payoff", "more_or_less"), nBins, region_name =  "All", niter, sub = sub, tag = "interaction-hfa-pres-locked-hilbertRS")
+  # pres #
+  run_permuted_interaction_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = c("self_var_payoff", "more_or_none"), nBins, region_name =  "All", niter, sub = sub, tag = "interaction-hfa-pres-locked-hilbertRS")
+  # pres #
+  run_permuted_interaction_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = c("self_var_payoff", "less_or_none"), nBins, region_name =  "All", niter, sub = sub, tag = "interaction-hfa-pres-locked-hilbertRS")
   # choice #
   run_permuted_interaction_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = c("self_payoff", "more_or_less"), nBins, region_name =  "All", niter, sub = sub, tag = "interaction-hfa-pres-locked-hilbertRS")
   # # adv ineq #
@@ -149,21 +163,28 @@ for(sub in subs){
   power_behave <-  read.csv(path_hp_clean)
   # merge with elecs #
   brain_behave_data <- power_behave %>%
-    filter(grepl(paste(all_elecs$Electrode, collapse = "|"), electrodes))  %>%
+    filter(grepl(paste(all_elecs$Electrode, collapse = "|"), electrodes)) %>%
     mutate(trial_type = if_else(self_var_payoff == other_var_payoff, "equality",
                                 if_else(self_var_payoff > other_var_payoff,
                                         "Advantageous", "Disadvantageous"))) %>%
-    filter(trial_type != "trial_type") %>%
-    mutate(more_or_less = if_else(abs(ineq_advent) > 0, 1, 0))
+    filter(trial_type != "equality") %>%
+    mutate(more_or_less = if_else(abs(ineq_advent) > 0, 1, -1)) %>% 
+    mutate(more_or_none = if_else(abs(ineq_advent) > 0, 1, 0)) %>% 
+    mutate(less_or_none = if_else(abs(ineq_advent) > 0, 0, 1)) 
+  
   all_electrodes <- unique(brain_behave_data$electrodes)
   # bin names #
-  nBins <- colnames(power_behave %>% select(starts_with("bin_")))
-
+  nBins <- colnames(power_behave %>% select(starts_with("bin_")))[1:27]
+  
   ## run regressions ##
 
   ## allocentric vs egocentric ##
   # pres #
   run_permuted_interaction_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = c("self_var_payoff", "more_or_less"), nBins, region_name =  "All", niter, sub = sub, tag = "interaction-beta-pres-locked-hilbertRS")
+  # pres #
+  run_permuted_interaction_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = c("self_var_payoff", "more_or_none"), nBins, region_name =  "All", niter, sub = sub, tag = "interaction-beta-pres-locked-hilbertRS")
+  # pres #
+  run_permuted_interaction_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = c("self_var_payoff", "less_or_none"), nBins, region_name =  "All", niter, sub = sub, tag = "interaction-beta-pres-locked-hilbertRS")
   # choice #
   run_permuted_interaction_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = c("self_payoff", "more_or_less"), nBins, region_name =  "All", niter, sub = sub, tag = "interaction-beta-pres-locked-hilbertRS")
   # # # adv ineq #
@@ -195,21 +216,28 @@ for(sub in subs){
   power_behave <-  read.csv(path_hp_clean)
   # merge with elecs #
   brain_behave_data <- power_behave %>%
-    filter(grepl(paste(all_elecs$Electrode, collapse = "|"), electrodes))  %>%
+    filter(grepl(paste(all_elecs$Electrode, collapse = "|"), electrodes)) %>%
     mutate(trial_type = if_else(self_var_payoff == other_var_payoff, "equality",
                                 if_else(self_var_payoff > other_var_payoff,
                                         "Advantageous", "Disadvantageous"))) %>%
-    filter(trial_type != "trial_type") %>%
-    mutate(more_or_less = if_else(abs(ineq_advent) > 0, 1, 0))
+    filter(trial_type != "equality") %>%
+    mutate(more_or_less = if_else(abs(ineq_advent) > 0, 1, -1)) %>% 
+    mutate(more_or_none = if_else(abs(ineq_advent) > 0, 1, 0)) %>% 
+    mutate(less_or_none = if_else(abs(ineq_advent) > 0, 0, 1)) 
+  
   all_electrodes <- unique(brain_behave_data$electrodes)
   # bin names #
-  nBins <- colnames(power_behave %>% select(starts_with("bin_")))
-
+  nBins <- colnames(power_behave %>% select(starts_with("bin_")))[1:27]
+  
   ## run regressions ##
 
   ## allocentric vs egocentric ##
   # pres #
   run_permuted_interaction_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = c("self_var_payoff", "more_or_less"), nBins, region_name =  "All", niter, sub = sub, tag = "interaction-gamma-pres-locked-hilbertRS")
+  # pres #
+  run_permuted_interaction_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = c("self_var_payoff", "more_or_none"), nBins, region_name =  "All", niter, sub = sub, tag = "interaction-gamma-pres-locked-hilbertRS")
+  # pres #
+  run_permuted_interaction_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = c("self_var_payoff", "less_or_none"), nBins, region_name =  "All", niter, sub = sub, tag = "interaction-gamma-pres-locked-hilbertRS")
   # choice #
   run_permuted_interaction_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = c("self_payoff", "more_or_less"), nBins, region_name =  "All", niter, sub = sub, tag = "interaction-gamma-pres-locked-hilbertRS")
   # # adv ineq #
@@ -240,21 +268,28 @@ for(sub in subs){
   power_behave <-  read.csv(path_hp_clean)
   # merge with elecs #
   brain_behave_data <- power_behave %>%
-    filter(grepl(paste(all_elecs$Electrode, collapse = "|"), electrodes))  %>%
+    filter(grepl(paste(all_elecs$Electrode, collapse = "|"), electrodes)) %>%
     mutate(trial_type = if_else(self_var_payoff == other_var_payoff, "equality",
                                 if_else(self_var_payoff > other_var_payoff,
                                         "Advantageous", "Disadvantageous"))) %>%
-    filter(trial_type != "trial_type") %>%
-    mutate(more_or_less = if_else(abs(ineq_advent) > 0, 1, 0))
+    filter(trial_type != "equality") %>%
+    mutate(more_or_less = if_else(abs(ineq_advent) > 0, 1, -1)) %>% 
+    mutate(more_or_none = if_else(abs(ineq_advent) > 0, 1, 0)) %>% 
+    mutate(less_or_none = if_else(abs(ineq_advent) > 0, 0, 1)) 
+  
   all_electrodes <- unique(brain_behave_data$electrodes)
   # bin names #
-  nBins <- colnames(power_behave %>% select(starts_with("bin_")))
-
+  nBins <- colnames(power_behave %>% select(starts_with("bin_")))[1:27]
+  
   ## run regressions ##
 
   ## allocentric vs egocentric ##
   # pres #
   run_permuted_interaction_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = c("self_var_payoff", "more_or_less"), nBins, region_name =  "All", niter, sub = sub, tag = "interaction-alpha-pres-locked-hilbertRS")
+  # pres #
+  run_permuted_interaction_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = c("self_var_payoff", "more_or_none"), nBins, region_name =  "All", niter, sub = sub, tag = "interaction-alpha-pres-locked-hilbertRS")
+  # pres #
+  run_permuted_interaction_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = c("self_var_payoff", "less_or_none"), nBins, region_name =  "All", niter, sub = sub, tag = "interaction-alpha-pres-locked-hilbertRS")
   # choice #
   run_permuted_interaction_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = c("self_payoff", "more_or_less"), nBins, region_name =  "All", niter, sub = sub, tag = "interaction-alpha-pres-locked-hilbertRS")
   # # adv ineq #
@@ -285,21 +320,28 @@ for(sub in subs){
   power_behave <-  read.csv(path_hp_clean)
   # merge with elecs #
   brain_behave_data <- power_behave %>%
-    filter(grepl(paste(all_elecs$Electrode, collapse = "|"), electrodes))  %>%
+    filter(grepl(paste(all_elecs$Electrode, collapse = "|"), electrodes)) %>%
     mutate(trial_type = if_else(self_var_payoff == other_var_payoff, "equality",
                                 if_else(self_var_payoff > other_var_payoff,
                                         "Advantageous", "Disadvantageous"))) %>%
-    filter(trial_type != "trial_type") %>%
-    mutate(more_or_less = if_else(abs(ineq_advent) > 0, 1, 0))
+    filter(trial_type != "equality") %>%
+    mutate(more_or_less = if_else(abs(ineq_advent) > 0, 1, -1)) %>% 
+    mutate(more_or_none = if_else(abs(ineq_advent) > 0, 1, 0)) %>% 
+    mutate(less_or_none = if_else(abs(ineq_advent) > 0, 0, 1)) 
+  
   all_electrodes <- unique(brain_behave_data$electrodes)
   # bin names #
-  nBins <- colnames(power_behave %>% select(starts_with("bin_")))
-
+  nBins <- colnames(power_behave %>% select(starts_with("bin_")))[1:27]
+  
   ## run regressions ##
 
   ## allocentric vs egocentric ##
   # pres #
   run_permuted_interaction_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = c("self_var_payoff", "more_or_less"), nBins, region_name =  "All", niter, sub = sub, tag = "interaction-delta-pres-locked-hilbertRS")
+  # pres #
+  run_permuted_interaction_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = c("self_var_payoff", "more_or_none"), nBins, region_name =  "All", niter, sub = sub, tag = "interaction-delta-pres-locked-hilbertRS")
+  # pres #
+  run_permuted_interaction_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = c("self_var_payoff", "less_or_none"), nBins, region_name =  "All", niter, sub = sub, tag = "interaction-delta-pres-locked-hilbertRS")
   # choice #
   run_permuted_interaction_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = c("self_payoff", "more_or_less"), nBins, region_name =  "All", niter, sub = sub, tag = "interaction-delta-pres-locked-hilbertRS")
   # # adv ineq #

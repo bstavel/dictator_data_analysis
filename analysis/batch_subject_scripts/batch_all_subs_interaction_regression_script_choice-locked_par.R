@@ -27,12 +27,12 @@ source(path(here(), "R", "run_filtered_anova.R"))
 source(path(here(), "R", 'mutate_cond.R'))
 
 ## paralellization ##
-nCores <- 3
+nCores <- 20
 registerDoParallel(nCores)
 
 ## regression parameters ##
 # save info needed for regressions #
-niter <- 10
+niter <- 1000
 
 ## subs to run ##
 subs <- c("IR9", "IR10", "IR16", "IR26", "IR28", "IR35", "IR57", "CP34")
