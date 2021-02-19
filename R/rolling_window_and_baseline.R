@@ -55,7 +55,7 @@ rolling_window_and_baseline <- function(df, baseline_csv, lWin = 150, lOver = 50
     # subtract the baseline (time around beginning of option presentation)
     df_rollmean_baseline <- apply(df_rollmean, 2, function(col) t(as.vector(col - baseline)))
     
-    # rebind back #
+    # rebind back # Note, we do not add back the baseline because it would be zero since we baseline with a 200 ms window AND average with a 200 second window
     hg_clean <- cbind(indices, df_rollmean_baseline)
     
   }

@@ -506,6 +506,8 @@ write_csv(betas_choice_mult_reg_results, path(here(), "results", "multiple_regre
 
 ```{r plot-bets, warning=F}
 
+betas_pres_mult_reg_results <- read_csv(path(here(), "results", "multiple_regressions", "betas_pres_mult_reg_results.csv"))
+
 
 betas_pres_other_mult_reg_plot_df <- betas_pres_mult_reg_results %>%
   filter(pres_other_results > 0) %>%
@@ -787,9 +789,14 @@ ofc_1 <- roi_betas_pres_other_mult_reg_plot_df %>%
   geom_line() +
   geom_ribbon(aes(ymin = lower_sem_beta_1, ymax = upper_sem_beta_1), alpha = .7) +
   theme(panel.background = element_rect(fill = "white"), legend.position = "top") +
-  ylim(-.012, 0.015) + 
+  # ylim(-.012, 0.015) + 
   facet_wrap(~pres_other_legend) +
   ggtitle("OFC ~ Other")
+
+```
+
+
+```{r}
 
 ofc_2 <- roi_betas_pres_self_mult_reg_plot_df %>%
   filter(predictor %in% c("ineq_disadvent_self_var_payoff", "self_var_payoff_ineq_disadvent")) %>%

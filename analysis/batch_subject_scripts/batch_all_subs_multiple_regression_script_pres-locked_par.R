@@ -67,11 +67,15 @@ for(sub in subs){
   
   ## allocentric vs egocentric ##
   # pres #
-  # run_permuted_multiple_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = c("ineq_disadvent", "self_var_payoff"), nBins, region_name =  "All", niter, sub = sub, tag = "multiple-theta-pres-locked-hilbertRS")
-  # run_permuted_multiple_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = c("self_var_payoff", "ineq_disadvent"), nBins, region_name =  "All", niter, sub = sub, tag = "multiple-theta-pres-locked-hilbertRS")
+  run_permuted_multiple_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = c("ineq_disadvent", "self_var_payoff"), nBins, region_name =  "All", niter, sub = sub, tag = "multiple-theta-pres-locked-hilbertRS")
+  run_permuted_multiple_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = c("self_var_payoff", "ineq_disadvent"), nBins, region_name =  "All", niter, sub = sub, tag = "multiple-theta-pres-locked-hilbertRS")
+  
   run_permuted_multiple_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = c("other_var_payoff", "self_var_payoff"), nBins, region_name =  "All", niter, sub = sub, tag = "multiple-theta-pres-locked-hilbertRS")
   run_permuted_multiple_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = c("self_var_payoff", "other_var_payoff"), nBins, region_name =  "All", niter, sub = sub, tag = "multiple-theta-pres-locked-hilbertRS")
-
+  
+  run_permuted_multiple_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = c("ineq_disadvent", "other_var_payoff"), nBins, region_name =  "All", niter, sub = sub, tag = "multiple-theta-pres-locked-hilbertRS")
+  run_permuted_multiple_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = c("other_var_payoff", "ineq_disadvent"), nBins, region_name =  "All", niter, sub = sub, tag = "multiple-theta-pres-locked-hilbertRS")
+  
     # choice #
   # run_permuted_multiple_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = c("ineq_foregone", "self_foregone"), nBins, region_name =  "All", niter, sub = sub, tag = "multiple-theta-pres-locked-hilbertRS")
   # run_permuted_multiple_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = c("self_foregone", "ineq_foregone"), nBins, region_name =  "All", niter, sub = sub, tag = "multiple-theta-pres-locked-hilbertRS")

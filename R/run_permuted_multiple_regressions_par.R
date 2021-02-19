@@ -78,7 +78,7 @@ run_permuted_multiple_regressions_par <- function(brain_behave_data, electrodes,
           bin_vec <- brain_behave_data_elec[, bin]
           reg_1_vec <- brain_behave_data_elec[, reg_1]
           reg_2_vec <- brain_behave_data_elec[, reg_2]
-          null_lm <-summary(lm(bin_vec ~ sample(reg_1_vec) + reg_1_vec, data = brain_behave_data_elec))
+          null_lm <-summary(lm(bin_vec ~ sample(reg_1_vec) + reg_2_vec, data = brain_behave_data_elec))
           
           # save info from models #
           null_fstat[bin] <- null_lm$fstatistic[1]

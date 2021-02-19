@@ -245,7 +245,7 @@ load_IR35_presentation_data <- function(file_path_to_power_data, clean_name, ban
   write.csv(baseline_data, path(here(), "munge", paste0(band, "baseline_IR35.csv")))
   
   # average and baseline #
-  hg_clean <- rolling_window_and_baseline(hg_data, lWin = 250, lOver = 50, choice_locked = F)
+  hg_clean <- rolling_window_and_baseline(hg_data, lWin = 200, lOver = 50, choice_locked = F)
   
   # with behavior #
   hg_behave <- merge.data.frame(hg_clean, behave_data_35, by.x = "trial", by.y = "round", all.x = T, all.y = F)
