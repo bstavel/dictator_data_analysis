@@ -257,36 +257,36 @@ load_IR35_presentation_data <- function(file_path_to_power_data, clean_name, ban
 }
 
 ## Extract for all f ##
-# # delta #
-# band <- "delta"
-# file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR35_delta_munge_presentation_locked_rscaler_2575.csv")
-# clean_name <- path(here(), "munge", "IR35", "delta_behave_presentation_rscaler_2575_200.csv")
-# load_IR35_presentation_data(file_path_to_power_data, clean_name, band)
-# theta #
-band <- "theta"
-file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR35_theta_munge_presentation_locked_rscaler_2575.csv")
-clean_name <- path(here(), "munge", "IR35", "theta_behave_presentation_rscaler_2575_200.csv")
+# delta #
+band <- "delta"
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR35_delta_munge_presentation_locked_rscaler_2575.csv")
+clean_name <- path(here(), "munge", "IR35", "delta_behave_presentation_rscaler_2575_200.csv")
 load_IR35_presentation_data(file_path_to_power_data, clean_name, band)
-# # alpha #
-# band <- "alpha"
-# file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR35_alpha_munge_presentation_locked_rscaler_2575.csv")
-# clean_name <- path(here(), "munge", "IR35", "alpha_behave_presentation_rscaler_2575_200.csv")
+# # theta #
+# band <- "theta"
+# file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR35_theta_munge_presentation_locked_rscaler_2575.csv")
+# clean_name <- path(here(), "munge", "IR35", "theta_behave_presentation_rscaler_2575_200.csv")
 # load_IR35_presentation_data(file_path_to_power_data, clean_name, band)
-# # beta #
-# band <- "beta"
-# file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR35_beta_munge_presentation_locked_rscaler_2575.csv")
-# clean_name <- path(here(), "munge", "IR35", "beta_behave_presentation_rscaler_2575_200.csv")
-# load_IR35_presentation_data(file_path_to_power_data, clean_name, band)
-# # gamma #
-# band <- "gamma"
-# file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR35_gamma_munge_presentation_locked_rscaler_2575.csv")
-# clean_name <- path(here(), "munge", "IR35", "gamma_behave_presentation_rscaler_2575_200.csv")
-# load_IR35_presentation_data(file_path_to_power_data, clean_name, band)
-# # hfa #
-# band <- "hfa"
-# file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR35_hfa_munge_presentation_locked_rscaler_2575.csv")
-# clean_name <- path(here(), "munge", "IR35", "hfa_behave_presentation_rscaler_2575_200.csv")
-# load_IR35_presentation_data(file_path_to_power_data, clean_name, band)
+# alpha #
+band <- "alpha"
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR35_alpha_munge_presentation_locked_rscaler_2575.csv")
+clean_name <- path(here(), "munge", "IR35", "alpha_behave_presentation_rscaler_2575_200.csv")
+load_IR35_presentation_data(file_path_to_power_data, clean_name, band)
+# beta #
+band <- "beta"
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR35_beta_munge_presentation_locked_rscaler_2575.csv")
+clean_name <- path(here(), "munge", "IR35", "beta_behave_presentation_rscaler_2575_200.csv")
+load_IR35_presentation_data(file_path_to_power_data, clean_name, band)
+# gamma #
+band <- "gamma"
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR35_gamma_munge_presentation_locked_rscaler_2575.csv")
+clean_name <- path(here(), "munge", "IR35", "gamma_behave_presentation_rscaler_2575_200.csv")
+load_IR35_presentation_data(file_path_to_power_data, clean_name, band)
+# hfa #
+band <- "hfa"
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR35_hfa_munge_presentation_locked_rscaler_2575.csv")
+clean_name <- path(here(), "munge", "IR35", "hfa_behave_presentation_rscaler_2575_200.csv")
+load_IR35_presentation_data(file_path_to_power_data, clean_name, band)
 
 beep(2)
 ```
