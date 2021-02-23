@@ -1,0 +1,744 @@
+---
+title: "Regression Simulations"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo <- FALSE,  # don't print the code chunk
+  warning <- FALSE,  # don't print warnings
+  message <- FALSE,  # don't print messages
+  fig.width <- 12,  # set default width of figures
+  fig.height <- 6,  # set default height of figures
+  fig.align <- "center",  # always align figure in center
+  fig.pos <- "H",  # always plot figure at the exact location of the code chunk
+  cache <- TRUE)  # cache results
+
+## libraries ##
+library(tidyverse)
+library(ggplot2)
+library(magrittr)
+library(ggthemr)
+library(grid)
+library(gtable)
+library(gridExtra)
+library(wesanderson)
+library(ggsci)
+library(zoo)
+library(kableExtra)
+library(lme4)
+library(RColorBrewer)
+library(doParallel)
+library(parallel)
+library(foreach)
+library(here)
+library(fs)
+library(ggcorrplot)
+library(viridis)
+library(lmtest)
+library(janitor)
+
+## hand written functions ##
+source(path(here(), "R", "load_behave_data.R"))
+source(path(here(), "R", "prep_behave_data.R"))
+source(path(here(), "R", "stretch_start_end.R"))
+source(path(here(), "R", "load_high_gamma_data.R"))
+source(path(here(), "R", "rolling_window_and_baseline.R"))
+source(path(here(), "R", "run_permuted_regressions.R"))
+source(path(here(), "R", "compile_results.R"))
+source(path(here(), "R", "run_filtered_anova.R"))
+source(path(here(), "R", "merge_stepped_anova_results.R"))
+# source('~/Projects/nice_r_functions/ggpaired_pretty.R')
+source(path(here(), "R", 'mutate_cond.R'))
+
+## plotting helpers ##
+ggthemr("solarized")
+solarized_palette <- c(
+        '#073642', '#E1965D',
+        '#268bd2', '#dc322f',
+        '#2aa198', '#b58900',
+       '#6c71c4', '#d33682')
+
+getPalette = colorRampPalette(brewer.pal(12, "Set1"))
+
+## parallelization ##
+nCores <- 4
+registerDoParallel(nCores)
+
+```
+
+
+```{r behave-prep, echo = F}
+
+# path to beahvioral files #
+path_to_raw_behave <- fs::path(here(), "../dg_behave_formatted")
+path_to_behave_munge <- fs::path(here(), "munge", "combined_behavioral_data.csv")
+path_to_behave_clean <- fs::path(here(), "munge", "clean_behavioral_data.csv")
+
+
+# load clean data #
+behave_data <- read.csv(path_to_behave_clean)
+
+# add trial type info #
+behave_data <- behave_data %>%
+  mutate(trial_type = if_else(self_var_payoff == other_var_payoff, "equality",
+                              if_else(self_var_payoff > other_var_payoff,
+                                      "Advantageous", "Disadvantageous"))) 
+
+
+# filter to current subject #
+behave_data_19 <- behave_data %>% filter(SID == "DG_s08")
+behave_data_35 <- behave_data %>% filter(SID == "DG_s11")
+behave_data_28 <- behave_data %>% filter(SID == "DG_s10")
+behave_data_39 <- behave_data %>% filter(SID == "DG_s12")
+behave_data_16 <- behave_data %>% filter(SID == "DG_s06")
+behave_data_10 <- behave_data %>% filter(SID == "DG_s04")
+behave_data_57 <- behave_data %>% filter(SID == "DG_s13")
+behave_data_9 <- behave_data %>% filter(SID == "DG_s03")
+behave_data_26 <- behave_data %>% filter(SID == "DG_s09")
+behave_data_cp34 <- behave_data %>% filter(SID == "DG_s14")
+behave_data_da8 <- behave_data %>% filter(SID == "DG_s15")
+
+
+short_behave_data <- behave_data_35 %>% filter(trial_type == "Disadvantageous")
+```
+
+```{r simulate-self-payoff}
+
+
+# global params #
+sds <- seq(.1, 5, .1)
+neg_sim <- 1
+
+beta_self <- matrix(NA, nrow = length(sds), ncol = 6)
+beta_self_other <- matrix(NA, nrow = length(sds), ncol = 6)
+beta_self_dis <- matrix(NA, nrow = length(sds), ncol = 6)
+
+beta_dis <- matrix(NA, nrow = length(sds), ncol = 6)
+beta_dis_other <- matrix(NA, nrow = length(sds), ncol = 6)
+beta_dis_self <- matrix(NA, nrow = length(sds), ncol = 6)
+
+beta_other <- matrix(NA, nrow = length(sds), ncol = 6)
+beta_other_self <- matrix(NA, nrow = length(sds), ncol = 6)
+beta_other_dis <- matrix(NA, nrow = length(sds), ncol = 6)
+
+beta_self <- data.frame(beta_self)
+colnames(beta_self) <- c("Grouping", "Regressor", "Beta", "Lower_sem", "Upper_sem", "Pval")
+beta_self$Noise <- sds
+beta_self_other <- data.frame(beta_self_other)
+colnames(beta_self_other) <- c("Grouping", "Regressor", "Beta", "Lower_sem", "Upper_sem", "Pval")
+beta_self_other$Noise <- sds
+beta_self_dis <- data.frame(beta_self_dis)
+colnames(beta_self_dis) <- c("Grouping", "Regressor", "Beta", "Lower_sem", "Upper_sem", "Pval")
+beta_self_dis$Noise <- sds
+
+beta_dis <- data.frame(beta_dis)
+colnames(beta_dis) <- c("Grouping", "Regressor", "Beta", "Lower_sem", "Upper_sem", "Pval")
+beta_dis$Noise <- sds
+beta_dis_other <- data.frame(beta_dis_other)
+colnames(beta_dis_other) <- c("Grouping", "Regressor", "Beta", "Lower_sem", "Upper_sem", "Pval")
+beta_dis_other$Noise <- sds
+beta_dis_self <- data.frame(beta_dis_self)
+colnames(beta_dis_self) <- c("Grouping", "Regressor", "Beta", "Lower_sem", "Upper_sem", "Pval")
+beta_dis_self$Noise <- sds
+
+beta_other <- data.frame(beta_other)
+colnames(beta_other) <- c("Grouping", "Regressor", "Beta", "Lower_sem", "Upper_sem", "Pval")
+beta_other$Noise <- sds
+beta_other_self <- data.frame(beta_other_self)
+colnames(beta_other_self) <- c("Grouping", "Regressor", "Beta", "Lower_sem", "Upper_sem", "Pval")
+beta_other_self$Noise <- sds
+beta_other_dis <- data.frame(beta_other_dis)
+colnames(beta_other_dis) <- c("Grouping", "Regressor", "Beta", "Lower_sem", "Upper_sem", "Pval")
+beta_other_dis$Noise <- sds
+
+beta_self_tmp <- NULL
+beta_self_other_tmp <- NULL
+beta_self_dis_tmp <- NULL
+
+beta_dis_tmp <- NULL
+beta_dis_other_tmp <- NULL
+beta_dis_self_tmp <- NULL
+
+beta_other_tmp <- NULL
+beta_other_dis_tmp <- NULL
+beta_other_self_tmp <- NULL
+
+p_val_self_tmp <- NULL
+p_val_other_tmp <- NULL
+p_val_dis_tmp <- NULL
+nSims <- 10
+for(sd_tmp in sds) {
+  
+  for(idx in 1:nSims) {
+  
+  sim_theta <- neg_sim * .04* short_behave_data$self_var_payoff + rnorm(length(short_behave_data$self_var_payoff), sd = sd_tmp)
+  
+  model_self <- summary(lm(sim_theta ~ short_behave_data$self_var_payoff))
+  model_dis_other <- summary(lm(sim_theta ~ short_behave_data$ineq_disadvent + short_behave_data$other_var_payoff))
+  
+  model_other <- summary(lm(sim_theta ~ short_behave_data$other_var_payoff))
+  model_dis_self <- summary(lm(sim_theta ~ short_behave_data$ineq_disadvent + short_behave_data$self_var_payoff))
+  
+  
+  model_dis <- summary(lm(sim_theta ~ short_behave_data$ineq_disadvent))
+  model_self_other <- summary(lm(sim_theta ~ short_behave_data$self_var_payoff + short_behave_data$other_var_payoff))
+  
+  # collect betas #
+  beta_self_tmp[idx] <- model_self$coefficients[2, 1]
+  beta_self_other_tmp[idx] <- model_self_other$coefficients[2, 1]
+  beta_self_dis_tmp[idx] <- model_dis_self$coefficients[3, 1]
+  
+  
+  beta_dis_tmp[idx] <- model_dis$coefficients[2, 1]
+  beta_dis_self_tmp[idx] <- model_dis_other$coefficients[2, 1]
+  beta_dis_other_tmp[idx] <- model_dis_other$coefficients[2, 1]
+  
+  beta_other_tmp[idx] <- model_other$coefficients[2, 1]
+  beta_other_dis_tmp[idx] <- model_dis_other$coefficients[3, 1]
+  beta_other_self_tmp[idx] <- model_self_other$coefficients[3, 1]
+  
+  p_val_self_tmp[idx] <- model_self$coefficients[2, 4]
+  p_val_dis_tmp[idx] <- model_dis_other$coefficients[2, 4]
+  p_val_other_tmp[idx] <- model_dis_other$coefficients[3, 4]
+  
+  
+  }
+
+  sd_char <- as.character(sd_tmp)
+  beta_self <- beta_self %>% mutate_cond(Noise == sd_char, 
+                                          Grouping = "Self",
+                                          Regressor = "Self",
+                                          Beta = mean(beta_self_tmp), 
+                                          Lower_sem = mean(beta_self_tmp) - 2*(sd(beta_self_tmp)/nSims), 
+                                          Upper_sem =  mean(beta_self_tmp) + 2*(sd(beta_self_tmp)/nSims),
+                                          Pval = if_else(sum(rep(1, nSims)[p_val_self_tmp < .05]) >= 5, 1, 0) )
+  beta_self_other <- beta_self_other %>% mutate_cond(Noise == sd_char, 
+                                          Grouping = "Dis. Ineq.",
+                                          Regressor = "Self",
+                                          Beta = mean(beta_self_other_tmp), 
+                                          Lower_sem = mean(beta_self_other_tmp) - 2*(sd(beta_self_other_tmp)/nSims), 
+                                          Upper_sem =  mean(beta_self_other_tmp) + 2*(sd(beta_self_other_tmp)/nSims),
+                                          Pval = if_else(sum(rep(1, nSims)[p_val_self_tmp < .05]) >= 5, 1, 0) )
+    
+  beta_self_dis <- beta_self_dis %>% mutate_cond(Noise == sd_char, 
+                                          Grouping = "Other",
+                                          Regressor = "Self",
+                                          Beta = mean(beta_self_dis_tmp), 
+                                          Lower_sem = mean(beta_self_dis_tmp) - 2*(sd(beta_self_dis_tmp)/nSims), 
+                                          Upper_sem =  mean(beta_self_dis_tmp) + 2*(sd(beta_self_dis_tmp)/nSims),
+                                          Pval = if_else(sum(rep(1, nSims)[p_val_self_tmp < .05]) >= 5, 1, 0) )
+  
+  beta_other <- beta_other %>% mutate_cond(Noise == sd_char,
+                                          Grouping = "Other",
+                                          Regressor = "Other",
+                                          Beta = mean(beta_other_tmp), 
+                                          Lower_sem = mean(beta_other_tmp) - 2*(sd(beta_other_tmp)/nSims), 
+                                          Upper_sem =  mean(beta_other_tmp) + 2*(sd(beta_other_tmp)/nSims),
+                                          Pval = if_else(sum(rep(1, nSims)[p_val_other_tmp < .05]) >= 5, 1, 0) )
+  
+  beta_other_self <- beta_other_self %>% mutate_cond(Noise == sd_char, 
+                                          Grouping = "Dis. Ineq.",
+                                          Regressor = "Other",
+                                          Beta = mean(beta_other_self_tmp), 
+                                          Lower_sem = mean(beta_other_self_tmp) - 2*(sd(beta_other_self_tmp)/nSims), 
+                                          Upper_sem =  mean(beta_other_self_tmp) + 2*(sd(beta_other_self_tmp)/nSims),
+                                          Pval = if_else(sum(rep(1, nSims)[p_val_other_tmp < .05]) >= 5, 1, 0) )
+    
+  beta_other_dis <- beta_other_dis %>% mutate_cond(Noise == sd_char, 
+                                          Grouping = "Self",
+                                          Regressor = "Other",
+                                          Beta = mean(beta_other_dis_tmp), 
+                                          Lower_sem = mean(beta_other_dis_tmp) - 2*(sd(beta_other_dis_tmp)/nSims), 
+                                          Upper_sem =  mean(beta_other_dis_tmp) + 2*(sd(beta_other_dis_tmp)/nSims),
+                                          Pval = if_else(sum(rep(1, nSims)[p_val_other_tmp < .05]) >= 5, 1, 0) )
+  
+  beta_dis <- beta_dis %>% mutate_cond(Noise == sd_char, 
+                                          Grouping = "Dis. Ineq.",
+                                          Regressor = "Dis. Ineq.",
+                                          Beta = mean(beta_dis_tmp), 
+                                          Lower_sem = mean(beta_dis_tmp) - 2*(sd(beta_dis_tmp)/nSims), 
+                                          Upper_sem =  mean(beta_dis_tmp) + 2*(sd(beta_dis_tmp)/nSims),
+                                          Pval = if_else(sum(rep(1, nSims)[p_val_dis_tmp < .05]) >= 5, 1, 0)  )
+ 
+  beta_dis_self <- beta_dis_self %>% mutate_cond(Noise == sd_char, 
+                                          Grouping = "Other",
+                                          Regressor = "Dis. Ineq.",
+                                          Beta = mean(beta_dis_self_tmp), 
+                                          Lower_sem = mean(beta_dis_self_tmp) - 2*(sd(beta_dis_self_tmp)/nSims), 
+                                          Upper_sem =  mean(beta_dis_self_tmp) + 2*(sd(beta_dis_self_tmp)/nSims),
+                                          Pval = if_else(sum(rep(1, nSims)[p_val_dis_tmp < .05]) >= 5, 1, 0)  )
+
+  beta_dis_other <- beta_dis_other %>% mutate_cond(Noise == sd_char, 
+                                          Grouping = "Self",
+                                          Regressor = "Dis. Ineq.",
+                                          Beta = mean(beta_dis_other_tmp), 
+                                          Lower_sem = mean(beta_dis_other_tmp) - 2*(sd(beta_dis_other_tmp)/nSims), 
+                                          Upper_sem =  mean(beta_dis_other_tmp) + 2*(sd(beta_dis_other_tmp)/nSims),
+                                          Pval = if_else(sum(rep(1, nSims)[p_val_dis_tmp < .05]) >= 5, 1, 0)  )  
+
+}
+
+beta_diff <- beta_dis %>%
+  mutate(Beta = abs(beta_other$Beta) - abs(beta_dis$Beta)) %>%
+  mutate(Lower_sem = NA) %>%
+  mutate(Upper_sem = NA) %>%
+  mutate(Regressor = "Symmetry") %>%
+  mutate(Pval =1)
+
+simulated_df <- rbind(beta_self, beta_self_dis, beta_self_other, beta_other, beta_other_self, beta_other_dis, beta_dis, beta_dis_self, beta_dis_other)
+
+self_plot <- simulated_df %>%
+  ggplot(., aes(x = Noise, y = Beta, color = Regressor, fill = Regressor)) +
+  geom_point() +
+  geom_line() +
+  geom_ribbon(aes(ymin = Lower_sem, ymax = Upper_sem), alpha = .7) +
+  geom_hline(yintercept = neg_sim * .04, color = "black") +
+  # ylim(-.05, 0.05) +
+  theme(panel.background = element_rect(fill = "white")) +
+  facet_wrap(~Grouping) +
+  ggtitle("Self Payoff")
+
+# simulated_df %>%
+#   mutate(reg_col = Regressor) %>%
+#   mutate_cond(Pval == 0, reg_col = "Neither") %>%
+#   mutate(reg_col = factor(reg_col, levels = c("Neither", "Dis. Ineq.", "Self", "Other", "Symmetry"))) %>%
+#   ggplot(., aes(x = Noise, y = Beta)) +
+#   geom_point(aes(color = reg_col, fill = reg_col), size = 5, alpha = .7) +
+#   geom_line(aes(group = Regressor), color = "grey") +
+#   # geom_ribbon(aes(ymin = Lower_sem, ymax = Upper_sem, color = reg_col, fill = reg_col), alpha = .7) +
+#   geom_hline(yintercept = neg_sim * .04, color = "black") +
+#   scale_color_manual(values = c("grey", solarized_palette[2:5])) +
+#   # ylim(-.05, 0.05) +
+#   theme(panel.background = element_rect(fill = "white"))
+
+```
+
+
+```{r simulate-other-payoff}
+beta_self <- matrix(NA, nrow = length(sds), ncol = 6)
+beta_self_other <- matrix(NA, nrow = length(sds), ncol = 6)
+beta_self_dis <- matrix(NA, nrow = length(sds), ncol = 6)
+
+beta_dis <- matrix(NA, nrow = length(sds), ncol = 6)
+beta_dis_other <- matrix(NA, nrow = length(sds), ncol = 6)
+beta_dis_self <- matrix(NA, nrow = length(sds), ncol = 6)
+
+beta_other <- matrix(NA, nrow = length(sds), ncol = 6)
+beta_other_self <- matrix(NA, nrow = length(sds), ncol = 6)
+beta_other_dis <- matrix(NA, nrow = length(sds), ncol = 6)
+
+beta_self <- data.frame(beta_self)
+colnames(beta_self) <- c("Grouping", "Regressor", "Beta", "Lower_sem", "Upper_sem", "Pval")
+beta_self$Noise <- sds
+beta_self_other <- data.frame(beta_self_other)
+colnames(beta_self_other) <- c("Grouping", "Regressor", "Beta", "Lower_sem", "Upper_sem", "Pval")
+beta_self_other$Noise <- sds
+beta_self_dis <- data.frame(beta_self_dis)
+colnames(beta_self_dis) <- c("Grouping", "Regressor", "Beta", "Lower_sem", "Upper_sem", "Pval")
+beta_self_dis$Noise <- sds
+
+beta_dis <- data.frame(beta_dis)
+colnames(beta_dis) <- c("Grouping", "Regressor", "Beta", "Lower_sem", "Upper_sem", "Pval")
+beta_dis$Noise <- sds
+beta_dis_other <- data.frame(beta_dis_other)
+colnames(beta_dis_other) <- c("Grouping", "Regressor", "Beta", "Lower_sem", "Upper_sem", "Pval")
+beta_dis_other$Noise <- sds
+beta_dis_self <- data.frame(beta_dis_self)
+colnames(beta_dis_self) <- c("Grouping", "Regressor", "Beta", "Lower_sem", "Upper_sem", "Pval")
+beta_dis_self$Noise <- sds
+
+beta_other <- data.frame(beta_other)
+colnames(beta_other) <- c("Grouping", "Regressor", "Beta", "Lower_sem", "Upper_sem", "Pval")
+beta_other$Noise <- sds
+beta_other_self <- data.frame(beta_other_self)
+colnames(beta_other_self) <- c("Grouping", "Regressor", "Beta", "Lower_sem", "Upper_sem", "Pval")
+beta_other_self$Noise <- sds
+beta_other_dis <- data.frame(beta_other_dis)
+colnames(beta_other_dis) <- c("Grouping", "Regressor", "Beta", "Lower_sem", "Upper_sem", "Pval")
+beta_other_dis$Noise <- sds
+
+beta_self_tmp <- NULL
+beta_self_other_tmp <- NULL
+beta_self_dis_tmp <- NULL
+
+beta_dis_tmp <- NULL
+beta_dis_other_tmp <- NULL
+beta_dis_self_tmp <- NULL
+
+beta_other_tmp <- NULL
+beta_other_dis_tmp <- NULL
+beta_other_self_tmp <- NULL
+
+p_val_self_tmp <- NULL
+p_val_other_tmp <- NULL
+p_val_dis_tmp <- NULL
+nSims <- 10
+for(sd_tmp in sds) {
+  
+  for(idx in 1:nSims) {
+  
+  sim_theta <- neg_sim * .04* short_behave_data$other_var_payoff + rnorm(length(short_behave_data$other_var_payoff), sd = sd_tmp)
+  
+  model_self <- summary(lm(sim_theta ~ short_behave_data$self_var_payoff))
+  model_dis_other <- summary(lm(sim_theta ~ short_behave_data$ineq_disadvent + short_behave_data$other_var_payoff))
+  
+  model_other <- summary(lm(sim_theta ~ short_behave_data$other_var_payoff))
+  model_dis_self <- summary(lm(sim_theta ~ short_behave_data$ineq_disadvent + short_behave_data$self_var_payoff))
+  
+  
+  model_dis <- summary(lm(sim_theta ~ short_behave_data$ineq_disadvent))
+  model_self_other <- summary(lm(sim_theta ~ short_behave_data$self_var_payoff + short_behave_data$other_var_payoff))
+  
+  # collect betas #
+  beta_self_tmp[idx] <- model_self$coefficients[2, 1]
+  beta_self_other_tmp[idx] <- model_self_other$coefficients[2, 1]
+  beta_self_dis_tmp[idx] <- model_dis_self$coefficients[3, 1]
+  
+  
+  beta_dis_tmp[idx] <- model_dis$coefficients[2, 1]
+  beta_dis_self_tmp[idx] <- model_dis_other$coefficients[2, 1]
+  beta_dis_other_tmp[idx] <- model_dis_other$coefficients[2, 1]
+  
+  beta_other_tmp[idx] <- model_other$coefficients[2, 1]
+  beta_other_dis_tmp[idx] <- model_dis_other$coefficients[3, 1]
+  beta_other_self_tmp[idx] <- model_self_other$coefficients[3, 1]
+  
+  p_val_self_tmp[idx] <- model_self$coefficients[2, 4]
+  p_val_dis_tmp[idx] <- model_dis_other$coefficients[2, 4]
+  p_val_other_tmp[idx] <- model_dis_other$coefficients[3, 4]
+  
+  
+  }
+
+  sd_char <- as.character(sd_tmp)
+  beta_self <- beta_self %>% mutate_cond(Noise == sd_char, 
+                                          Grouping = "Self",
+                                          Regressor = "Self",
+                                          Beta = mean(beta_self_tmp), 
+                                          Lower_sem = mean(beta_self_tmp) - 2*(sd(beta_self_tmp)/nSims), 
+                                          Upper_sem =  mean(beta_self_tmp) + 2*(sd(beta_self_tmp)/nSims),
+                                          Pval = if_else(sum(rep(1, nSims)[p_val_self_tmp < .05]) >= 5, 1, 0) )
+  beta_self_other <- beta_self_other %>% mutate_cond(Noise == sd_char, 
+                                          Grouping = "Dis. Ineq.",
+                                          Regressor = "Self",
+                                          Beta = mean(beta_self_other_tmp), 
+                                          Lower_sem = mean(beta_self_other_tmp) - 2*(sd(beta_self_other_tmp)/nSims), 
+                                          Upper_sem =  mean(beta_self_other_tmp) + 2*(sd(beta_self_other_tmp)/nSims),
+                                          Pval = if_else(sum(rep(1, nSims)[p_val_self_tmp < .05]) >= 5, 1, 0) )
+    
+  beta_self_dis <- beta_self_dis %>% mutate_cond(Noise == sd_char, 
+                                          Grouping = "Other",
+                                          Regressor = "Self",
+                                          Beta = mean(beta_self_dis_tmp), 
+                                          Lower_sem = mean(beta_self_dis_tmp) - 2*(sd(beta_self_dis_tmp)/nSims), 
+                                          Upper_sem =  mean(beta_self_dis_tmp) + 2*(sd(beta_self_dis_tmp)/nSims),
+                                          Pval = if_else(sum(rep(1, nSims)[p_val_self_tmp < .05]) >= 5, 1, 0) )
+  
+  beta_other <- beta_other %>% mutate_cond(Noise == sd_char,
+                                          Grouping = "Other",
+                                          Regressor = "Other",
+                                          Beta = mean(beta_other_tmp), 
+                                          Lower_sem = mean(beta_other_tmp) - 2*(sd(beta_other_tmp)/nSims), 
+                                          Upper_sem =  mean(beta_other_tmp) + 2*(sd(beta_other_tmp)/nSims),
+                                          Pval = if_else(sum(rep(1, nSims)[p_val_other_tmp < .05]) >= 5, 1, 0) )
+  
+  beta_other_self <- beta_other_self %>% mutate_cond(Noise == sd_char, 
+                                          Grouping = "Dis. Ineq.",
+                                          Regressor = "Other",
+                                          Beta = mean(beta_other_self_tmp), 
+                                          Lower_sem = mean(beta_other_self_tmp) - 2*(sd(beta_other_self_tmp)/nSims), 
+                                          Upper_sem =  mean(beta_other_self_tmp) + 2*(sd(beta_other_self_tmp)/nSims),
+                                          Pval = if_else(sum(rep(1, nSims)[p_val_other_tmp < .05]) >= 5, 1, 0) )
+    
+  beta_other_dis <- beta_other_dis %>% mutate_cond(Noise == sd_char, 
+                                          Grouping = "Self",
+                                          Regressor = "Other",
+                                          Beta = mean(beta_other_dis_tmp), 
+                                          Lower_sem = mean(beta_other_dis_tmp) - 2*(sd(beta_other_dis_tmp)/nSims), 
+                                          Upper_sem =  mean(beta_other_dis_tmp) + 2*(sd(beta_other_dis_tmp)/nSims),
+                                          Pval = if_else(sum(rep(1, nSims)[p_val_other_tmp < .05]) >= 5, 1, 0) )
+  
+  beta_dis <- beta_dis %>% mutate_cond(Noise == sd_char, 
+                                          Grouping = "Dis. Ineq.",
+                                          Regressor = "Dis. Ineq.",
+                                          Beta = mean(beta_dis_tmp), 
+                                          Lower_sem = mean(beta_dis_tmp) - 2*(sd(beta_dis_tmp)/nSims), 
+                                          Upper_sem =  mean(beta_dis_tmp) + 2*(sd(beta_dis_tmp)/nSims),
+                                          Pval = if_else(sum(rep(1, nSims)[p_val_dis_tmp < .05]) >= 5, 1, 0)  )
+ 
+  beta_dis_self <- beta_dis_self %>% mutate_cond(Noise == sd_char, 
+                                          Grouping = "Other",
+                                          Regressor = "Dis. Ineq.",
+                                          Beta = mean(beta_dis_self_tmp), 
+                                          Lower_sem = mean(beta_dis_self_tmp) - 2*(sd(beta_dis_self_tmp)/nSims), 
+                                          Upper_sem =  mean(beta_dis_self_tmp) + 2*(sd(beta_dis_self_tmp)/nSims),
+                                          Pval = if_else(sum(rep(1, nSims)[p_val_dis_tmp < .05]) >= 5, 1, 0)  )
+
+  beta_dis_other <- beta_dis_other %>% mutate_cond(Noise == sd_char, 
+                                          Grouping = "Self",
+                                          Regressor = "Dis. Ineq.",
+                                          Beta = mean(beta_dis_other_tmp), 
+                                          Lower_sem = mean(beta_dis_other_tmp) - 2*(sd(beta_dis_other_tmp)/nSims), 
+                                          Upper_sem =  mean(beta_dis_other_tmp) + 2*(sd(beta_dis_other_tmp)/nSims),
+                                          Pval = if_else(sum(rep(1, nSims)[p_val_dis_tmp < .05]) >= 5, 1, 0)  )  
+
+}
+
+beta_diff <- beta_dis %>%
+  mutate(Beta = abs(beta_other$Beta) - abs(beta_dis$Beta)) %>%
+  mutate(Lower_sem = NA) %>%
+  mutate(Upper_sem = NA) %>%
+  mutate(Regressor = "Symmetry") %>%
+  mutate(Pval =1)
+
+simulated_df <- rbind(beta_self, beta_self_dis, beta_self_other, beta_other, beta_other_self, beta_other_dis, beta_dis, beta_dis_self, beta_dis_other)
+
+other_plot <- simulated_df %>%
+  ggplot(., aes(x = Noise, y = Beta, color = Regressor, fill = Regressor)) +
+  geom_point() +
+  geom_line() +
+  geom_ribbon(aes(ymin = Lower_sem, ymax = Upper_sem), alpha = .7) +
+  geom_hline(yintercept = neg_sim * .04, color = "black") +
+  # ylim(-.05, 0.05) +
+  theme(panel.background = element_rect(fill = "white")) +
+  facet_wrap(~Grouping) +
+  ggtitle("Other Payoff")
+
+```
+
+
+
+```{r simulate-dis-ineq}
+
+beta_self <- matrix(NA, nrow = length(sds), ncol = 6)
+beta_self_other <- matrix(NA, nrow = length(sds), ncol = 6)
+beta_self_dis <- matrix(NA, nrow = length(sds), ncol = 6)
+
+beta_dis <- matrix(NA, nrow = length(sds), ncol = 6)
+beta_dis_other <- matrix(NA, nrow = length(sds), ncol = 6)
+beta_dis_self <- matrix(NA, nrow = length(sds), ncol = 6)
+
+beta_other <- matrix(NA, nrow = length(sds), ncol = 6)
+beta_other_self <- matrix(NA, nrow = length(sds), ncol = 6)
+beta_other_dis <- matrix(NA, nrow = length(sds), ncol = 6)
+
+beta_self <- data.frame(beta_self)
+colnames(beta_self) <- c("Grouping", "Regressor", "Beta", "Lower_sem", "Upper_sem", "Pval")
+beta_self$Noise <- sds
+beta_self_other <- data.frame(beta_self_other)
+colnames(beta_self_other) <- c("Grouping", "Regressor", "Beta", "Lower_sem", "Upper_sem", "Pval")
+beta_self_other$Noise <- sds
+beta_self_dis <- data.frame(beta_self_dis)
+colnames(beta_self_dis) <- c("Grouping", "Regressor", "Beta", "Lower_sem", "Upper_sem", "Pval")
+beta_self_dis$Noise <- sds
+
+beta_dis <- data.frame(beta_dis)
+colnames(beta_dis) <- c("Grouping", "Regressor", "Beta", "Lower_sem", "Upper_sem", "Pval")
+beta_dis$Noise <- sds
+beta_dis_other <- data.frame(beta_dis_other)
+colnames(beta_dis_other) <- c("Grouping", "Regressor", "Beta", "Lower_sem", "Upper_sem", "Pval")
+beta_dis_other$Noise <- sds
+beta_dis_self <- data.frame(beta_dis_self)
+colnames(beta_dis_self) <- c("Grouping", "Regressor", "Beta", "Lower_sem", "Upper_sem", "Pval")
+beta_dis_self$Noise <- sds
+
+beta_other <- data.frame(beta_other)
+colnames(beta_other) <- c("Grouping", "Regressor", "Beta", "Lower_sem", "Upper_sem", "Pval")
+beta_other$Noise <- sds
+beta_other_self <- data.frame(beta_other_self)
+colnames(beta_other_self) <- c("Grouping", "Regressor", "Beta", "Lower_sem", "Upper_sem", "Pval")
+beta_other_self$Noise <- sds
+beta_other_dis <- data.frame(beta_other_dis)
+colnames(beta_other_dis) <- c("Grouping", "Regressor", "Beta", "Lower_sem", "Upper_sem", "Pval")
+beta_other_dis$Noise <- sds
+
+beta_self_tmp <- NULL
+beta_self_other_tmp <- NULL
+beta_self_dis_tmp <- NULL
+
+beta_dis_tmp <- NULL
+beta_dis_other_tmp <- NULL
+beta_dis_self_tmp <- NULL
+
+beta_other_tmp <- NULL
+beta_other_dis_tmp <- NULL
+beta_other_self_tmp <- NULL
+
+p_val_self_tmp <- NULL
+p_val_other_tmp <- NULL
+p_val_dis_tmp <- NULL
+nSims <- 10
+for(sd_tmp in sds) {
+  
+  for(idx in 1:nSims) {
+  
+  sim_theta <- neg_sim * .04* short_behave_data$ineq_disadvent + rnorm(length(short_behave_data$ineq_disadvent), sd = sd_tmp)
+  
+  model_self <- summary(lm(sim_theta ~ short_behave_data$self_var_payoff))
+  model_dis_other <- summary(lm(sim_theta ~ short_behave_data$ineq_disadvent + short_behave_data$other_var_payoff))
+  
+  model_other <- summary(lm(sim_theta ~ short_behave_data$other_var_payoff))
+  model_dis_self <- summary(lm(sim_theta ~ short_behave_data$ineq_disadvent + short_behave_data$self_var_payoff))
+  
+  
+  model_dis <- summary(lm(sim_theta ~ short_behave_data$ineq_disadvent))
+  model_self_other <- summary(lm(sim_theta ~ short_behave_data$self_var_payoff + short_behave_data$other_var_payoff))
+  
+  # collect betas #
+  beta_self_tmp[idx] <- model_self$coefficients[2, 1]
+  beta_self_other_tmp[idx] <- model_self_other$coefficients[2, 1]
+  beta_self_dis_tmp[idx] <- model_dis_self$coefficients[3, 1]
+  
+  
+  beta_dis_tmp[idx] <- model_dis$coefficients[2, 1]
+  beta_dis_self_tmp[idx] <- model_dis_other$coefficients[2, 1]
+  beta_dis_other_tmp[idx] <- model_dis_other$coefficients[2, 1]
+  
+  beta_other_tmp[idx] <- model_other$coefficients[2, 1]
+  beta_other_dis_tmp[idx] <- model_dis_other$coefficients[3, 1]
+  beta_other_self_tmp[idx] <- model_self_other$coefficients[3, 1]
+  
+  p_val_self_tmp[idx] <- model_self$coefficients[2, 4]
+  p_val_dis_tmp[idx] <- model_dis_other$coefficients[2, 4]
+  p_val_other_tmp[idx] <- model_dis_other$coefficients[3, 4]
+  
+  
+  }
+
+  sd_char <- as.character(sd_tmp)
+  beta_self <- beta_self %>% mutate_cond(Noise == sd_char, 
+                                          Grouping = "Self",
+                                          Regressor = "Self",
+                                          Beta = mean(beta_self_tmp), 
+                                          Lower_sem = mean(beta_self_tmp) - 2*(sd(beta_self_tmp)/nSims), 
+                                          Upper_sem =  mean(beta_self_tmp) + 2*(sd(beta_self_tmp)/nSims),
+                                          Pval = if_else(sum(rep(1, nSims)[p_val_self_tmp < .05]) >= 5, 1, 0) )
+  beta_self_other <- beta_self_other %>% mutate_cond(Noise == sd_char, 
+                                          Grouping = "Dis. Ineq.",
+                                          Regressor = "Self",
+                                          Beta = mean(beta_self_other_tmp), 
+                                          Lower_sem = mean(beta_self_other_tmp) - 2*(sd(beta_self_other_tmp)/nSims), 
+                                          Upper_sem =  mean(beta_self_other_tmp) + 2*(sd(beta_self_other_tmp)/nSims),
+                                          Pval = if_else(sum(rep(1, nSims)[p_val_self_tmp < .05]) >= 5, 1, 0) )
+    
+  beta_self_dis <- beta_self_dis %>% mutate_cond(Noise == sd_char, 
+                                          Grouping = "Other",
+                                          Regressor = "Self",
+                                          Beta = mean(beta_self_dis_tmp), 
+                                          Lower_sem = mean(beta_self_dis_tmp) - 2*(sd(beta_self_dis_tmp)/nSims), 
+                                          Upper_sem =  mean(beta_self_dis_tmp) + 2*(sd(beta_self_dis_tmp)/nSims),
+                                          Pval = if_else(sum(rep(1, nSims)[p_val_self_tmp < .05]) >= 5, 1, 0) )
+  
+  beta_other <- beta_other %>% mutate_cond(Noise == sd_char,
+                                          Grouping = "Other",
+                                          Regressor = "Other",
+                                          Beta = mean(beta_other_tmp), 
+                                          Lower_sem = mean(beta_other_tmp) - 2*(sd(beta_other_tmp)/nSims), 
+                                          Upper_sem =  mean(beta_other_tmp) + 2*(sd(beta_other_tmp)/nSims),
+                                          Pval = if_else(sum(rep(1, nSims)[p_val_other_tmp < .05]) >= 5, 1, 0) )
+  
+  beta_other_self <- beta_other_self %>% mutate_cond(Noise == sd_char, 
+                                          Grouping = "Dis. Ineq.",
+                                          Regressor = "Other",
+                                          Beta = mean(beta_other_self_tmp), 
+                                          Lower_sem = mean(beta_other_self_tmp) - 2*(sd(beta_other_self_tmp)/nSims), 
+                                          Upper_sem =  mean(beta_other_self_tmp) + 2*(sd(beta_other_self_tmp)/nSims),
+                                          Pval = if_else(sum(rep(1, nSims)[p_val_other_tmp < .05]) >= 5, 1, 0) )
+    
+  beta_other_dis <- beta_other_dis %>% mutate_cond(Noise == sd_char, 
+                                          Grouping = "Self",
+                                          Regressor = "Other",
+                                          Beta = mean(beta_other_dis_tmp), 
+                                          Lower_sem = mean(beta_other_dis_tmp) - 2*(sd(beta_other_dis_tmp)/nSims), 
+                                          Upper_sem =  mean(beta_other_dis_tmp) + 2*(sd(beta_other_dis_tmp)/nSims),
+                                          Pval = if_else(sum(rep(1, nSims)[p_val_other_tmp < .05]) >= 5, 1, 0) )
+  
+  beta_dis <- beta_dis %>% mutate_cond(Noise == sd_char, 
+                                          Grouping = "Dis. Ineq.",
+                                          Regressor = "Dis. Ineq.",
+                                          Beta = mean(beta_dis_tmp), 
+                                          Lower_sem = mean(beta_dis_tmp) - 2*(sd(beta_dis_tmp)/nSims), 
+                                          Upper_sem =  mean(beta_dis_tmp) + 2*(sd(beta_dis_tmp)/nSims),
+                                          Pval = if_else(sum(rep(1, nSims)[p_val_dis_tmp < .05]) >= 5, 1, 0)  )
+ 
+  beta_dis_self <- beta_dis_self %>% mutate_cond(Noise == sd_char, 
+                                          Grouping = "Other",
+                                          Regressor = "Dis. Ineq.",
+                                          Beta = mean(beta_dis_self_tmp), 
+                                          Lower_sem = mean(beta_dis_self_tmp) - 2*(sd(beta_dis_self_tmp)/nSims), 
+                                          Upper_sem =  mean(beta_dis_self_tmp) + 2*(sd(beta_dis_self_tmp)/nSims),
+                                          Pval = if_else(sum(rep(1, nSims)[p_val_dis_tmp < .05]) >= 5, 1, 0)  )
+
+  beta_dis_other <- beta_dis_other %>% mutate_cond(Noise == sd_char, 
+                                          Grouping = "Self",
+                                          Regressor = "Dis. Ineq.",
+                                          Beta = mean(beta_dis_other_tmp), 
+                                          Lower_sem = mean(beta_dis_other_tmp) - 2*(sd(beta_dis_other_tmp)/nSims), 
+                                          Upper_sem =  mean(beta_dis_other_tmp) + 2*(sd(beta_dis_other_tmp)/nSims),
+                                          Pval = if_else(sum(rep(1, nSims)[p_val_dis_tmp < .05]) >= 5, 1, 0)  )  
+
+}
+
+beta_diff <- beta_dis %>%
+  mutate(Beta = abs(beta_other$Beta) - abs(beta_dis$Beta)) %>%
+  mutate(Lower_sem = NA) %>%
+  mutate(Upper_sem = NA) %>%
+  mutate(Regressor = "Symmetry") %>%
+  mutate(Pval =1)
+
+simulated_df <- rbind(beta_self, beta_self_dis, beta_self_other, beta_other, beta_other_self, beta_other_dis, beta_dis, beta_dis_self, beta_dis_other)
+
+dis_plot <- simulated_df %>%
+  ggplot(., aes(x = Noise, y = Beta, color = Regressor, fill = Regressor)) +
+  geom_point() +
+  geom_line() +
+  geom_ribbon(aes(ymin = Lower_sem, ymax = Upper_sem), alpha = .7) +
+  geom_hline(yintercept = neg_sim * .04, color = "black") +
+  # ylim(-.05, 0.05) +
+  theme(panel.background = element_rect(fill = "white")) +
+  facet_wrap(~Grouping) +
+  ggtitle("Dis. Ineq.")
+
+```
+
+
+```{r combine-plots}
+
+
+
+plot(arrangeGrob(grobs = list(ggplotGrob(self_plot), ggplotGrob(other_plot), ggplotGrob(dis_plot)), nrow = 3, ncol = 1))
+
+
+```
+
+
+```{r basic-level}
+
+## Self ##
+  sd_tmp <- .1
+
+  sim_theta <- neg_sim * .04* short_behave_data$self_var_payoff + rnorm(length(short_behave_data$self_var_payoff), sd = sd_tmp)
+  
+  model_true <- summary(lm(sim_theta ~ short_behave_data$self_var_payoff))
+  model_composite <- summary(lm(sim_theta ~ short_behave_data$ineq_disadvent + short_behave_data$other_var_payoff))
+  model_dis_self <- summary(lm(sim_theta ~ short_behave_data$ineq_disadvent + short_behave_data$self_var_payoff))
+
+  model_true
+  model_composite
+  
+  
+## Dis. Inequity ##
+  sd_tmp <- .1
+
+  sim_theta <- neg_sim * .04* short_behave_data$ineq_disadvent + rnorm(length(short_behave_data$ineq_disadvent), sd = sd_tmp)
+  
+  model_true <- summary(lm(sim_theta ~ short_behave_data$ineq_disadvent))
+  model_composite <- summary(lm(sim_theta ~ short_behave_data$self_var_payoff + short_behave_data$other_var_payoff))
+ 
+  model_true
+  model_composite
+
+```
+
+

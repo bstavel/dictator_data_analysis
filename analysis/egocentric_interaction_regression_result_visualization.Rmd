@@ -1,0 +1,591 @@
+---
+title: "Visualization Interaction Regressions"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo <- FALSE,  # don't print the code chunk
+  warning <- FALSE,  # don't print warnings
+  message <- FALSE,  # don't print messages
+  fig.width <- 5,  # set default width of figures
+  fig.height <- 8,  # set default height of figures
+  fig.align <- "center",  # always align figure in center
+  fig.pos <- "H",  # always plot figure at the exact location of the code chunk
+  cache <- FALSE)  # cache results
+
+## libraries ##
+library(tidyverse)
+library(ggplot2)
+library(magrittr)
+library(ggthemr)
+library(grid)
+library(gtable)
+library(gridExtra)
+library(wesanderson)
+library(ggsci)
+library(zoo)
+library(kableExtra)
+library(lme4)
+library(RColorBrewer)
+library(doParallel)
+library(parallel)
+library(foreach)
+library(here)
+library(fs)
+library(ggcorrplot)
+library(viridis)
+library(lmtest)
+
+## hand written functions ##
+source(path(here(), "R", "load_behave_data.R"))
+source(path(here(), "R", "prep_behave_data.R"))
+source(path(here(), "R", "stretch_start_end.R"))
+source(path(here(), "R", "load_high_gamma_data.R"))
+source(path(here(), "R", "rolling_window_and_baseline.R"))
+source(path(here(), "R", "run_permuted_regressions.R"))
+source(path(here(), "R", "compile_mult_reg_results.R"))
+source(path(here(), "R", "run_filtered_anova.R"))
+source(path(here(), "R", "merge_stepped_anova_results.R"))
+# source('~/Projects/nice_r_functions/ggpaired_pretty.R')
+source(path(here(), "R", 'mutate_cond.R'))
+source(path(here(), "R", "load_and_collate_reg_results.R"))
+
+## plotting helpers ##
+ggthemr("solarized")
+getPalette = colorRampPalette(brewer.pal(9, "Set1"))
+
+## parallelization ##
+nCores <- 2
+registerDoParallel(nCores)
+
+```
+
+```{r load-all-results}
+
+load_interaction_results_and_combine <- function(epoch, freq, pred) {
+  
+    ### any subject general vars ###
+    spec_vars <- c("self_var_payoff", "more_or_less")
+    regions_to_combine <- c("All")
+    
+    ## IR57 ##
+    choice_inter_reg_df_57 <- compile_mult_reg_results(regions = regions_to_combine,
+                                               type = paste0("interaction-", freq, "-choice-locked-hilbertRS"),
+                                               sub = "IR57",
+                                               spec_vars = spec_vars,
+                                               path = path(here(), "results", "IR57", "post_eda", "interactions"))
+    
+    
+    presentation_inter_reg_df_57 <- compile_mult_reg_results(regions = regions_to_combine,
+                                               type = paste0("interaction-", freq, "-pres-locked-hilbertRS"),
+                                               sub = "IR57",
+                                               spec_vars = spec_vars,
+                                               path = path(here(), "results", "IR57", "post_eda", "interactions"))
+    
+    
+    ## IR35 ##
+    choice_inter_reg_df_35 <- compile_mult_reg_results(regions = regions_to_combine,
+                                               type = paste0("interaction-", freq, "-choice-locked-hilbertRS"),
+                                               sub = "IR35",
+                                               spec_vars = spec_vars,
+                                               path = path(here(), "results", "IR35", "post_eda", "interactions"))
+    
+    
+    presentation_inter_reg_df_35 <- compile_mult_reg_results(regions = regions_to_combine,
+                                               type = paste0("interaction-", freq, "-pres-locked-hilbertRS"),
+                                               sub = "IR35",
+                                               spec_vars = spec_vars,
+                                               path = path(here(), "results", "IR35", "post_eda", "interactions"))
+    
+    
+    ## IR28 ##
+    choice_inter_reg_df_28 <- compile_mult_reg_results(regions = regions_to_combine,
+                                               type = paste0("interaction-", freq, "-choice-locked-hilbertRS"),
+                                               sub = "IR28",
+                                               spec_vars = spec_vars,
+                                               path = path(here(), "results", "IR28", "post_eda", "interactions"))
+    
+    
+    presentation_inter_reg_df_28 <- compile_mult_reg_results(regions = regions_to_combine,
+                                               type = paste0("interaction-", freq, "-pres-locked-hilbertRS"),
+                                               sub = "IR28",
+                                               spec_vars = spec_vars,
+                                               path = path(here(), "results", "IR28", "post_eda", "interactions"))
+    
+    ## IR26 ##
+    choice_inter_reg_df_26 <- compile_mult_reg_results(regions = regions_to_combine,
+                                               type = paste0("interaction-", freq, "-choice-locked-hilbertRS"),
+                                               sub = "IR26",
+                                               spec_vars = spec_vars,
+                                               path = path(here(), "results", "IR26", "post_eda", "interactions"))
+    
+    
+    presentation_inter_reg_df_26 <- compile_mult_reg_results(regions = regions_to_combine,
+                                               type = paste0("interaction-", freq, "-pres-locked-hilbertRS"),
+                                               sub = "IR26",
+                                               spec_vars = spec_vars,
+                                               path = path(here(), "results", "IR26", "post_eda", "interactions"))
+    
+    
+    ## IR16 ##
+    choice_inter_reg_df_16 <- compile_mult_reg_results(regions = regions_to_combine,
+                                               type = paste0("interaction-", freq, "-choice-locked-hilbertRS"),
+                                               sub = "IR16",
+                                               spec_vars = spec_vars,
+                                               path = path(here(), "results", "IR16", "post_eda", "interactions"))
+    
+    
+    presentation_inter_reg_df_16 <- compile_mult_reg_results(regions = regions_to_combine,
+                                               type = paste0("interaction-", freq, "-pres-locked-hilbertRS"),
+                                               sub = "IR16",
+                                               spec_vars = spec_vars,
+                                               path = path(here(), "results", "IR16", "post_eda", "interactions"))
+    
+    
+    ## IR10 ##
+    choice_inter_reg_df_10 <- compile_mult_reg_results(regions = regions_to_combine,
+                                               type = paste0("interaction-", freq, "-choice-locked-hilbertRS"),
+                                               sub = "IR10",
+                                               spec_vars = spec_vars,
+                                               path = path(here(), "results", "IR10", "post_eda", "interactions"))
+    
+    
+    presentation_inter_reg_df_10 <- compile_mult_reg_results(regions = regions_to_combine,
+                                               type = paste0("interaction-", freq, "-pres-locked-hilbertRS"),
+                                               sub = "IR10",
+                                               spec_vars = spec_vars,
+                                               path = path(here(), "results", "IR10", "post_eda", "interactions"))
+    
+    
+    ## IR9 ##
+    choice_inter_reg_df_9 <- compile_mult_reg_results(regions = regions_to_combine,
+                                               type = paste0("interaction-", freq, "-choice-locked-hilbertRS"),
+                                               sub = "IR9",
+                                               spec_vars = spec_vars,
+                                               path = path(here(), "results", "IR9", "post_eda", "interactions"))
+    
+    
+    presentation_inter_reg_df_9 <- compile_mult_reg_results(regions = regions_to_combine,
+                                               type = paste0("interaction-", freq, "-pres-locked-hilbertRS"),
+                                               sub = "IR9",
+                                               spec_vars = spec_vars,
+                                               path = path(here(), "results", "IR9", "post_eda", "interactions"))
+    
+    
+    
+    
+    # presentation dfs #
+    presentation_inter_reg_df_57 <- presentation_inter_reg_df_57 %>% mutate(sub = "IR57") %>% mutate(epoch = "presentation")
+    presentation_inter_reg_df_35 <- presentation_inter_reg_df_35 %>% mutate(sub = "IR35") %>% mutate(epoch = "presentation")
+    presentation_inter_reg_df_28 <- presentation_inter_reg_df_28 %>% mutate(sub = "IR28") %>% mutate(epoch = "presentation")
+    presentation_inter_reg_df_26 <- presentation_inter_reg_df_26 %>% mutate(sub = "IR26") %>% mutate(epoch = "presentation")
+    presentation_inter_reg_df_16 <- presentation_inter_reg_df_16 %>% mutate(sub = "IR16") %>% mutate(epoch = "presentation")
+    presentation_inter_reg_df_10 <- presentation_inter_reg_df_10 %>% mutate(sub = "IR10") %>% mutate(epoch = "presentation")
+    presentation_inter_reg_df_9 <- presentation_inter_reg_df_9 %>% mutate(sub = "IR9") %>% mutate(epoch = "presentation")
+    
+    
+    # choice dfs #
+    choice_inter_reg_df_57 <- choice_inter_reg_df_57 %>% mutate(sub = "IR57") %>% mutate(epoch = "choice")
+    choice_inter_reg_df_35 <- choice_inter_reg_df_35 %>% mutate(sub = "IR35") %>% mutate(epoch = "choice")
+    choice_inter_reg_df_28 <- choice_inter_reg_df_28 %>% mutate(sub = "IR28") %>% mutate(epoch = "choice")
+    choice_inter_reg_df_26 <- choice_inter_reg_df_26 %>% mutate(sub = "IR26") %>% mutate(epoch = "choice")
+    choice_inter_reg_df_16 <- choice_inter_reg_df_16 %>% mutate(sub = "IR16") %>% mutate(epoch = "choice")
+    choice_inter_reg_df_10 <- choice_inter_reg_df_10 %>% mutate(sub = "IR10") %>% mutate(epoch = "choice")
+    choice_inter_reg_df_9 <- choice_inter_reg_df_9 %>% mutate(sub = "IR9") %>% mutate(epoch = "choice")
+    
+    
+    
+    
+    
+    merge_with_elec_info <- function(df, localizations_sub) {
+    ## merge df with elec info, stored in localizations_sub
+    ## creates new var of form ROI1-ROI2  
+    ## also cleans elec names
+      
+      # clean the names
+      df <- df %>%
+        mutate(electrode = gsub("POL ", "", electrode)) %>%
+        mutate(electrode = gsub(" POL", "", electrode)) %>%
+        mutate(electrode = gsub("-Ref", "", electrode)) %>%
+        mutate(electrode = gsub("-Ref-", "-", electrode)) 
+      
+      # separate two electrodes
+      df <- df %>%
+        mutate(first_elec= gsub("-.*", "", electrode)) %>%
+        mutate(second_elec = gsub(".*-", "", electrode))
+      # join on first electrode
+      df <- left_join(df,
+                     localizations_sub,
+                     by = c("first_elec" = "Electrode"))
+      # rename to `first_region`
+      df <- df %>%
+        rename(first_region = `Loc Meeting`)
+      # join on second electrode and rename
+      df <-  left_join(df,
+                 localizations_sub,
+                 by = c("second_elec" = "Electrode")) %>%
+        rename(second_region = `Loc Meeting`) 
+      # paste into useful format
+      df <- df %>% mutate(ROI = paste0(first_region, "-", second_region))
+      
+      return(df)
+    
+    }
+    
+    
+    ## get region names ##
+    localizations <- read_csv(path(here(), "munge", "combined_electrode_info_with_bob.csv"))
+    localizations_28 <- localizations %>% filter(subject == "IR28") %>% select(Electrode, `Loc Meeting`)
+    localizations_35 <- localizations %>% filter(subject == "IR35") %>% select(Electrode, `Loc Meeting`)
+    localizations_57 <- localizations %>% filter(subject == "IR57") %>% select(Electrode, `Loc Meeting`)
+    localizations_9 <- localizations %>% filter(subject == "IR9") %>% select(Electrode, `Loc Meeting`)
+    localizations_10 <- localizations %>% filter(subject == "IR10") %>% select(Electrode, `Loc Meeting`)
+    localizations_10 <- localizations_10 %>%
+      mutate(Electrode = gsub("POL ", "", Electrode)) %>%
+      mutate(Electrode = gsub(" POL", "", Electrode)) %>%
+      mutate(Electrode = gsub("-Ref", "", Electrode)) %>%
+      mutate(Electrode = gsub("-Ref-", "-", Electrode)) 
+    localizations_26 <- localizations %>% filter(subject == "IR26") %>% select(Electrode, `Loc Meeting`)
+    localizations_16 <- localizations %>% filter(subject == "IR16") %>% select(Electrode, `Loc Meeting`)
+    localizations_cp34 <- localizations %>% filter(subject == "CP34") %>% select(Electrode, `Loc Meeting`)
+    
+    
+    ## merge dfs ##
+    presentation_inter_reg_df_9 <- merge_with_elec_info(presentation_inter_reg_df_9, localizations_9)
+    presentation_inter_reg_df_10 <- merge_with_elec_info(presentation_inter_reg_df_10, localizations_10)
+    presentation_inter_reg_df_16 <- merge_with_elec_info(presentation_inter_reg_df_16, localizations_16)
+    presentation_inter_reg_df_26 <- merge_with_elec_info(presentation_inter_reg_df_26, localizations_26)
+    presentation_inter_reg_df_28 <- merge_with_elec_info(presentation_inter_reg_df_28, localizations_28)
+    presentation_inter_reg_df_35 <- merge_with_elec_info(presentation_inter_reg_df_35, localizations_35)
+    presentation_inter_reg_df_57 <- merge_with_elec_info(presentation_inter_reg_df_57, localizations_57)
+    
+    choice_inter_reg_df_9 <- merge_with_elec_info(choice_inter_reg_df_9, localizations_9)
+    choice_inter_reg_df_10 <- merge_with_elec_info(choice_inter_reg_df_10, localizations_10)
+    choice_inter_reg_df_16 <- merge_with_elec_info(choice_inter_reg_df_16, localizations_16)
+    choice_inter_reg_df_26 <- merge_with_elec_info(choice_inter_reg_df_26, localizations_26)
+    choice_inter_reg_df_28 <- merge_with_elec_info(choice_inter_reg_df_28, localizations_28)
+    choice_inter_reg_df_35 <- merge_with_elec_info(choice_inter_reg_df_35, localizations_35)
+    choice_inter_reg_df_57 <- merge_with_elec_info(choice_inter_reg_df_57, localizations_57)
+    
+    
+    
+    
+    all_pres_inter_reg_results <- rbind(presentation_inter_reg_df_9, 
+                                  presentation_inter_reg_df_10,
+                                  presentation_inter_reg_df_16,
+                                  presentation_inter_reg_df_26,
+                                  presentation_inter_reg_df_28,
+                                  presentation_inter_reg_df_35,
+                                  presentation_inter_reg_df_57)
+                                  
+    all_choice_inter_reg_results <- rbind(choice_inter_reg_df_9, 
+                                  choice_inter_reg_df_10,
+                                  choice_inter_reg_df_16,
+                                  choice_inter_reg_df_26,
+                                  choice_inter_reg_df_28,
+                                  choice_inter_reg_df_35,
+                                  choice_inter_reg_df_57)
+    
+    # only main interaction
+    all_pres_inter_reg_results <- all_pres_inter_reg_results %>% filter(predictor  == pred)
+    all_choice_inter_reg_results <- all_choice_inter_reg_results %>% filter(predictor == pred)
+    
+    if(epoch == "presentation"){
+      return(all_pres_inter_reg_results)
+    } else {
+      return(all_choice_inter_reg_results)
+    }
+
+}
+```
+
+
+```{r prep-for-matlab-plots}
+
+freqs <- c("delta", "theta", "alpha", "beta", "gamma", "hfa")
+
+for(freq in freqs) {
+    print(freq)
+    all_pres_inter_reg_results <- load_interaction_results_and_combine(epoch = "presentation", freq = freq, pred = "self_var_payoff_less_or_none")
+
+    ### Pres ###
+    
+    PVAL <- .05
+    plot_pres_inter_elecs <- all_pres_inter_reg_results %>%
+      mutate(bin_sig = if_else(p_inter < .05, 1, 0)) %>%
+      group_by(sub, electrode) %>%
+      # mutate(sig_stretch = 1 + (stretch_start_end(bin_sig)[2] - stretch_start_end(bin_sig)[1]))  %>%
+      # filter(sig_stretch > 4) %>%
+      filter(sub != "IR26") %>%
+      select(sub, electrode, perm_p, predictor) %>%
+      distinct() %>%
+      mutate(sig = if_else(perm_p < PVAL, 1, 0)) %>%
+      group_by(sub, electrode) %>%
+      mutate(inter_pvals = if_else(sum(sig) > 0 & sub == "IR9", 1, 
+                              if_else(sum(sig) > 0L & sub == "IR10", 2, 
+                                      if_else(sum(sig) > 0 & sub == "IR16", 3,
+                                                  if_else(sum(sig) > 0 & sub == "IR28", 4,
+                                                      if_else(sum(sig) > 0 & sub == "IR35", 5,
+                                                              if_else(sum(sig) > 0 & sub == "IR57", 6, 0))))))) %>%
+      mutate(sub = factor(sub, levels = c("IR9", "IR10", "IR16",  "IR28", "IR35", "IR57"))) %>%
+      arrange(sub) %>%
+      filter(inter_pvals > 0 )
+    
+    # write_csv #
+    write_csv(plot_pres_inter_elecs, path(here(), "figures", "anat_values", paste0(freq, "_less_or_none_interaction_pres_electrodes.csv")))
+    write_csv(plot_pres_inter_elecs %>% filter(sub == "IR9"), path(here(), "figures", "anat_values",  paste0("IR9_", freq, "_less_or_none_interaction_pres_electrodes.csv")))
+    write_csv(plot_pres_inter_elecs %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", paste0("IR10_", freq, "_less_or_none_interaction_pres_electrodes.csv")))
+    write_csv(plot_pres_inter_elecs %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", paste0("IR16_", freq, "_less_or_none_interaction_pres_electrodes.csv")))
+    write_csv(plot_pres_inter_elecs %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", paste0("IR28_", freq, "_less_or_none_interaction_pres_electrodes.csv")))
+    write_csv(plot_pres_inter_elecs %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", paste0("IR35_", freq, "_less_or_none_interaction_pres_electrodes.csv")))
+    write_csv(plot_pres_inter_elecs %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", paste0("IR57_", freq, "_less_or_none_interaction_pres_electrodes.csv")))
+
+
+}
+
+### Choice ###
+plot_choice_inter_elecs <- all_choice_inter_reg_results %>%
+  filter(sub != "IR26") %>%
+  select(sub, electrode, perm_p, predictor) %>%
+  distinct() %>%
+  mutate(sig = if_else(perm_p < PVAL, 1, 0)) %>%
+  group_by(sub, electrode) %>%
+  mutate(inter_pvals = if_else(sum(sig) > 0 & sub == "IR9", 1, 
+                          if_else(sum(sig) > 0L & sub == "IR10", 2, 
+                                  if_else(sum(sig) > 0 & sub == "IR16", 3,
+                                              if_else(sum(sig) > 0 & sub == "IR28", 4,
+                                                  if_else(sum(sig) > 0 & sub == "IR35", 5,
+                                                          if_else(sum(sig) > 0 & sub == "IR57", 6, 0))))))) %>%
+  mutate(sub = factor(sub, levels = c("IR9", "IR10", "IR16",  "IR28", "IR35", "IR57"))) %>%
+  arrange(sub)
+
+# write_csv #
+write_csv(plot_choice_inter_elecs, path(here(), "figures", "anat_values", "sig_interaction_choice_electrodes.csv"))
+write_csv(plot_choice_inter_elecs %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_sig_interaction_choice_electrodes.csv"))
+write_csv(plot_choice_inter_elecs %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_sig_interaction_choice_electrodes.csv"))
+write_csv(plot_choice_inter_elecs %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_sig_interaction_choice_electrodes.csv"))
+write_csv(plot_choice_inter_elecs %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_sig_interaction_choice_electrodes.csv"))
+write_csv(plot_choice_inter_elecs %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_sig_interaction_choice_electrodes.csv"))
+write_csv(plot_choice_inter_elecs %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_sig_interaction_choice_electrodes.csv"))
+  
+
+
+
+
+```
+
+
+
+```{r combine-freq-dfs}
+
+freqs <- c("delta", "theta", "alpha", "beta", "gamma", "hfa")
+
+all_freqs_pres_inter_results <- NULL
+for(freq in freqs) {
+    print(freq)
+    all_pres_inter_reg_results <- load_interaction_results_and_combine(epoch = "presentation", freq = freq, pred = "self_var_payoff_less_or_none")
+    all_pres_inter_reg_results <- all_pres_inter_reg_results %>% mutate(frequency = freq)
+    
+    if(is.null(all_freqs_pres_inter_results)) {
+       all_freqs_pres_inter_results <-  all_pres_inter_reg_results
+    } else {
+      all_freqs_pres_inter_results <- rbind(all_freqs_pres_inter_results, all_pres_inter_reg_results)
+    }
+
+}
+
+```
+
+```{r color-by-freq}
+
+all_freqs_pres_inter_results_for_brain <- all_freqs_pres_inter_results %>%
+  filter(perm_p < 0.05) %>%
+  select(electrode, sub, frequency) %>%
+  filter(sub != "IR26") %>%
+  distinct() %>%
+  mutate(freq_sig = if_else(frequency == "delta", 1, 
+                            if_else(frequency == "theta", 2, 
+                                    if_else(frequency == "alpha", 3, 
+                                            if_else(frequency == "beta", 4, 
+                                                    if_else(frequency == "gamma", 5, 
+                                                            if_else(frequency == "hfa", 6, 999)))))))
+
+
+
+# # write_csv #
+# write_csv(all_freqs_pres_inter_results_for_brain, path(here(), "figures", "anat_values", "sig_more_or_less_freq_interaction_pres_electrodes.csv"))
+# write_csv(all_freqs_pres_inter_results_for_brain %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_sig_more_or_less_freq_interaction_pres_electrodes.csv"))
+# write_csv(all_freqs_pres_inter_results_for_brain %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_sig_more_or_less_freq_interaction_pres_electrodes.csv"))
+# write_csv(all_freqs_pres_inter_results_for_brain %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_sig_more_or_less_freq_interaction_pres_electrodes.csv"))
+# write_csv(all_freqs_pres_inter_results_for_brain %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_sig_more_or_less_freq_interaction_pres_electrodes.csv"))
+# write_csv(all_freqs_pres_inter_results_for_brain %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_sig_more_or_less_freq_interaction_pres_electrodes.csv"))
+# write_csv(all_freqs_pres_inter_results_for_brain %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_sig_more_or_less_freq_interaction_pres_electrodes.csv"))
+
+# # write_csv #
+# write_csv(all_freqs_pres_inter_results_for_brain, path(here(), "figures", "anat_values", "sig_more_or_none_freq_interaction_pres_electrodes.csv"))
+# write_csv(all_freqs_pres_inter_results_for_brain %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_sig_more_or_none_freq_interaction_pres_electrodes.csv"))
+# write_csv(all_freqs_pres_inter_results_for_brain %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_sig_more_or_none_freq_interaction_pres_electrodes.csv"))
+# write_csv(all_freqs_pres_inter_results_for_brain %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_sig_more_or_none_freq_interaction_pres_electrodes.csv"))
+# write_csv(all_freqs_pres_inter_results_for_brain %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_sig_more_or_none_freq_interaction_pres_electrodes.csv"))
+# write_csv(all_freqs_pres_inter_results_for_brain %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_sig_more_or_none_freq_interaction_pres_electrodes.csv"))
+# write_csv(all_freqs_pres_inter_results_for_brain %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_sig_more_or_none_freq_interaction_pres_electrodes.csv"))
+
+# write_csv #
+write_csv(all_freqs_pres_inter_results_for_brain, path(here(), "figures", "anat_values", "sig_less_or_none_freq_interaction_pres_electrodes.csv"))
+write_csv(all_freqs_pres_inter_results_for_brain %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_sig_less_or_none_freq_interaction_pres_electrodes.csv"))
+write_csv(all_freqs_pres_inter_results_for_brain %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_sig_less_or_none_freq_interaction_pres_electrodes.csv"))
+write_csv(all_freqs_pres_inter_results_for_brain %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_sig_less_or_none_freq_interaction_pres_electrodes.csv"))
+write_csv(all_freqs_pres_inter_results_for_brain %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_sig_less_or_none_freq_interaction_pres_electrodes.csv"))
+write_csv(all_freqs_pres_inter_results_for_brain %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_sig_less_or_none_freq_interaction_pres_electrodes.csv"))
+write_csv(all_freqs_pres_inter_results_for_brain %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_sig_less_or_none_freq_interaction_pres_electrodes.csv"))
+
+```
+
+```{r different-regressors}
+
+behave_data_updated <- behave_data_35 %>%
+  mutate(trial_type = if_else(self_var_payoff == other_var_payoff, "equality",
+                                if_else(self_var_payoff > other_var_payoff,
+                                        "Advantageous", "Disadvantageous"))) %>%
+    filter(trial_type != "equality") %>%
+    mutate(more_or_less = if_else(abs(ineq_advent) > 0, 1, -1)) %>% 
+    mutate(more_or_none = if_else(abs(ineq_advent) > 0, 1, 0)) %>% 
+    mutate(less_or_none = if_else(abs(ineq_advent) > 0, 0, -1)) 
+
+behave_data_updated %>%
+  mutate(model_1 = self_var_payoff + more_or_none + self_var_payoff*more_or_none) %>%
+  mutate(model_2 = self_var_payoff + less_or_none + self_var_payoff*less_or_none) %>%
+  mutate(model_3 = self_var_payoff + more_or_less + self_var_payoff*more_or_less) %>%
+  mutate(inequity = abs(ineq_advent) - ineq_disadvent) %>%
+  select(model_1, model_2, model_3, more_or_less, more_or_none, less_or_none, self_var_payoff, inequity) %>%
+  gather(key = "model", value = 'y', model_1, model_2, model_3) %>%
+  ggplot(., aes(x = self_var_payoff, y = y, color = inequity)) +
+  geom_point(alpha = .5, size = 3) +
+  # geom_line(alpha = .7) +
+  geom_abline(color = "black", linetype = "dashed") +
+  theme(panel.background = element_rect(fill = "white")) +
+  facet_wrap(~model)
+
+
+```
+
+
+```{r plot-multi-freq-interactions} 
+  
+
+
+for(sub_idx in unique(all_sub_table$sub)) {
+  
+  
+  sub_all_freqs_pres_inter_results <- all_freqs_pres_inter_results %>% 
+    filter(sub == sub_idx) %>%
+    filter(perm_p < 0.05) %>%
+    mutate(bin_sig = if_else(p_inter < .05, 1, 0)) %>%
+    group_by(frequency, bin) %>%
+    mutate(abs_beta_inter = abs(Beta_Inter)) %>%
+    mutate(mean_beta = mean(abs_beta_inter))  %>%
+    mutate(lower_sem_beta = mean(abs_beta_inter) - 2*(sd(abs_beta_inter)/n())) %>%
+    mutate(upper_sem_beta = mean(abs_beta_inter) + 2*(sd(abs_beta_inter)/n())) %>%
+    select(mean_beta, lower_sem_beta, upper_sem_beta, frequency, bin) %>%
+    distinct()
+    
+
+
+   p <- sub_all_freqs_pres_inter_results %>%
+    mutate(frequency = factor(frequency, levels = freqs)) %>%
+    mutate(bin = as.numeric(gsub("bin_", "", bin))) %>%
+    ggplot(., aes(x = bin, y = mean_beta, color = frequency, fill = frequency)) +
+    geom_line(aes(group = frequency), color = "grey") +
+    geom_point(size = 3) +
+    geom_ribbon(aes(ymin = lower_sem_beta, ymax = upper_sem_beta), alpha = .5) +
+    scale_color_manual(values = getPalette(9), drop = F) +
+    scale_fill_manual(values = getPalette(9), drop = F) +
+    theme(panel.background = element_rect(fill = "white")) +
+    ggtitle(paste0(sub_idx, " ~ ", elec))
+   
+   plot(p)
+     
+   # ggsave(filename = path(here(), 'figures', 'egocentric_beta_plots', paste0(sub_idx, "_", elec, '.png')), plot = p)
+    
+
+}
+
+```
+
+```{r tables}
+
+  
+all_sub_table <- all_freqs_pres_inter_results %>% 
+    mutate(bin_sig = if_else(p_inter < .05, 1, 0)) %>%
+    group_by(sub, electrode, frequency) %>%
+    mutate(sig_stretch = 1 + (stretch_start_end(bin_sig)[2] - stretch_start_end(bin_sig)[1]))  %>%
+    filter(sig_stretch > 4) %>%
+    ungroup() %>%
+    select(frequency, electrode, sub) %>%
+    distinct() %>%
+    group_by(sub, electrode, frequency) %>%
+    summarise(n=n()) %>%
+    spread(key = frequency, value = n, fill = 0) %>%
+    ungroup() %>%
+    mutate(Total = rowSums(.[3:8])) %>%
+    arrange(desc(Total))
+
+
+all_sub_table %>%
+  select(-sub) %>%
+  kable() %>%
+  kable_styling() %>%
+  save_kable(file = path(here(), 'figures', 'egocentric_elec_table.png'))
+
+
+```
+
+
+```{r plot-multi-freq-interactions} 
+  
+
+
+for(sub_idx in unique(all_sub_table$sub)) {
+  
+  electrodes_to_plot <- all_sub_table %>%
+    filter(Total  > 2 & sub == sub_idx) %>%
+    pull(electrode)
+  
+  sub_all_freqs_pres_inter_results <- all_freqs_pres_inter_results %>% 
+    filter(sub == sub_idx) %>%
+    filter(electrode %in% electrodes_to_plot) %>%
+    mutate(bin_sig = if_else(p_inter < .05, 1, 0)) %>%
+    group_by(sub, electrode, frequency) %>%
+    mutate(sig_stretch = 1 + (stretch_start_end(bin_sig)[2] - stretch_start_end(bin_sig)[1]))  %>%
+    filter(sig_stretch > 4)
+  
+  for(elec in unique(sub_all_freqs_pres_inter_results$electrode)) {
+
+     p <- sub_all_freqs_pres_inter_results %>%
+      filter(electrode == elec) %>%
+      mutate(frequency_sig = if_else(bin_sig == 0, "Insig", as.character(frequency))) %>%
+      mutate(frequency_sig = relevel(factor(frequency_sig), ref = "Insig")) %>%
+      mutate(bin = as.numeric(gsub("bin_", "", bin))) %>%
+      ggplot(., aes(x = bin, y = Beta_Inter)) +
+      geom_line(aes(group = frequency), color = "grey") +
+      geom_point(aes(color = frequency_sig), size = 3) +
+      scale_color_manual(values = c("grey", getPalette(9)), drop = F) +
+      theme(panel.background = element_rect(fill = "white")) +
+      ggtitle(paste0(sub_idx, " ~ ", elec))
+     
+     plot(p)
+     
+     # ggsave(filename = path(here(), 'figures', 'egocentric_beta_plots', paste0(sub_idx, "_", elec, '.png')), plot = p)
+    
+  }
+}
+
+```
+
+```{r ming-plots}
+
+
+
+```
+
+

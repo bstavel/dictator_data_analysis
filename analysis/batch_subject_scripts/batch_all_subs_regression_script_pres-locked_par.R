@@ -53,14 +53,15 @@ for(sub in subs){
     power_behave <-  read.csv(path_hp_clean)
     # merge with elecs #
     brain_behave_data <- power_behave %>%
-      filter(grepl(paste(all_elecs$Electrode, collapse = "|"), electrodes))
+      filter(grepl(paste(all_elecs$Electrode, collapse = "|"), electrodes)) %>%
+      mutate(pie_size = self_var_payoff + other_var_payoff)
     all_electrodes <- unique(brain_behave_data$electrodes)
     # bin names #
     nBins <- colnames(power_behave %>% select(starts_with("bin_")))
     
     ## run regressions ##
     # adv ineq #
-    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "ineq_var", nBins, region_name =  "All", niter, sub = sub, tag = "theta-pres-locked-hilbertRS")
+    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "pie_size", nBins, region_name =  "All", niter, sub = sub, tag = "theta-pres-locked-hilbertRS")
     # # disadv ineq #
     # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "ineq_disadvent", nBins, region_name =  "All", niter, sub = sub, tag = "theta-pres-locked-hilbertRS")
     # # self payoff #
@@ -88,7 +89,8 @@ for(sub in subs){
     power_behave <-  read.csv(path_hp_clean)
     # merge with elecs #
     brain_behave_data <- power_behave %>%
-      filter(grepl(paste(all_elecs$Electrode, collapse = "|"), electrodes))
+      filter(grepl(paste(all_elecs$Electrode, collapse = "|"), electrodes)) %>%       
+      mutate(pie_size = self_var_payoff + other_var_payoff)
     all_electrodes <- unique(brain_behave_data$electrodes)
     # bin names #
     nBins <- colnames(power_behave %>% select(starts_with("bin_")))
@@ -96,7 +98,7 @@ for(sub in subs){
     ## run regressions ##
 
     # adv ineq #
-    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "ineq_var", nBins, region_name =  "All", niter, sub = sub, tag = "hfa-pres-locked-hilbertRS")
+    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "pie_size", nBins, region_name =  "All", niter, sub = sub, tag = "hfa-pres-locked-hilbertRS")
     # # disadv ineq #
     # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "ineq_disadvent", nBins, region_name =  "All", niter, sub = sub, tag = "hfa-pres-locked-hilbertRS")
     # # self payoff #
@@ -124,7 +126,8 @@ for(sub in subs){
     power_behave <-  read.csv(path_hp_clean)
     # merge with elecs #
     brain_behave_data <- power_behave %>%
-      filter(grepl(paste(all_elecs$Electrode, collapse = "|"), electrodes))
+      filter(grepl(paste(all_elecs$Electrode, collapse = "|"), electrodes)) %>%       
+      mutate(pie_size = self_var_payoff + other_var_payoff)
     all_electrodes <- unique(brain_behave_data$electrodes)
     # bin names #
     nBins <- colnames(power_behave %>% select(starts_with("bin_")))
@@ -132,7 +135,7 @@ for(sub in subs){
     ## run regressions ##
 
     # # adv ineq #
-    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "ineq_var", nBins, region_name =  "All", niter, sub = sub, tag = "beta-pres-locked-hilbertRS")
+    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "pie_size", nBins, region_name =  "All", niter, sub = sub, tag = "beta-pres-locked-hilbertRS")
     # # disadv ineq #
     # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "ineq_disadvent", nBins, region_name =  "All", niter, sub = sub, tag = "beta-pres-locked-hilbertRS")
     # # self payoff #
@@ -160,7 +163,8 @@ for(sub in subs){
     power_behave <-  read.csv(path_hp_clean)
     # merge with elecs #
     brain_behave_data <- power_behave %>%
-      filter(grepl(paste(all_elecs$Electrode, collapse = "|"), electrodes))
+      filter(grepl(paste(all_elecs$Electrode, collapse = "|"), electrodes)) %>%      
+      mutate(pie_size = self_var_payoff + other_var_payoff)
     all_electrodes <- unique(brain_behave_data$electrodes)
     # bin names #
     nBins <- colnames(power_behave %>% select(starts_with("bin_")))
@@ -168,7 +172,7 @@ for(sub in subs){
     ## run regressions ##
 
     # adv ineq #
-    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "ineq_var", nBins, region_name =  "All", niter, sub = sub, tag = "gamma-pres-locked-hilbertRS")
+    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "pie_size", nBins, region_name =  "All", niter, sub = sub, tag = "gamma-pres-locked-hilbertRS")
     # # disadv ineq #
     # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "ineq_disadvent", nBins, region_name =  "All", niter, sub = sub, tag = "gamma-pres-locked-hilbertRS")
     # # self payoff #
@@ -195,7 +199,8 @@ for(sub in subs){
     power_behave <-  read.csv(path_hp_clean)
     # merge with elecs #
     brain_behave_data <- power_behave %>%
-      filter(grepl(paste(all_elecs$Electrode, collapse = "|"), electrodes))
+      filter(grepl(paste(all_elecs$Electrode, collapse = "|"), electrodes)) %>%       
+      mutate(pie_size = self_var_payoff + other_var_payoff)
     all_electrodes <- unique(brain_behave_data$electrodes)
     # bin names #
     nBins <- colnames(power_behave %>% select(starts_with("bin_")))
@@ -203,7 +208,7 @@ for(sub in subs){
     ## run regressions ##
 
     # adv ineq #
-    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "ineq_var", nBins, region_name =  "All", niter, sub = sub, tag = "alpha-pres-locked-hilbertRS")
+    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "pie_size", nBins, region_name =  "All", niter, sub = sub, tag = "alpha-pres-locked-hilbertRS")
     # # disadv ineq #
     # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "ineq_disadvent", nBins, region_name =  "All", niter, sub = sub, tag = "alpha-pres-locked-hilbertRS")
     # # self payoff #
@@ -230,7 +235,8 @@ for(sub in subs){
     power_behave <-  read.csv(path_hp_clean)
     # merge with elecs #
     brain_behave_data <- power_behave %>%
-      filter(grepl(paste(all_elecs$Electrode, collapse = "|"), electrodes))
+      filter(grepl(paste(all_elecs$Electrode, collapse = "|"), electrodes)) %>%       
+      mutate(pie_size = self_var_payoff + other_var_payoff)
     all_electrodes <- unique(brain_behave_data$electrodes)
     # bin names #
     nBins <- colnames(power_behave %>% select(starts_with("bin_")))
@@ -238,7 +244,7 @@ for(sub in subs){
     ## run regressions ##
 
     # adv ineq #
-    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "ineq_var", nBins, region_name =  "All", niter, sub = sub, tag = "delta-pres-locked-hilbertRS")
+    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "pie_size", nBins, region_name =  "All", niter, sub = sub, tag = "delta-pres-locked-hilbertRS")
     # # disadv ineq #
     # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "ineq_disadvent", nBins, region_name =  "All", niter, sub = sub, tag = "delta-pres-locked-hilbertRS")
     # # self payoff #

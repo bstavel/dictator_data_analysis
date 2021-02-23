@@ -1,0 +1,970 @@
+---
+title: "Visualization Interaction Regressions"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo <- FALSE,  # don't print the code chunk
+  warning <- FALSE,  # don't print warnings
+  message <- FALSE,  # don't print messages
+  fig.width <- 5,  # set default width of figures
+  fig.height <- 8,  # set default height of figures
+  fig.align <- "center",  # always align figure in center
+  fig.pos <- "H",  # always plot figure at the exact location of the code chunk
+  cache <- FALSE)  # cache results
+
+## libraries ##
+library(tidyverse)
+library(ggplot2)
+library(magrittr)
+library(ggthemr)
+library(grid)
+library(gtable)
+library(gridExtra)
+library(wesanderson)
+library(ggsci)
+library(zoo)
+library(kableExtra)
+library(lme4)
+library(RColorBrewer)
+library(doParallel)
+library(parallel)
+library(foreach)
+library(here)
+library(fs)
+library(ggcorrplot)
+library(viridis)
+library(lmtest)
+
+## hand written functions ##
+source(path(here(), "R", "load_behave_data.R"))
+source(path(here(), "R", "prep_behave_data.R"))
+source(path(here(), "R", "stretch_start_end.R"))
+source(path(here(), "R", "load_high_gamma_data.R"))
+source(path(here(), "R", "rolling_window_and_baseline.R"))
+source(path(here(), "R", "run_permuted_regressions.R"))
+source(path(here(), "R", "compile_mult_reg_results.R"))
+source(path(here(), "R", "run_filtered_anova.R"))
+source(path(here(), "R", "merge_stepped_anova_results.R"))
+# source('~/Projects/nice_r_functions/ggpaired_pretty.R')
+source(path(here(), "R", 'mutate_cond.R'))
+source(path(here(), "R", "load_and_collate_reg_results.R"))
+
+## plotting helpers ##
+ggthemr("solarized")
+
+## parallelization ##
+nCores <- 2
+registerDoParallel(nCores)
+
+```
+
+```{r load-all-results}
+
+### any subject general vars ###
+spec_vars <- c("*", "*")
+regions_to_combine <- c("All")
+
+## IR57 ##
+choice_inter_reg_df_57 <- compile_mult_reg_results(regions = regions_to_combine,
+                                           type = "interaction-theta-choice-locked-hilbertRS",
+                                           sub = "IR57",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR57", "post_eda", "interactions"))
+
+
+presentation_inter_reg_df_57 <- compile_mult_reg_results(regions = regions_to_combine,
+                                           type = "interaction-theta-pres-locked-hilbertRS",
+                                           sub = "IR57",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR57", "post_eda", "interactions"))
+
+
+## IR35 ##
+choice_inter_reg_df_35 <- compile_mult_reg_results(regions = regions_to_combine,
+                                           type = "interaction-theta-choice-locked-hilbertRS",
+                                           sub = "IR35",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR35", "post_eda", "interactions"))
+
+
+presentation_inter_reg_df_35 <- compile_mult_reg_results(regions = regions_to_combine,
+                                           type = "interaction-theta-pres-locked-hilbertRS",
+                                           sub = "IR35",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR35", "post_eda", "interactions"))
+
+
+## IR28 ##
+choice_inter_reg_df_28 <- compile_mult_reg_results(regions = regions_to_combine,
+                                           type = "interaction-theta-choice-locked-hilbertRS",
+                                           sub = "IR28",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR28", "post_eda", "interactions"))
+
+
+presentation_inter_reg_df_28 <- compile_mult_reg_results(regions = regions_to_combine,
+                                           type = "interaction-theta-pres-locked-hilbertRS",
+                                           sub = "IR28",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR28", "post_eda", "interactions"))
+
+## IR26 ##
+choice_inter_reg_df_26 <- compile_mult_reg_results(regions = regions_to_combine,
+                                           type = "interaction-theta-choice-locked-hilbertRS",
+                                           sub = "IR26",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR26", "post_eda", "interactions"))
+
+
+presentation_inter_reg_df_26 <- compile_mult_reg_results(regions = regions_to_combine,
+                                           type = "interaction-theta-pres-locked-hilbertRS",
+                                           sub = "IR26",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR26", "post_eda", "interactions"))
+
+
+## IR16 ##
+choice_inter_reg_df_16 <- compile_mult_reg_results(regions = regions_to_combine,
+                                           type = "interaction-theta-choice-locked-hilbertRS",
+                                           sub = "IR16",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR16", "post_eda", "interactions"))
+
+
+presentation_inter_reg_df_16 <- compile_mult_reg_results(regions = regions_to_combine,
+                                           type = "interaction-theta-pres-locked-hilbertRS",
+                                           sub = "IR16",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR16", "post_eda", "interactions"))
+
+
+## IR10 ##
+choice_inter_reg_df_10 <- compile_mult_reg_results(regions = regions_to_combine,
+                                           type = "interaction-theta-choice-locked-hilbertRS",
+                                           sub = "IR10",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR10", "post_eda", "interactions"))
+
+
+presentation_inter_reg_df_10 <- compile_mult_reg_results(regions = regions_to_combine,
+                                           type = "interaction-theta-pres-locked-hilbertRS",
+                                           sub = "IR10",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR10", "post_eda", "interactions"))
+
+
+## IR9 ##
+choice_inter_reg_df_9 <- compile_mult_reg_results(regions = regions_to_combine,
+                                           type = "interaction-theta-choice-locked-hilbertRS",
+                                           sub = "IR9",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR9", "post_eda", "interactions"))
+
+
+presentation_inter_reg_df_9 <- compile_mult_reg_results(regions = regions_to_combine,
+                                           type = "interaction-theta-pres-locked-hilbertRS",
+                                           sub = "IR9",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR9", "post_eda", "interactions"))
+
+
+
+```
+
+
+```{r add-crit-info}
+
+# presentation dfs #
+presentation_inter_reg_df_57 <- presentation_inter_reg_df_57 %>% mutate(sub = "IR57") %>% mutate(epoch = "presentation")
+presentation_inter_reg_df_35 <- presentation_inter_reg_df_35 %>% mutate(sub = "IR35") %>% mutate(epoch = "presentation")
+presentation_inter_reg_df_28 <- presentation_inter_reg_df_28 %>% mutate(sub = "IR28") %>% mutate(epoch = "presentation")
+presentation_inter_reg_df_26 <- presentation_inter_reg_df_26 %>% mutate(sub = "IR26") %>% mutate(epoch = "presentation")
+presentation_inter_reg_df_16 <- presentation_inter_reg_df_16 %>% mutate(sub = "IR16") %>% mutate(epoch = "presentation")
+presentation_inter_reg_df_10 <- presentation_inter_reg_df_10 %>% mutate(sub = "IR10") %>% mutate(epoch = "presentation")
+presentation_inter_reg_df_9 <- presentation_inter_reg_df_9 %>% mutate(sub = "IR9") %>% mutate(epoch = "presentation")
+
+
+# choice dfs #
+choice_inter_reg_df_57 <- choice_inter_reg_df_57 %>% mutate(sub = "IR57") %>% mutate(epoch = "choice")
+choice_inter_reg_df_35 <- choice_inter_reg_df_35 %>% mutate(sub = "IR35") %>% mutate(epoch = "choice")
+choice_inter_reg_df_28 <- choice_inter_reg_df_28 %>% mutate(sub = "IR28") %>% mutate(epoch = "choice")
+choice_inter_reg_df_26 <- choice_inter_reg_df_26 %>% mutate(sub = "IR26") %>% mutate(epoch = "choice")
+choice_inter_reg_df_16 <- choice_inter_reg_df_16 %>% mutate(sub = "IR16") %>% mutate(epoch = "choice")
+choice_inter_reg_df_10 <- choice_inter_reg_df_10 %>% mutate(sub = "IR10") %>% mutate(epoch = "choice")
+choice_inter_reg_df_9 <- choice_inter_reg_df_9 %>% mutate(sub = "IR9") %>% mutate(epoch = "choice")
+
+
+
+```
+
+
+
+```{r location}
+
+merge_with_elec_info <- function(df, localizations_sub) {
+## merge df with elec info, stored in localizations_sub
+## creates new var of form ROI1-ROI2  
+## also cleans elec names
+  
+  # clean the names
+  df <- df %>%
+    mutate(electrode = gsub("POL ", "", electrode)) %>%
+    mutate(electrode = gsub(" POL", "", electrode)) %>%
+    mutate(electrode = gsub("-Ref", "", electrode)) %>%
+    mutate(electrode = gsub("-Ref-", "-", electrode)) 
+  
+  # separate two electrodes
+  df <- df %>%
+    mutate(first_elec= gsub("-.*", "", electrode)) %>%
+    mutate(second_elec = gsub(".*-", "", electrode))
+  # join on first electrode
+  df <- left_join(df,
+                 localizations_sub,
+                 by = c("first_elec" = "Electrode"))
+  # rename to `first_region`
+  df <- df %>%
+    rename(first_region = `Loc Meeting`)
+  # join on second electrode and rename
+  df <-  left_join(df,
+             localizations_sub,
+             by = c("second_elec" = "Electrode")) %>%
+    rename(second_region = `Loc Meeting`) 
+  # paste into useful format
+  df <- df %>% mutate(ROI = paste0(first_region, "-", second_region))
+  
+  return(df)
+
+}
+
+
+## get region names ##
+localizations <- read_csv(path(here(), "munge", "combined_electrode_info_with_bob.csv"))
+localizations_28 <- localizations %>% filter(subject == "IR28") %>% select(Electrode, `Loc Meeting`)
+localizations_35 <- localizations %>% filter(subject == "IR35") %>% select(Electrode, `Loc Meeting`)
+localizations_57 <- localizations %>% filter(subject == "IR57") %>% select(Electrode, `Loc Meeting`)
+localizations_9 <- localizations %>% filter(subject == "IR9") %>% select(Electrode, `Loc Meeting`)
+localizations_10 <- localizations %>% filter(subject == "IR10") %>% select(Electrode, `Loc Meeting`)
+localizations_10 <- localizations_10 %>%
+  mutate(Electrode = gsub("POL ", "", Electrode)) %>%
+  mutate(Electrode = gsub(" POL", "", Electrode)) %>%
+  mutate(Electrode = gsub("-Ref", "", Electrode)) %>%
+  mutate(Electrode = gsub("-Ref-", "-", Electrode)) 
+localizations_26 <- localizations %>% filter(subject == "IR26") %>% select(Electrode, `Loc Meeting`)
+localizations_16 <- localizations %>% filter(subject == "IR16") %>% select(Electrode, `Loc Meeting`)
+localizations_cp34 <- localizations %>% filter(subject == "CP34") %>% select(Electrode, `Loc Meeting`)
+
+
+## merge dfs ##
+presentation_inter_reg_df_9 <- merge_with_elec_info(presentation_inter_reg_df_9, localizations_9)
+presentation_inter_reg_df_10 <- merge_with_elec_info(presentation_inter_reg_df_10, localizations_10)
+presentation_inter_reg_df_16 <- merge_with_elec_info(presentation_inter_reg_df_16, localizations_16)
+presentation_inter_reg_df_26 <- merge_with_elec_info(presentation_inter_reg_df_26, localizations_26)
+presentation_inter_reg_df_28 <- merge_with_elec_info(presentation_inter_reg_df_28, localizations_28)
+presentation_inter_reg_df_35 <- merge_with_elec_info(presentation_inter_reg_df_35, localizations_35)
+presentation_inter_reg_df_57 <- merge_with_elec_info(presentation_inter_reg_df_57, localizations_57)
+
+choice_inter_reg_df_9 <- merge_with_elec_info(choice_inter_reg_df_9, localizations_9)
+choice_inter_reg_df_10 <- merge_with_elec_info(choice_inter_reg_df_10, localizations_10)
+choice_inter_reg_df_16 <- merge_with_elec_info(choice_inter_reg_df_16, localizations_16)
+choice_inter_reg_df_26 <- merge_with_elec_info(choice_inter_reg_df_26, localizations_26)
+choice_inter_reg_df_28 <- merge_with_elec_info(choice_inter_reg_df_28, localizations_28)
+choice_inter_reg_df_35 <- merge_with_elec_info(choice_inter_reg_df_35, localizations_35)
+choice_inter_reg_df_57 <- merge_with_elec_info(choice_inter_reg_df_57, localizations_57)
+
+
+
+```
+
+
+
+```{r merge-all-dfs}
+
+all_pres_inter_reg_results <- rbind(presentation_inter_reg_df_9, 
+                              presentation_inter_reg_df_10,
+                              presentation_inter_reg_df_16,
+                              presentation_inter_reg_df_26,
+                              presentation_inter_reg_df_28,
+                              presentation_inter_reg_df_35,
+                              presentation_inter_reg_df_57)
+                              
+all_choice_inter_reg_results <- rbind(choice_inter_reg_df_9, 
+                              choice_inter_reg_df_10,
+                              choice_inter_reg_df_16,
+                              choice_inter_reg_df_26,
+                              choice_inter_reg_df_28,
+                              choice_inter_reg_df_35,
+                              choice_inter_reg_df_57)
+
+
+```
+
+
+```{r prep-for-matlab-plots}
+
+### Pres ###
+
+PVAL <- .05
+plot_pres_inter_elecs <- all_pres_inter_reg_results %>%
+  filter(sub != "IR26") %>%
+  select(sub, electrode, perm_p, predictor) %>%
+  distinct() %>%
+  mutate(sig = if_else(perm_p < PVAL, 1, 0)) %>%
+  group_by(sub, electrode) %>%
+  mutate(inter_pvals = if_else(sum(sig) > 0 & sub == "IR9", 1, 
+                          if_else(sum(sig) > 0L & sub == "IR10", 2, 
+                                  if_else(sum(sig) > 0 & sub == "IR16", 3,
+                                              if_else(sum(sig) > 0 & sub == "IR28", 4,
+                                                  if_else(sum(sig) > 0 & sub == "IR35", 5,
+                                                          if_else(sum(sig) > 0 & sub == "IR57", 6, 0))))))) %>%
+  mutate(sub = factor(sub, levels = c("IR9", "IR10", "IR16",  "IR28", "IR35", "IR57"))) %>%
+  arrange(sub)
+
+# write_csv #
+write_csv(plot_pres_inter_elecs, path(here(), "figures", "anat_values", "sig_interaction_pres_electrodes.csv"))
+write_csv(plot_pres_inter_elecs %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_sig_interaction_pres_electrodes.csv"))
+write_csv(plot_pres_inter_elecs %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_sig_interaction_pres_electrodes.csv"))
+write_csv(plot_pres_inter_elecs %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_sig_interaction_pres_electrodes.csv"))
+write_csv(plot_pres_inter_elecs %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_sig_interaction_pres_electrodes.csv"))
+write_csv(plot_pres_inter_elecs %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_sig_interaction_pres_electrodes.csv"))
+write_csv(plot_pres_inter_elecs %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_sig_interaction_pres_electrodes.csv"))
+
+
+### Choice ###
+plot_choice_inter_elecs <- all_choice_inter_reg_results %>%
+  filter(sub != "IR26") %>%
+  select(sub, electrode, perm_p, predictor) %>%
+  distinct() %>%
+  mutate(sig = if_else(perm_p < PVAL, 1, 0)) %>%
+  group_by(sub, electrode) %>%
+  mutate(inter_pvals = if_else(sum(sig) > 0 & sub == "IR9", 1, 
+                          if_else(sum(sig) > 0L & sub == "IR10", 2, 
+                                  if_else(sum(sig) > 0 & sub == "IR16", 3,
+                                              if_else(sum(sig) > 0 & sub == "IR28", 4,
+                                                  if_else(sum(sig) > 0 & sub == "IR35", 5,
+                                                          if_else(sum(sig) > 0 & sub == "IR57", 6, 0))))))) %>%
+  mutate(sub = factor(sub, levels = c("IR9", "IR10", "IR16",  "IR28", "IR35", "IR57"))) %>%
+  arrange(sub)
+
+# write_csv #
+write_csv(plot_choice_inter_elecs, path(here(), "figures", "anat_values", "sig_interaction_choice_electrodes.csv"))
+write_csv(plot_choice_inter_elecs %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_sig_interaction_choice_electrodes.csv"))
+write_csv(plot_choice_inter_elecs %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_sig_interaction_choice_electrodes.csv"))
+write_csv(plot_choice_inter_elecs %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_sig_interaction_choice_electrodes.csv"))
+write_csv(plot_choice_inter_elecs %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_sig_interaction_choice_electrodes.csv"))
+write_csv(plot_choice_inter_elecs %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_sig_interaction_choice_electrodes.csv"))
+write_csv(plot_choice_inter_elecs %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_sig_interaction_choice_electrodes.csv"))
+  
+
+
+
+```
+
+## combining across different regression types ##
+
+```{r load-multiple-regs-dfs}
+
+# load results for self var #
+multiple_results_pres <- load_and_collate_reg_results(tag = "multiple-theta-pres-locked-hilbertRS", epoch = "presentation", folder = "post_eda/multiple_regressions")
+multiple_results_choice <- load_and_collate_reg_results(tag = "multiple-theta-choice-locked-hilbertRS", epoch = "choice", folder = "post_eda/multiple_regressions")
+
+# cut down variables #
+multiple_results_pres <- multiple_results_pres %>% select(-p_2, -Beta_2) %>% rename(Beta = Beta_1, p = p_1) %>% mutate(type = "multiple")
+multiple_results_choice <- multiple_results_choice %>% select(-p_2, -Beta_2) %>% rename(Beta = Beta_1, p = p_1) %>% mutate(type = "multiple")
+
+```
+
+
+```{r create-self-payoff-dfs}
+# load results for self var #
+self_var_results_pres <- load_and_collate_reg_results("self_var_payoff_theta-pres-locked-hilbertRS", epoch = "presentation", folder = "post_eda")
+self_var_results_choice <- load_and_collate_reg_results("self_var_payoff_theta-choice-locked-hilbertRS", epoch = "choice", folder = "post_eda")
+
+# change predictor #
+self_var_results_pres <- self_var_results_pres %>% mutate(predictor = "self_var_payoff") %>% mutate(type = "single")
+self_var_results_choice <- self_var_results_choice %>% mutate(predictor = "self_var_payoff") %>% mutate(type = "single")
+
+```
+
+```{r create-other-payoff-dfs}
+# load results for self var #
+other_var_results_pres <- load_and_collate_reg_results(tag = "other_var_payoff_theta-pres-locked-hilbertRS", epoch = "presentation", folder = "post_eda")
+other_var_results_choice <- load_and_collate_reg_results(tag = "other_var_payoff_theta-choice-locked-hilbertRS", epoch = "choice", folder = "post_eda")
+
+# change predictor #
+other_var_results_pres <- other_var_results_pres %>% mutate(predictor = "other_var_payoff") %>% mutate(type = "single")
+other_var_results_choice <- other_var_results_choice %>% mutate(predictor = "other_var_payoff") %>% mutate(type = "single")
+
+```
+
+
+```{r create-ineq_disadvent-dfs}
+# load results for self var #
+ineq_disadvent_results_pres <- load_and_collate_reg_results(tag = "ineq_disadvent_theta-pres-locked-hilbertRS", epoch = "presentation", folder = "post_eda")
+ineq_disadvent_results_choice <- load_and_collate_reg_results(tag = "ineq_disadvent_theta-choice-locked-hilbertRS", epoch = "choice", folder = "post_eda")
+
+# change predictor #
+ineq_disadvent_results_pres <- ineq_disadvent_results_pres %>% mutate(predictor = "ineq_disadvent") %>% mutate(type = "single")
+ineq_disadvent_results_choice <- ineq_disadvent_results_choice %>% mutate(predictor = "ineq_disadvent") %>% mutate(type = "single")
+
+```
+
+```{r combine-regression-types-reduce}
+# combine different regression types #
+presentation_results <- rbind(multiple_results_pres,
+                              self_var_results_pres,
+                              other_var_results_pres,
+                              ineq_disadvent_results_pres)
+
+choice_results <- rbind(multiple_results_choice,
+                              self_var_results_choice,
+                              other_var_results_choice,
+                              ineq_disadvent_results_choice)
+
+
+merge_all_subs_with_elec_info <- function(df, localizations_sub) {
+## merge df with elec info, stored in localizations_sub
+## creates new var of form ROI1-ROI2  
+## also cleans elec names
+  
+  # subset loc df #
+  localizations_sub <- localizations_sub %>% select(subject, Electrode, `Loc Meeting`)
+  
+  # clean the names
+  df <- df %>%
+    mutate(electrode = gsub("POL ", "", electrode)) %>%
+    mutate(electrode = gsub(" POL", "", electrode)) %>%
+    mutate(electrode = gsub("-Ref", "", electrode)) %>%
+    mutate(electrode = gsub("-Ref-", "-", electrode)) 
+  
+  # separate two electrodes
+  df <- df %>%
+    mutate(first_elec= gsub("-.*", "", electrode)) %>%
+    mutate(second_elec = gsub(".*-", "", electrode))
+  # join on first electrode
+  df <- left_join(df,
+                 localizations_sub,
+                 by = c("sub" = "subject", "first_elec" = "Electrode"))
+  # rename to `first_region`
+  df <- df %>%
+    rename(first_region = `Loc Meeting`)
+  # join on second electrode and rename
+  df <-  left_join(df,
+             localizations_sub,
+             by = c("sub" = "subject", "second_elec" = "Electrode")) %>%
+    rename(second_region = `Loc Meeting`) 
+  # paste into useful format
+  df <- df %>% mutate(ROI = paste0(first_region, "-", second_region))
+  
+  return(df)
+
+}
+
+localizations <- localizations %>%
+  mutate(Electrode = gsub("POL ", "", Electrode)) %>%
+  mutate(Electrode = gsub(" POL", "", Electrode)) %>%
+  mutate(Electrode = gsub("-Ref", "", Electrode)) %>%
+  mutate(Electrode = gsub("-Ref-", "-", Electrode)) 
+presentation_results <- merge_all_subs_with_elec_info(presentation_results, localizations)
+choice_results <- merge_all_subs_with_elec_info(choice_results, localizations)
+
+
+```
+
+
+```{r interactions}
+
+
+## merge and filter with interaction data ##
+
+# keep only sig and identifier columns from interaction df #
+sig_pres_inter_reg_results <- plot_pres_inter_elecs %>%
+  select(sub, electrode, sig) %>%
+  rename(inter_sig = sig)
+
+# merge together #
+full_interaction_pres_results <- full_join(sig_pres_inter_reg_results, presentation_results)
+nsig_interaction_pres_results <- full_interaction_pres_results %>% filter(inter_sig == 0)
+sig_interaction_pres_results <- full_interaction_pres_results %>% filter(inter_sig == 1)
+
+
+# create groups #
+full_interaction_pres_plot <- full_interaction_pres_results %>%
+  mutate(groupings = if_else(predictor %in% c("self_var_payoff", "ineq_disadvent_other_var_payoff", "other_var_payoff_ineq_disadvent"), "Self_Encoding", 
+              if_else(predictor %in% c("other_var_payoff", "ineq_disadvent_self_var_payoff", "self_var_payoff_ineq_disadvent"), "Other_Encoding",
+                if_else(predictor %in% c("ineq_disadvent", "other_var_payoff_self_var_payoff", "self_var_payoff_other_var_payoff"), "Dis_Ineq_Encoding", "Nope")))) %>%
+  filter(groupings != "Nope") %>%
+  mutate(predictor = if_else(predictor == "ineq_disadvent_other_var_payoff", "ineq_disadvent",
+                             if_else(predictor == "ineq_disadvent_self_var_payoff", "ineq_disadvent", 
+                                     if_else(predictor == "other_var_payoff_ineq_disadvent", "other_var_payoff",
+                                             if_else(predictor == "other_var_payoff_self_var_payoff", "other_var_payoff",
+                                                     if_else(predictor == "self_var_payoff_other_var_payoff", "self_var_payoff",
+                                                             if_else(predictor == "self_var_payoff_ineq_disadvent", "self_var_payoff", predictor))))))) %>%
+  mutate(bin = as.numeric(gsub("bin_", "", bin))) 
+
+nsig_interaction_pres_plot <- nsig_interaction_pres_results %>%
+  mutate(groupings = if_else(predictor %in% c("self_var_payoff", "ineq_disadvent_other_var_payoff", "other_var_payoff_ineq_disadvent"), "Self_Encoding", 
+              if_else(predictor %in% c("other_var_payoff", "ineq_disadvent_self_var_payoff", "self_var_payoff_ineq_disadvent"), "Other_Encoding",
+                if_else(predictor %in% c("ineq_disadvent", "other_var_payoff_self_var_payoff", "self_var_payoff_other_var_payoff"), "Dis_Ineq_Encoding", "Nope")))) %>%
+  filter(groupings != "Nope") %>%
+  mutate(predictor = if_else(predictor == "ineq_disadvent_other_var_payoff", "ineq_disadvent",
+                             if_else(predictor == "ineq_disadvent_self_var_payoff", "ineq_disadvent", 
+                                     if_else(predictor == "other_var_payoff_ineq_disadvent", "other_var_payoff",
+                                             if_else(predictor == "other_var_payoff_self_var_payoff", "other_var_payoff",
+                                                     if_else(predictor == "self_var_payoff_other_var_payoff", "self_var_payoff",
+                                                             if_else(predictor == "self_var_payoff_ineq_disadvent", "self_var_payoff", predictor))))))) %>%
+  mutate(bin = as.numeric(gsub("bin_", "", bin))) 
+
+
+sig_interaction_pres_plot <- sig_interaction_pres_results %>%
+  mutate(groupings = if_else(predictor %in% c("self_var_payoff", "ineq_disadvent_other_var_payoff", "other_var_payoff_ineq_disadvent"), "Self_Encoding", 
+              if_else(predictor %in% c("other_var_payoff", "ineq_disadvent_self_var_payoff", "self_var_payoff_ineq_disadvent"), "Other_Encoding",
+                if_else(predictor %in% c("ineq_disadvent", "other_var_payoff_self_var_payoff", "self_var_payoff_other_var_payoff"), "Dis_Ineq_Encoding", "Nope")))) %>%
+  filter(groupings != "Nope") %>%
+  mutate(predictor = if_else(predictor == "ineq_disadvent_other_var_payoff", "ineq_disadvent",
+                             if_else(predictor == "ineq_disadvent_self_var_payoff", "ineq_disadvent", 
+                                     if_else(predictor == "other_var_payoff_ineq_disadvent", "other_var_payoff",
+                                             if_else(predictor == "other_var_payoff_self_var_payoff", "other_var_payoff",
+                                                     if_else(predictor == "self_var_payoff_other_var_payoff", "self_var_payoff",
+                                                             if_else(predictor == "self_var_payoff_ineq_disadvent", "self_var_payoff", predictor))))))) %>%
+  mutate(bin = as.numeric(gsub("bin_", "", bin))) 
+```
+
+```{r inter-only-brain-plots}
+
+inter_brain_plots_df <- sig_interaction_pres_plot %>%
+      mutate(sub_numeric = gsub("IR", "", sub)) %>%
+      select(sub, electrode, predictor, perm_p, type) %>%
+      distinct() %>%
+      mutate(self_elecs = if_else(predictor == "self_var_payoff" & perm_p < 0.05 & type == "single", 1, 0)) %>%
+      mutate(other_elecs = if_else(predictor == "other_var_payoff" & perm_p < 0.05  & type == "single", 1, 0)) %>%
+      mutate(dis_elecs = if_else(predictor == "ineq_disadvent" & perm_p < 0.05 & type == "single", 1, 0)) %>%
+      group_by(electrode) %>%
+      mutate(self_sum = sum(self_elecs)) %>%
+      mutate(other_sum = sum(other_elecs)) %>%
+      mutate(dis_sum = sum(dis_elecs)) %>%
+      select(-predictor, -self_elecs, -other_elecs, -dis_elecs, -perm_p, -type) %>%
+      mutate(plot_only_elecs = if_else(self_sum == 1 & other_sum == 0 & dis_sum ==  0, 1,
+                                       if_else(self_sum == 0 & other_sum == 1 & dis_sum ==  0, 2,
+                                               if_else(self_sum == 0 & other_sum == 0 & dis_sum ==  1, 3, 0)))) %>%
+      mutate(plot_only_elecs_legend = if_else(self_sum == 1 & other_sum == 0 & dis_sum ==  0, "Self-Only",
+                                       if_else(self_sum == 0 & other_sum == 1 & dis_sum ==  0, "Other-Only",
+                                               if_else(self_sum == 0 & other_sum == 0 & dis_sum ==  1, "Dis-Only", "Neither")))) %>%
+      filter(plot_only_elecs_legend != "Neither") %>%
+      distinct()
+
+# write_csv #
+write_csv(inter_brain_plots_df, path(here(), "figures", "anat_values", "inter_only_pres_electrodes.csv"))
+write_csv(inter_brain_plots_df %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_inter_only_pres_electrodes.csv"))
+write_csv(inter_brain_plots_df %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_inter_only_pres_electrodes.csv"))
+write_csv(inter_brain_plots_df %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_inter_only_pres_electrodes.csv"))
+write_csv(inter_brain_plots_df %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_inter_only_pres_electrodes.csv"))
+write_csv(inter_brain_plots_df %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_inter_only_pres_electrodes.csv"))
+write_csv(inter_brain_plots_df %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_inter_only_pres_electrodes.csv"))
+  
+
+
+
+```
+
+
+```{r no-inter-only-brain-plots}
+
+no_inter_brain_plots_df <- nsig_interaction_pres_plot %>%
+      mutate(sub_numeric = gsub("IR", "", sub)) %>%
+      select(sub, electrode, predictor, perm_p, type) %>%
+      distinct() %>%
+      mutate(self_elecs = if_else(predictor == "self_var_payoff" & perm_p < 0.05 & type == "single", 1, 0)) %>%
+      mutate(other_elecs = if_else(predictor == "other_var_payoff" & perm_p < 0.05  & type == "single", 1, 0)) %>%
+      mutate(dis_elecs = if_else(predictor == "ineq_disadvent" & perm_p < 0.05 & type == "single", 1, 0)) %>%
+      group_by(electrode) %>%
+      mutate(self_sum = sum(self_elecs)) %>%
+      mutate(other_sum = sum(other_elecs)) %>%
+      mutate(dis_sum = sum(dis_elecs)) %>%
+      select(-predictor, -self_elecs, -other_elecs, -dis_elecs, -perm_p, -type) %>%
+      mutate(plot_only_elecs = if_else(self_sum == 1 & other_sum == 0 & dis_sum ==  0, 1,
+                                       if_else(self_sum == 0 & other_sum == 1 & dis_sum ==  0, 2,
+                                               if_else(self_sum == 0 & other_sum == 0 & dis_sum ==  1, 3, 0)))) %>%
+      mutate(plot_only_elecs_legend = if_else(self_sum == 1 & other_sum == 0 & dis_sum ==  0, "Self-Only",
+                                       if_else(self_sum == 0 & other_sum == 1 & dis_sum ==  0, "Other-Only",
+                                               if_else(self_sum == 0 & other_sum == 0 & dis_sum ==  1, "Dis-Only", "Neither")))) %>%
+      filter(plot_only_elecs_legend != "Neither") %>%
+      distinct()
+
+# write_csv #
+write_csv(no_inter_brain_plots_df, path(here(), "figures", "anat_values", "no_inter_only_pres_electrodes.csv"))
+write_csv(no_inter_brain_plots_df %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_no_inter_only_pres_electrodes.csv"))
+write_csv(no_inter_brain_plots_df %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_no_inter_only_pres_electrodes.csv"))
+write_csv(no_inter_brain_plots_df %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_no_inter_only_pres_electrodes.csv"))
+write_csv(no_inter_brain_plots_df %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_no_inter_only_pres_electrodes.csv"))
+write_csv(no_inter_brain_plots_df %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_no_inter_only_pres_electrodes.csv"))
+write_csv(no_inter_brain_plots_df %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_no_inter_only_pres_electrodes.csv"))
+  
+
+
+
+```
+
+```{r averaged-plots, warning=F}
+
+
+    
+  self_electrodes <- nsig_interaction_pres_plot %>%
+      filter( (predictor == "self_var_payoff" & perm_p < 0.05 & type == "single")) %>%
+      pull(electrode)
+
+  other_electrodes <- nsig_interaction_pres_plot %>%
+      filter((predictor == "other_var_payoff" & perm_p < 0.05) ) %>%
+      pull(electrode)
+
+  dis_electrodes <- nsig_interaction_pres_plot %>%
+      filter( (predictor == "ineq_disadvent" & perm_p < 0.05 & type == "single")) %>%
+      pull(electrode)
+  
+  
+  nsig_interaction_pres_plot_prep <- nsig_interaction_pres_plot %>%
+    filter(electrode %in% unique(self_electrodes)) %>%
+    group_by(electrode) %>%
+    mutate(average_beta = mean(Beta)) %>%
+    mutate(encoding_groups = if_else( (groupings == "Self_Encoding" & predictor %in% c("self_var_payoff", "other_var_payoff") & average_beta > 0) | (groupings == "Self_Encoding" & predictor == "ineq_disadvent" & average_beta < 0),
+           "postive_self",
+           if_else( (groupings == "Self_Encoding" & predictor %in% c("self_var_payoff", "other_var_payoff") & average_beta < 0) | (groupings == "Self_Encoding" & predictor == "ineq_disadvent" & average_beta > 0), 
+           "negative_self", "other" ))) %>%
+    group_by(sub, bin, encoding_groups, predictor) %>%
+    mutate(sub_lower_beta_1_sem = mean(Beta, na.rm = T) - 2*(sd(Beta, na.rm = T)/n())) %>%
+    mutate(sub_upper_beta_1_sem = mean(Beta, na.rm = T) + 2*(sd(Beta, na.rm = T)/n())) %>%
+    mutate(sub_mean_beta_1 = mean(Beta, na.rm = T)) %>%
+    group_by(bin, encoding_groups, predictor) %>%
+    mutate(lower_beta_1_sem = mean(sub_lower_beta_1_sem, na.rm = T) - 2*(sd(sub_lower_beta_1_sem, na.rm = T)/n())) %>%
+    mutate(upper_beta_1_sem = mean(sub_upper_beta_1_sem, na.rm = T) + 2*(sd(sub_upper_beta_1_sem, na.rm = T)/n())) %>%
+    mutate(mean_beta_1 = mean(sub_mean_beta_1, na.rm = T)) %>%
+    mutate(bin = as.numeric(gsub("bin_", "", bin)))
+  
+  
+ self_inter_averaged_plot <-  nsig_interaction_pres_plot_prep %>%
+      filter(encoding_groups != "other") %>%
+      ggplot(., aes(bin, y = mean_beta_1, color = predictor, fill = predictor)) +
+        geom_point() +
+        geom_line() +
+        geom_ribbon(aes(ymin = lower_beta_1_sem, ymax = upper_beta_1_sem), alpha = .7) +
+        xlim(0, 30) +
+        theme(panel.background = element_rect(fill = "white")) +
+        facet_wrap(~encoding_groups) +
+        ggtitle("Self Payoff Beta Weights Averaged")
+
+
+
+
+```
+
+
+```{r averaged-plots-other, warning=F}
+
+
+  dis_electrodes <- nsig_interaction_pres_plot %>%
+      filter( (predictor == "ineq_disadvent" & perm_p < 0.05 & type == "single")) %>%
+      pull(electrode)
+  
+  
+  nsig_interaction_pres_plot_prep <- nsig_interaction_pres_plot %>%
+    filter(electrode %in% unique(self_electrodes)) %>%
+    group_by(electrode) %>%
+    mutate(average_beta = mean(Beta)) %>%
+    mutate(encoding_groups = if_else( (groupings == "Dis_Ineq_Encoding" & predictor %in% c("ineq_disadvent", "other_var_payoff") & average_beta > 0) | (groupings == "Dis_Ineq_Encoding" & predictor == "self_var_payoff" & average_beta < 0),
+           "postive_dis",
+           if_else( (groupings == "Dis_Ineq_Encoding" & predictor %in% c("ineq_disadvent", "other_var_payoff") & average_beta < 0) | (groupings == "Dis_Ineq_Encoding" & predictor == "self_var_payoff" & average_beta > 0), 
+           "negative_dis", "other" ))) %>%
+    group_by(sub, bin, encoding_groups, predictor) %>%
+    mutate(sub_lower_beta_1_sem = mean(Beta, na.rm = T) - 2*(sd(Beta, na.rm = T)/n())) %>%
+    mutate(sub_upper_beta_1_sem = mean(Beta, na.rm = T) + 2*(sd(Beta, na.rm = T)/n())) %>%
+    mutate(sub_mean_beta_1 = mean(Beta, na.rm = T)) %>%
+    group_by(bin, encoding_groups, predictor) %>%
+    mutate(lower_beta_1_sem = mean(sub_lower_beta_1_sem, na.rm = T) - 2*(sd(sub_lower_beta_1_sem, na.rm = T)/n())) %>%
+    mutate(upper_beta_1_sem = mean(sub_upper_beta_1_sem, na.rm = T) + 2*(sd(sub_upper_beta_1_sem, na.rm = T)/n())) %>%
+    mutate(mean_beta_1 = mean(sub_mean_beta_1, na.rm = T)) %>%
+    mutate(bin = as.numeric(gsub("bin_", "", bin)))
+  
+  
+ dis_inter_averaged_plot <-   nsig_interaction_pres_plot_prep %>%
+      filter(encoding_groups != "other") %>%
+      ggplot(., aes(bin, y = mean_beta_1, color = predictor, fill = predictor)) +
+        geom_point() +
+        geom_line() +
+        geom_ribbon(aes(ymin = lower_beta_1_sem, ymax = upper_beta_1_sem), alpha = .7) +
+        xlim(0, 30) +
+        theme(panel.background = element_rect(fill = "white")) +
+        facet_wrap(~encoding_groups) +
+        ggtitle("Dis. Ineq. Beta Weights Averaged")
+
+
+
+plot(arrangeGrob(grobs = list(ggplotGrob(self_inter_averaged_plot),  ggplotGrob(dis_inter_averaged_plot)), nrow = 2, ncol = 1))
+
+```
+
+```{r plot-it-up, warning=F}
+
+for(sub_iter in unique(sig_interaction_pres_plot$sub)) {
+
+  sig_interaction_pres_results_sub <- sig_interaction_pres_plot %>% filter(sub == sub_iter)
+    
+  # self_electrodes <- sig_interaction_pres_results_sub %>%
+  #     filter( (predictor == "self_var_payoff" & perm_p < 0.05)) %>%
+  #     pull(electrode)
+  # 
+  # other_electrodes <- sig_interaction_pres_results_sub %>%
+  #     filter((predictor == "other_var_payoff" & perm_p < 0.05) ) %>%
+  #     pull(electrode)
+  # 
+  # dis_electrodes <- sig_interaction_pres_results_sub %>%
+  #     filter( (predictor == "ineq_disadvent" & perm_p < 0.05 & type == "single")) %>%
+  #     pull(electrode)
+  
+  dis_electrodes <- elec_info_pres %>% 
+    filter(sub == sub_iter & sig == 1) %>%
+    filter(electrode %in% unique(sig_interaction_pres_results_sub$electrode)) %>% 
+    pull(electrode)
+  
+  
+  for(elec in unique(dis_electrodes)) {
+    
+    plot_df <- sig_interaction_pres_results_sub %>%
+      filter(electrode == elec)
+    
+    first_region <- unique(plot_df %>% pull(first_region))
+    second_region <- unique(plot_df %>% pull(second_region))
+    
+    p <- plot_df %>%
+      ggplot(., aes(bin, y = Beta, color = predictor)) +
+        geom_point() +
+        geom_line() +
+        xlim(0, 30) +
+        theme(panel.background = element_rect(fill = "white")) +
+        facet_wrap(~groupings) +
+        ggtitle(paste(sub_iter, first_region, second_region, "Cingulate With Interaction", sep = " ~ "))
+    
+    plot(p)
+  }
+
+
+}
+
+```
+
+
+
+```{r cing-nsiginter, warning=F}
+
+for(sub_iter in unique(nsig_interaction_pres_plot$sub)) {
+
+  nsig_interaction_pres_results_sub <- nsig_interaction_pres_plot %>% filter(sub == sub_iter)
+    
+  # self_electrodes <- sig_interaction_pres_results_sub %>%
+  #     filter( (predictor == "self_var_payoff" & perm_p < 0.05)) %>%
+  #     pull(electrode)
+  # 
+  # other_electrodes <- sig_interaction_pres_results_sub %>%
+  #     filter((predictor == "other_var_payoff" & perm_p < 0.05) ) %>%
+  #     pull(electrode)
+  # 
+  # dis_electrodes <- sig_interaction_pres_results_sub %>%
+  #     filter( (predictor == "ineq_disadvent" & perm_p < 0.05 & type == "single")) %>%
+  #     pull(electrode)
+  
+  dis_electrodes <- elec_info_pres %>% 
+    filter(sub == sub_iter & sig == 1) %>%
+    filter(electrode %in% unique(nsig_interaction_pres_results_sub$electrode)) %>% 
+    pull(electrode)
+  
+  
+  for(elec in unique(dis_electrodes)) {
+    
+    plot_df <- nsig_interaction_pres_results_sub %>%
+      filter(electrode == elec)
+    
+    first_region <- unique(plot_df %>% pull(first_region))
+    second_region <- unique(plot_df %>% pull(second_region))
+    
+    p <- plot_df %>%
+      ggplot(., aes(bin, y = Beta, color = predictor)) +
+        geom_point() +
+        geom_line() +
+        xlim(0, 30) +
+        theme(panel.background = element_rect(fill = "white")) +
+        facet_wrap(~groupings) +
+        labs(subtitle = elec) +
+        ggtitle(paste(sub_iter, first_region, second_region, "Cingulate With  NO Interaction", sep = " ~ "))
+    
+    plot(p)
+  }
+
+
+}
+
+
+tmp <- behave_data_35 %>%
+  filter(trial_type != "trial_type") %>%
+  mutate(ineq_advent = abs(ineq_advent)) %>%
+  mutate(more_or_less = if_else(ineq_advent > 0, 1, 0))
+
+```
+
+
+
+
+```{r function-to-load-power-data, echo = F}
+
+elec_specific_power_data <- function(elecs, epoch, freq, sig = T) {
+  
+  # get patient data 
+  subs <- elecs$sub %>% unique()
+  
+  ## load and filter sub data
+  cingulate_power_data <- NULL
+  for(cur_sub in subs) {
+    print(cur_sub)
+    ## load power data
+    # deal with cp34
+    if(cur_sub == "CP34") {
+      next
+      # necessary paths #
+      # elec_name_path_1 <- path(here(), "munge", "savio_cluster", "CP34-1_electrodes_presentation_locked_rscaler_2575.csv")
+      # elec_name_path_2 <- path(here(), "munge", "savio_cluster", "CP34-2_electrodes_presentation_locked_rscaler_2575.csv")
+      # file_path_to_first_power_data <- path(here(), "munge", "savio_cluster", paste0(cur_sub, "-1_theta_munge_", epoch, "_locked_rscaler_2575.csv"))
+      # file_path_to_second_power_data <- path(here(), "munge", "savio_cluster", paste0(cur_sub, "-2_theta_munge_", epoch, "_locked_rscaler_2575.csv"))
+      # 
+      # # bind first and second parts #
+      # first_power_data <- load_high_gamma_data(file_path_to_first_power_data, elec_name_path_1)
+      # second_power_data <- load_high_gamma_data(file_path_to_second_power_data, elec_name_path_2)
+      # second_power_data$trial <- second_power_data$trial + 109
+      # power_data <- rbind(first_power_data, second_power_data)
+      # power_data$sub <- cur_sub
+    } else {
+      power_path <- path(here(), "munge", "savio_cluster", paste0(cur_sub, "_theta_munge_", epoch, "_locked_rscaler_2575.csv"))
+      elec_name_path <- path(here(), "munge", "savio_cluster", paste0(cur_sub, "_electrodes_", epoch, "_locked_rscaler_2575.csv"))
+      power_data <- load_high_gamma_data(power_path, elec_name_path)
+      power_data$sub <- cur_sub
+    
+      ## filter
+      if(sig == T) {
+        tmp_elecs <- elecs %>% filter(sub == cur_sub & inter_sig < 0.05)
+      } else {
+        tmp_elecs <- elecs %>% filter(sub == cur_sub & inter_sig >= 0.05)
+      }
+      
+      data_to_save <- power_data %>%
+      mutate(sub = cur_sub) %>%
+      mutate(electrodes = gsub("POL ", "", electrodes)) %>%
+      mutate(electrodes = gsub(" POL", "", electrodes)) %>%
+      mutate(electrodes = gsub("-Ref", "", electrodes)) %>%
+      mutate(electrodes = gsub("-Ref-", "-", electrodes)) %>% 
+      filter(electrodes %in% tmp_elecs$electrode)
+      
+    
+    
+    if(cur_sub == subs[1]){
+      cingulate_power_data <- data_to_save %>% select(trial, electrodes, sub, starts_with("time")[1:2199])
+    } else {
+      data_to_save <- data_to_save %>% select(trial, electrodes, sub, starts_with("time")[1:2199])
+      cingulate_power_data <- rbind(cingulate_power_data, data_to_save)
+    }
+  
+   }
+  }
+  return(cingulate_power_data)
+}
+
+baseline_power_data <- function(df, epoch, pres_df = NULL) {
+  
+  if(epoch == "presentation") {
+      # get first 200 ms, average for each sub, trial, and elec
+      baseline_df <- df %>%
+        select(trial, electrodes, sub, starts_with("time")[1:200]) %>%
+        group_by(trial, electrodes, sub) %>%
+        gather(key = "time", value = "power", starts_with("time")) %>%
+        mutate(baseline = mean(power)) %>%
+        select(trial, electrodes, sub, baseline) %>%
+        distinct()
+      
+      # join baseline with original df, and subtract baseline from each time point #
+      clean_data <- full_join(df, baseline_df, 
+                                           by = c("trial", "electrodes", "sub")) %>%
+        mutate(across(starts_with("time"), function(x) x - baseline)) %>%
+        select(-baseline)
+      
+      
+  } else {
+    
+      # get first 200 ms, average for each sub, trial, and elec
+      baseline_df <- pres_df %>%
+        select(trial, electrodes, sub, starts_with("time")[1:200]) %>%
+        group_by(trial, electrodes, sub) %>%
+        gather(key = "time", value = "power", starts_with("time")) %>%
+        mutate(baseline = mean(power)) %>%
+        select(trial, electrodes, sub, baseline) %>%
+        distinct()
+      
+      # join baseline with original df, and subtract baseline from each time point #
+      clean_data <- left_join(df, baseline_df, 
+                                           by = c("trial", "electrodes", "sub")) %>%
+        mutate(across(starts_with("time"), function(x) x - baseline)) %>%
+        select(-baseline)
+    
+  }
+  
+  return(clean_data)
+
+}
+
+
+interaction_elecs <- full_interaction_pres_results %>% select(sub, electrode, inter_sig)
+interaction_power_data_sig <- elec_specific_power_data(elecs = interaction_elecs,
+                                                 epoch = "presentation",
+                                                 freq = "theta",
+                                                 sig = T)
+
+interaction_power_based_data_sig <- baseline_power_data(interaction_power_data_sig,
+                                                  epoch = "presentation")
+
+
+```
+
+
+```{r interaction-behave-data}
+
+interaction_power_based_gathered_data_sig <- interaction_power_based_data_sig %>%
+  select(!starts_with("time")[1:200]) %>%
+  gather(key = "time", value = "power", starts_with("time"))
+
+
+interaction_power_based_gathered_data_sig_to_plot <- interaction_power_based_gathered_data_sig %>%
+  mutate(time_numeric = as.numeric(gsub("time_", "", time))) %>%
+  filter(time_numeric < 1200) %>%
+  group_by(trial, electrodes) %>%
+  mutate(elec_power = mean(power)) %>%
+  group_by(trial, sub) %>%
+  mutate(sub_power = mean(elec_power))
+  
+
+behave_inter_data <- behave_data_35 %>% select(self_var_payoff, other_var_payoff, round)
+
+
+```
+
+
+```{r plot-inter-behave}
+
+interaction_power_based_gathered_data_sig_to_plot <- full_join(interaction_power_based_gathered_data_sig_to_plot, behave_inter_data,
+                                                               by = c("trial" = "round"))
+
+interaction_power_based_gathered_data_sig_to_plot %>%
+  mutate(interaction_groups = if_else(self_var_payoff > 13 & other_var_payoff > 13, "High-High",
+                                      if_else(self_var_payoff > 13 & other_var_payoff <= 13, "High-Low",
+                                              if_else(self_var_payoff <= 13 & other_var_payoff > 13, "Low-High", "Low-Low")))) %>%
+  ggplot(., aes(x = interaction_groups, y = sub_power)) +
+  geom_boxplot() +
+  theme(panel.background = element_rect(fill = "white"))
+
+```
+
+

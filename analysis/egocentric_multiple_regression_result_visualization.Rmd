@@ -1,0 +1,1039 @@
+---
+title: "Multiple Regression Visualization"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo <- FALSE,  # don't print the code chunk
+  warning <- FALSE,  # don't print warnings
+  message <- FALSE,  # don't print messages
+  fig.width <- 5,  # set default width of figures
+  fig.height <- 8,  # set default height of figures
+  fig.align <- "center",  # always align figure in center
+  fig.pos <- "H",  # always plot figure at the exact location of the code chunk
+  cache <- FALSE)  # cache results
+
+## libraries ##
+library(tidyverse)
+library(ggplot2)
+library(magrittr)
+library(ggthemr)
+library(grid)
+library(gtable)
+library(gridExtra)
+library(wesanderson)
+library(ggsci)
+library(zoo)
+library(kableExtra)
+library(lme4)
+library(RColorBrewer)
+library(doParallel)
+library(parallel)
+library(foreach)
+library(here)
+library(fs)
+library(ggcorrplot)
+library(viridis)
+library(lmtest)
+
+## hand written functions ##
+source(path(here(), "R", "load_behave_data.R"))
+source(path(here(), "R", "prep_behave_data.R"))
+source(path(here(), "R", "stretch_start_end.R"))
+source(path(here(), "R", "load_high_gamma_data.R"))
+source(path(here(), "R", "rolling_window_and_baseline.R"))
+source(path(here(), "R", "run_permuted_regressions_par.R"))
+source(path(here(), "R", "compile_mult_reg_results.R"))
+source(path(here(), "R", "run_filtered_anova.R"))
+source(path(here(), "R", "merge_stepped_anova_results.R"))
+# source('~/Projects/nice_r_functions/ggpaired_pretty.R')
+source(path(here(), "R", 'mutate_cond.R'))
+source(path(here(), "R", "load_and_collate_reg_results.R"))
+
+## plotting helpers ##
+ggthemr("solarized")
+
+## parallelization ##
+nCores <- 2
+registerDoParallel(nCores)
+
+```
+
+```{r load-all-results}
+
+### any subject general vars ###
+spec_vars <- c("*", "*")
+regions_to_combine <- c("All")
+
+## IR57 ##
+choice_mult_reg_df_57 <- compile_mult_reg_results(regions = regions_to_combine,
+                                           type = "multiple-theta-choice-locked-hilbertRS",
+                                           sub = "IR57",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR57", "post_eda", "multiple_regressions"))
+
+
+presentation_mult_reg_df_57 <- compile_mult_reg_results(regions = regions_to_combine,
+                                           type = "multiple-theta-pres-locked-hilbertRS",
+                                           sub = "IR57",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR57", "post_eda", "multiple_regressions"))
+
+
+## IR35 ##
+choice_mult_reg_df_35 <- compile_mult_reg_results(regions = regions_to_combine,
+                                           type = "multiple-theta-choice-locked-hilbertRS",
+                                           sub = "IR35",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR35", "post_eda", "multiple_regressions"))
+
+
+presentation_mult_reg_df_35 <- compile_mult_reg_results(regions = regions_to_combine,
+                                           type = "multiple-theta-pres-locked-hilbertRS",
+                                           sub = "IR35",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR35", "post_eda", "multiple_regressions"))
+
+
+## IR28 ##
+choice_mult_reg_df_28 <- compile_mult_reg_results(regions = regions_to_combine,
+                                           type = "multiple-theta-choice-locked-hilbertRS",
+                                           sub = "IR28",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR28", "post_eda", "multiple_regressions"))
+
+
+presentation_mult_reg_df_28 <- compile_mult_reg_results(regions = regions_to_combine,
+                                           type = "multiple-theta-pres-locked-hilbertRS",
+                                           sub = "IR28",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR28", "post_eda", "multiple_regressions"))
+
+## IR26 ##
+choice_mult_reg_df_26 <- compile_mult_reg_results(regions = regions_to_combine,
+                                           type = "multiple-theta-choice-locked-hilbertRS",
+                                           sub = "IR26",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR26", "post_eda", "multiple_regressions"))
+
+
+presentation_mult_reg_df_26 <- compile_mult_reg_results(regions = regions_to_combine,
+                                           type = "multiple-theta-pres-locked-hilbertRS",
+                                           sub = "IR26",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR26", "post_eda", "multiple_regressions"))
+
+
+## IR16 ##
+choice_mult_reg_df_16 <- compile_mult_reg_results(regions = regions_to_combine,
+                                           type = "multiple-theta-choice-locked-hilbertRS",
+                                           sub = "IR16",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR16", "post_eda", "multiple_regressions"))
+
+
+presentation_mult_reg_df_16 <- compile_mult_reg_results(regions = regions_to_combine,
+                                           type = "multiple-theta-pres-locked-hilbertRS",
+                                           sub = "IR16",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR16", "post_eda", "multiple_regressions"))
+
+
+## IR10 ##
+choice_mult_reg_df_10 <- compile_mult_reg_results(regions = regions_to_combine,
+                                           type = "multiple-theta-choice-locked-hilbertRS",
+                                           sub = "IR10",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR10", "post_eda", "multiple_regressions"))
+
+
+presentation_mult_reg_df_10 <- compile_mult_reg_results(regions = regions_to_combine,
+                                           type = "multiple-theta-pres-locked-hilbertRS",
+                                           sub = "IR10",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR10", "post_eda", "multiple_regressions"))
+
+
+## IR9 ##
+choice_mult_reg_df_9 <- compile_mult_reg_results(regions = regions_to_combine,
+                                           type = "multiple-theta-choice-locked-hilbertRS",
+                                           sub = "IR9",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR9", "post_eda", "multiple_regressions"))
+
+
+presentation_mult_reg_df_9 <- compile_mult_reg_results(regions = regions_to_combine,
+                                           type = "multiple-theta-pres-locked-hilbertRS",
+                                           sub = "IR9",
+                                           spec_vars = spec_vars,
+                                           path = path(here(), "results", "IR9", "post_eda", "multiple_regressions"))
+
+
+
+```
+
+
+
+```{r add-crit-info}
+
+# presentation dfs #
+presentation_mult_reg_df_57 <- presentation_mult_reg_df_57 %>% mutate(sub = "IR57") %>% mutate(epoch = "presentation")
+presentation_mult_reg_df_35 <- presentation_mult_reg_df_35 %>% mutate(sub = "IR35") %>% mutate(epoch = "presentation")
+presentation_mult_reg_df_28 <- presentation_mult_reg_df_28 %>% mutate(sub = "IR28") %>% mutate(epoch = "presentation")
+presentation_mult_reg_df_26 <- presentation_mult_reg_df_26 %>% mutate(sub = "IR26") %>% mutate(epoch = "presentation")
+presentation_mult_reg_df_16 <- presentation_mult_reg_df_16 %>% mutate(sub = "IR16") %>% mutate(epoch = "presentation")
+presentation_mult_reg_df_10 <- presentation_mult_reg_df_10 %>% mutate(sub = "IR10") %>% mutate(epoch = "presentation")
+presentation_mult_reg_df_9 <- presentation_mult_reg_df_9 %>% mutate(sub = "IR9") %>% mutate(epoch = "presentation")
+
+
+# choice dfs #
+choice_mult_reg_df_57 <- choice_mult_reg_df_57 %>% mutate(sub = "IR57") %>% mutate(epoch = "choice")
+choice_mult_reg_df_35 <- choice_mult_reg_df_35 %>% mutate(sub = "IR35") %>% mutate(epoch = "choice")
+choice_mult_reg_df_28 <- choice_mult_reg_df_28 %>% mutate(sub = "IR28") %>% mutate(epoch = "choice")
+choice_mult_reg_df_26 <- choice_mult_reg_df_26 %>% mutate(sub = "IR26") %>% mutate(epoch = "choice")
+choice_mult_reg_df_16 <- choice_mult_reg_df_16 %>% mutate(sub = "IR16") %>% mutate(epoch = "choice")
+choice_mult_reg_df_10 <- choice_mult_reg_df_10 %>% mutate(sub = "IR10") %>% mutate(epoch = "choice")
+choice_mult_reg_df_9 <- choice_mult_reg_df_9 %>% mutate(sub = "IR9") %>% mutate(epoch = "choice")
+
+
+
+```
+
+
+```{r add-localization}
+
+merge_with_elec_info <- function(df, localizations_sub) {
+## merge df with elec info, stored in localizations_sub
+## creates new var of form ROI1-ROI2  
+## also cleans elec names
+  
+  # clean the names
+  df <- df %>%
+    mutate(electrode = gsub("POL ", "", electrode)) %>%
+    mutate(electrode = gsub(" POL", "", electrode)) %>%
+    mutate(electrode = gsub("-Ref", "", electrode)) %>%
+    mutate(electrode = gsub("-Ref-", "-", electrode)) 
+  
+  # separate two electrodes
+  df <- df %>%
+    mutate(first_elec= gsub("-.*", "", electrode)) %>%
+    mutate(second_elec = gsub(".*-", "", electrode))
+  # join on first electrode
+  df <- left_join(df,
+                 localizations_sub,
+                 by = c("first_elec" = "Electrode"))
+  # rename to `first_region`
+  df <- df %>%
+    rename(first_region = `Loc Meeting`)
+  # join on second electrode and rename
+  df <-  left_join(df,
+             localizations_sub,
+             by = c("second_elec" = "Electrode")) %>%
+    rename(second_region = `Loc Meeting`) 
+  # paste into useful format
+  df <- df %>% mutate(ROI = paste0(first_region, "-", second_region))
+  
+  return(df)
+
+}
+
+
+## get region names ##
+localizations <- read_csv(path(here(), "munge", "combined_electrode_info_with_bob.csv"))
+localizations_28 <- localizations %>% filter(subject == "IR28") %>% select(Electrode, `Loc Meeting`)
+localizations_35 <- localizations %>% filter(subject == "IR35") %>% select(Electrode, `Loc Meeting`)
+localizations_57 <- localizations %>% filter(subject == "IR57") %>% select(Electrode, `Loc Meeting`)
+localizations_9 <- localizations %>% filter(subject == "IR9") %>% select(Electrode, `Loc Meeting`)
+localizations_10 <- localizations %>% filter(subject == "IR10") %>% select(Electrode, `Loc Meeting`)
+localizations_10 <- localizations_10 %>%
+  mutate(Electrode = gsub("POL ", "", Electrode)) %>%
+  mutate(Electrode = gsub(" POL", "", Electrode)) %>%
+  mutate(Electrode = gsub("-Ref", "", Electrode)) %>%
+  mutate(Electrode = gsub("-Ref-", "-", Electrode)) 
+localizations_26 <- localizations %>% filter(subject == "IR26") %>% select(Electrode, `Loc Meeting`)
+localizations_16 <- localizations %>% filter(subject == "IR16") %>% select(Electrode, `Loc Meeting`)
+localizations_cp34 <- localizations %>% filter(subject == "CP34") %>% select(Electrode, `Loc Meeting`)
+
+
+## merge dfs ##
+presentation_mult_reg_df_9 <- merge_with_elec_info(presentation_mult_reg_df_9, localizations_9)
+presentation_mult_reg_df_10 <- merge_with_elec_info(presentation_mult_reg_df_10, localizations_10)
+presentation_mult_reg_df_16 <- merge_with_elec_info(presentation_mult_reg_df_16, localizations_16)
+presentation_mult_reg_df_26 <- merge_with_elec_info(presentation_mult_reg_df_26, localizations_26)
+presentation_mult_reg_df_28 <- merge_with_elec_info(presentation_mult_reg_df_28, localizations_28)
+presentation_mult_reg_df_35 <- merge_with_elec_info(presentation_mult_reg_df_35, localizations_35)
+presentation_mult_reg_df_57 <- merge_with_elec_info(presentation_mult_reg_df_57, localizations_57)
+
+choice_mult_reg_df_9 <- merge_with_elec_info(choice_mult_reg_df_9, localizations_9)
+choice_mult_reg_df_10 <- merge_with_elec_info(choice_mult_reg_df_10, localizations_10)
+choice_mult_reg_df_16 <- merge_with_elec_info(choice_mult_reg_df_16, localizations_16)
+choice_mult_reg_df_26 <- merge_with_elec_info(choice_mult_reg_df_26, localizations_26)
+choice_mult_reg_df_28 <- merge_with_elec_info(choice_mult_reg_df_28, localizations_28)
+choice_mult_reg_df_35 <- merge_with_elec_info(choice_mult_reg_df_35, localizations_35)
+choice_mult_reg_df_57 <- merge_with_elec_info(choice_mult_reg_df_57, localizations_57)
+
+```
+
+
+```{r merge-all-dfs}
+
+all_pres_mult_reg_results <- rbind(presentation_mult_reg_df_9, 
+                              presentation_mult_reg_df_10,
+                              presentation_mult_reg_df_16,
+                              presentation_mult_reg_df_26,
+                              presentation_mult_reg_df_28,
+                              presentation_mult_reg_df_35,
+                              presentation_mult_reg_df_57)
+                              
+all_choice_mult_reg_results <- rbind(choice_mult_reg_df_9, 
+                              choice_mult_reg_df_10,
+                              choice_mult_reg_df_16,
+                              choice_mult_reg_df_26,
+                              choice_mult_reg_df_28,
+                              choice_mult_reg_df_35,
+                              choice_mult_reg_df_57)
+
+
+```
+
+
+```{r create-self-payoff-dfs}
+# load results for self var #
+self_var_results_pres <- load_and_collate_reg_results("self_var_payoff_theta-pres-locked-hilbertRS", epoch = "presentation", folder = "post_eda")
+self_var_results_choice <- load_and_collate_reg_results("self_var_payoff_theta-choice-locked-hilbertRS", epoch = "choice", folder = "post_eda")
+
+# change predictor #
+self_var_results_pres <- self_var_results_pres %>% mutate(predictor = "self_var_payoff") %>% mutate(type = "single")
+self_var_results_choice <- self_var_results_choice %>% mutate(predictor = "self_var_payoff") %>% mutate(type = "single")
+
+```
+
+```{r create-other-payoff-dfs}
+# load results for self var #
+other_var_results_pres <- load_and_collate_reg_results(tag = "other_var_payoff_theta-pres-locked-hilbertRS", epoch = "presentation", folder = "post_eda")
+other_var_results_choice <- load_and_collate_reg_results(tag = "other_var_payoff_theta-choice-locked-hilbertRS", epoch = "choice", folder = "post_eda")
+
+# change predictor #
+other_var_results_pres <- other_var_results_pres %>% mutate(predictor = "other_var_payoff") %>% mutate(type = "single")
+other_var_results_choice <- other_var_results_choice %>% mutate(predictor = "other_var_payoff") %>% mutate(type = "single")
+
+```
+
+
+```{r create-ineq_disadvent-dfs}
+# load results for self var #
+ineq_disadvent_results_pres <- load_and_collate_reg_results(tag = "ineq_disadvent_theta-pres-locked-hilbertRS", epoch = "presentation", folder = "post_eda")
+ineq_disadvent_results_choice <- load_and_collate_reg_results(tag = "ineq_disadvent_theta-choice-locked-hilbertRS", epoch = "choice", folder = "post_eda")
+
+# change predictor #
+ineq_disadvent_results_pres <- ineq_disadvent_results_pres %>% mutate(predictor = "ineq_disadvent") %>% mutate(type = "single")
+ineq_disadvent_results_choice <- ineq_disadvent_results_choice %>% mutate(predictor = "ineq_disadvent") %>% mutate(type = "single")
+
+```
+
+```{r prep-for-matlab-plots}
+
+prepped_pres_mult_reg_results <- all_pres_mult_reg_results %>%
+  select(sub, epoch, electrode, first_region, second_region, ROI, perm_p, predictor) %>%
+  pivot_wider(names_from = predictor, values_from = perm_p, values_fn = function(x) unique(x)) %>%
+  ## other version ##
+  mutate(pres_other_results = if_else(ineq_disadvent_other_var_payoff < 0.05 & other_var_payoff_ineq_disadvent < 0.05, 3, 
+                                if_else(ineq_disadvent_other_var_payoff < 0.05, 2, 
+                                        if_else(other_var_payoff_ineq_disadvent < 0.05, 1, 0)))) %>%
+  mutate(pres_other_legend = if_else(pres_other_results == 3, "Both-Other", 
+                                 if_else(pres_other_results == 2, "Ineq Disadvant", 
+                                         if_else(pres_other_results == 1, "Other Var", "Neither")))) %>%
+  ## self version ##
+  mutate(pres_self_results = if_else(ineq_disadvent_self_var_payoff < 0.05 & self_var_payoff_ineq_disadvent < 0.05, 3, 
+                                if_else(ineq_disadvent_self_var_payoff < 0.05, 2, 
+                                        if_else(self_var_payoff_ineq_disadvent < 0.05, 1, 0)))) %>%
+  mutate(pres_self_legend = if_else(pres_self_results == 3, "Both-Self", 
+                                 if_else(pres_self_results == 2, "Ineq Disadvant", 
+                                         if_else(pres_self_results == 1, "Self Var", "Neither"))))
+
+
+
+# prepped_choice_mult_reg_results <- all_choice_mult_reg_results %>%
+#   select(sub, epoch, electrode, first_region, second_region, ROI, perm_p, predictor) %>%
+#   pivot_wider(names_from = predictor, values_from = perm_p, values_fn = function(x) unique(x)) %>%
+#   ## other version ##
+#   mutate(pres_other_results = if_else(ineq_disadvent_other_var_payoff < 0.05 & other_var_payoff_ineq_disadvent < 0.05, 3, 
+#                                 if_else(ineq_disadvent_other_var_payoff < 0.05, 2, 
+#                                         if_else(other_var_payoff_ineq_disadvent < 0.05, 1, 0)))) %>%
+#   mutate(choice_other_results = if_else(ineq_foregone_other_foregone < 0.05 & other_foregone_ineq_foregone < 0.05, 3, 
+#                                 if_else(ineq_foregone_other_foregone < 0.05, 2, 
+#                                         if_else(other_foregone_ineq_foregone < 0.05, 1, 0)))) %>%
+#   mutate(choice_other_legend = if_else(choice_other_results == 3, "Both-Other", 
+#                                  if_else(choice_other_results == 2, "Ineq Foregone", 
+#                                          if_else(choice_other_results == 1, "Other Foregone", "Neither")))) %>%
+#   mutate(pres_other_legend = if_else(pres_other_results == 3, "Both-Other", 
+#                                  if_else(pres_other_results == 2, "Ineq Disadvant", 
+#                                          if_else(pres_other_results == 1, "Other Var", "Neither")))) %>%
+#   ## self version ##
+#   mutate(pres_self_results = if_else(ineq_disadvent_self_var_payoff < 0.05 & self_var_payoff_ineq_disadvent < 0.05, 3, 
+#                                 if_else(ineq_disadvent_self_var_payoff < 0.05, 2, 
+#                                         if_else(self_var_payoff_ineq_disadvent < 0.05, 1, 0)))) %>%
+#   mutate(choice_self_results = if_else(ineq_foregone_self_foregone < 0.05 & self_foregone_ineq_foregone < 0.05, 3, 
+#                                 if_else(ineq_foregone_self_foregone < 0.05, 2, 
+#                                         if_else(self_foregone_ineq_foregone < 0.05, 1, 0)))) %>%
+#   mutate(choice_self_legend = if_else(choice_self_results == 3, "Both-Self", 
+#                                  if_else(choice_self_results == 2, "Ineq Foregone", 
+#                                          if_else(choice_self_results == 1, "Self Foregone", "Neither")))) %>%
+#   mutate(pres_self_legend = if_else(pres_self_results == 3, "Both-Self", 
+#                                  if_else(pres_self_results == 2, "Ineq Disadvant", 
+#                                          if_else(pres_self_results == 1, "Self Var", "Neither"))))
+
+```
+
+
+```{r write-results, eval = F}
+
+## pres ##
+write_csv(prepped_pres_mult_reg_results, path(here(), "figures", "anat_values", "presentation_multiple_reg_results.csv"))
+write_csv(prepped_pres_mult_reg_results %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_presentation_multiple_reg_results.csv"))
+write_csv(prepped_pres_mult_reg_results %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_presentation_multiple_reg_results.csv"))
+write_csv(prepped_pres_mult_reg_results %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_presentation_multiple_reg_results.csv"))
+write_csv(prepped_pres_mult_reg_results %>% filter(sub == "IR26"), path(here(), "figures", "anat_values", "IR26_presentation_multiple_reg_results.csv"))
+write_csv(prepped_pres_mult_reg_results %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_presentation_multiple_reg_results.csv"))
+write_csv(prepped_pres_mult_reg_results %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_presentation_multiple_reg_results.csv"))
+write_csv(prepped_pres_mult_reg_results %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_presentation_multiple_reg_results.csv"))
+## chocie ##
+write_csv(prepped_choice_mult_reg_results, path(here(), "figures", "anat_values", "choice_pres-regs_multiple_reg_results.csv"))
+write_csv(prepped_choice_mult_reg_results %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_choice_pres-regs_multiple_reg_results.csv"))
+write_csv(prepped_choice_mult_reg_results %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_choice_pres-regs_multiple_reg_results.csv"))
+write_csv(prepped_choice_mult_reg_results %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_choice_pres-regs_multiple_reg_results.csv"))
+write_csv(prepped_choice_mult_reg_results %>% filter(sub == "IR26"), path(here(), "figures", "anat_values", "IR26_choice_pres-regs_multiple_reg_results.csv"))
+write_csv(prepped_choice_mult_reg_results %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_choice_pres-regs_multiple_reg_results.csv"))
+write_csv(prepped_choice_mult_reg_results %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_choice_pres-regs_multiple_reg_results.csv"))
+write_csv(prepped_choice_mult_reg_results %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_choice_pres-regs_multiple_reg_results.csv"))
+
+
+### only sig ###
+sig_pres_mult_reg_results <- prepped_pres_mult_reg_results %>% filter(pres_results > 0)
+sig_choice_mult_reg_results <- prepped_choice_mult_reg_results %>% filter(choice_results > 0)
+## pres ##
+write_csv(sig_pres_mult_reg_results, path(here(), "figures", "anat_values", "sig_presentation_multiple_reg_results.csv"))
+write_csv(sig_pres_mult_reg_results %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_sig_presentation_multiple_reg_results.csv"))
+write_csv(sig_pres_mult_reg_results %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_sig_presentation_multiple_reg_results.csv"))
+write_csv(sig_pres_mult_reg_results %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_sig_presentation_multiple_reg_results.csv"))
+write_csv(sig_pres_mult_reg_results %>% filter(sub == "IR26"), path(here(), "figures", "anat_values", "IR26_sig_presentation_multiple_reg_results.csv"))
+write_csv(sig_pres_mult_reg_results %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_sig_presentation_multiple_reg_results.csv"))
+write_csv(sig_pres_mult_reg_results %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_sig_presentation_multiple_reg_results.csv"))
+write_csv(sig_pres_mult_reg_results %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_sig_presentation_multiple_reg_results.csv"))
+## chocie ##
+write_csv(sig_choice_mult_reg_results, path(here(), "figures", "anat_values", "sig_choice_multiple_reg_results.csv"))
+write_csv(sig_choice_mult_reg_results %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_sig_choice_multiple_reg_results.csv"))
+write_csv(sig_choice_mult_reg_results %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_sig_choice_multiple_reg_results.csv"))
+write_csv(sig_choice_mult_reg_results %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_sig_choice_multiple_reg_results.csv"))
+write_csv(sig_choice_mult_reg_results %>% filter(sub == "IR26"), path(here(), "figures", "anat_values", "IR26_sig_choice_multiple_reg_results.csv"))
+write_csv(sig_choice_mult_reg_results %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_sig_choice_multiple_reg_results.csv"))
+write_csv(sig_choice_mult_reg_results %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_sig_choice_multiple_reg_results.csv"))
+write_csv(sig_choice_mult_reg_results %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_sig_choice_multiple_reg_results.csv"))
+
+
+### only sig ###
+sig_pres_mult_reg_results <- prepped_pres_mult_reg_results %>% filter(choice_results > 0)
+sig_choice_mult_reg_results <- prepped_choice_mult_reg_results %>% filter(pres_results > 0)
+## pres ##
+write_csv(sig_pres_mult_reg_results, path(here(), "figures", "anat_values", "sig_presentation_choice-regs_multiple_reg_results.csv"))
+write_csv(sig_pres_mult_reg_results %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_sig_presentation_choice-regs_multiple_reg_results.csv"))
+write_csv(sig_pres_mult_reg_results %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_sig_presentation_choice-regs_multiple_reg_results.csv"))
+write_csv(sig_pres_mult_reg_results %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_sig_presentation_choice-regs_multiple_reg_results.csv"))
+write_csv(sig_pres_mult_reg_results %>% filter(sub == "IR26"), path(here(), "figures", "anat_values", "IR26_sig_presentation_choice-regs_multiple_reg_results.csv"))
+write_csv(sig_pres_mult_reg_results %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_sig_presentation_choice-regs_multiple_reg_results.csv"))
+write_csv(sig_pres_mult_reg_results %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_sig_presentation_choice-regs_multiple_reg_results.csv"))
+write_csv(sig_pres_mult_reg_results %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_sig_presentation_choice-regs_multiple_reg_results.csv"))
+## choice ##
+write_csv(sig_choice_mult_reg_results, path(here(), "figures", "anat_values", "sig_choice_pres-regs_multiple_reg_results.csv"))
+write_csv(sig_choice_mult_reg_results %>% filter(sub == "IR9"), path(here(), "figures", "anat_values", "IR9_sig_choice_pres-regs_multiple_reg_results.csv"))
+write_csv(sig_choice_mult_reg_results %>% filter(sub == "IR10"), path(here(), "figures", "anat_values", "IR10_sig_choice_pres-regs_multiple_reg_results.csv"))
+write_csv(sig_choice_mult_reg_results %>% filter(sub == "IR16"), path(here(), "figures", "anat_values", "IR16_sig_choice_pres-regs_multiple_reg_results.csv"))
+write_csv(sig_choice_mult_reg_results %>% filter(sub == "IR26"), path(here(), "figures", "anat_values", "IR26_sig_choice_pres-regs_multiple_reg_results.csv"))
+write_csv(sig_choice_mult_reg_results %>% filter(sub == "IR28"), path(here(), "figures", "anat_values", "IR28_sig_choice_pres-regs_multiple_reg_results.csv"))
+write_csv(sig_choice_mult_reg_results %>% filter(sub == "IR35"), path(here(), "figures", "anat_values", "IR35_sig_choice_pres-regs_multiple_reg_results.csv"))
+write_csv(sig_choice_mult_reg_results %>% filter(sub == "IR57"), path(here(), "figures", "anat_values", "IR57_sig_choice_pres-regs_multiple_reg_results.csv"))
+
+
+
+```
+
+
+```{r tables, eval =F}
+
+kable(table(factor(prepped_pres_mult_reg_results$pres_legend, levels = c("Self Var", "Ineq Disadvant", "Other Var", "Neither"))), col.names = c("Pres Vars", "Freq"), caption = "Presentation Epoch") %>% kable_styling()
+kable(table(factor(prepped_choice_mult_reg_results$choice_legend, levels = c("Self foregone", "Ineq Foregone", "Other Foregone", "Neither"))), col.names = c("Choice Vars", "Freq"), caption = "Choice Epoch") %>% kable_styling()
+kable(table(factor(prepped_pres_mult_reg_results$choice_legend, levels = c("Self foregone", "Ineq Foregone", "Other Foregone", "Neither"))), col.names = c("Choice Vars", "Freq"), caption = "Presentation Epoch") %>% kable_styling()
+kable(table(factor(prepped_choice_mult_reg_results$pres_legend, levels = c("Self Var", "Ineq Disadvant", "Other Var", "Neither"))), col.names = c("Pres Vars", "Freq"), caption = "Choice Epoch") %>% kable_styling()
+
+```
+
+
+```{r cing-tables, eval =F}
+
+
+cing_prepped_pres_mult_reg_results <- prepped_pres_mult_reg_results %>% 
+  mutate(cingulate = if_else(grepl("CC", ROI, ignore.case = T), 1,
+                           if_else(grepl("cing", ROI, ignore.case = T), 1, 0))) %>%
+  filter(cingulate ==1)
+
+cing_prepped_choice_mult_reg_results <- prepped_choice_mult_reg_results %>% 
+  mutate(cingulate = if_else(grepl("CC", ROI, ignore.case = T), 1,
+                           if_else(grepl("cing", ROI, ignore.case = T), 1, 0))) %>%
+  filter(cingulate ==1)
+
+cing_prepped_pres_mult_reg_results <- prepped_pres_mult_reg_results %>% 
+  mutate(cingulate = if_else(grepl("CC", ROI, ignore.case = T), 1,
+                           if_else(grepl("cing", ROI, ignore.case = T), 1, 0))) %>%
+  filter(cingulate ==1)
+
+cing_prepped_choice_mult_reg_results <- prepped_choice_mult_reg_results %>% 
+  mutate(cingulate = if_else(grepl("CC", ROI, ignore.case = T), 1,
+                           if_else(grepl("cing", ROI, ignore.case = T), 1, 0))) %>%
+  filter(cingulate ==1)
+
+table(cing_prepped_pres_mult_reg_results$pres_legend)
+table(cing_prepped_choice_mult_reg_results$choice_legend)
+table(cing_prepped_pres_mult_reg_results$choice_legend)
+table(cing_prepped_choice_mult_reg_results$pres_legend)
+
+```
+
+
+```{r combined-averaged-betas}
+
+## select need ed values for plots from full df and merge back into prepped results ##
+betas_pres_mult_reg_results <- all_pres_mult_reg_results %>%
+  select(electrode, bin, R2, Beta_1, Beta_2, Fstat, p_1, p_2, perm_p, predictor, sub, ROI)
+
+# merge #
+betas_pres_mult_reg_results <- left_join(betas_pres_mult_reg_results, prepped_pres_mult_reg_results %>% select(sub, electrode, pres_other_legend, pres_self_legend), by = c("sub", "electrode"))
+
+# table #
+tmp <- betas_pres_mult_reg_results %>% filter(predictor %in% c("ineq_disadvent_other_var_payoff", "other_var_payoff_ineq_disadvent")) %>% select(electrode, pres_other_legend, ROI) %>% distinct()
+tmp_table <- data.frame(table(tmp$ROI, tmp$pres_other_legend))
+colnames(tmp_table) <- c("ROI", "Pres_legend", "Count")
+
+## ofc ##
+# single regressions #
+self_single_reg_ofc <- self_var_results_pres %>% 
+  select(electrode, sub, perm_p,) %>%
+  distinct() %>%
+  rename(self_single_perm_p = perm_p)
+
+other_single_reg_ofc <- other_var_results_pres %>% 
+  select(electrode, sub, perm_p,) %>%
+  distinct() %>%
+  rename(other_single_perm_p = perm_p)
+
+dis_single_reg_ofc <- ineq_disadvent_results_pres %>% 
+  select(electrode, sub, perm_p,) %>%
+  distinct() %>%
+  rename(dis_single_perm_p = perm_p)
+
+# multiple regressions #
+ofc_df <- betas_pres_mult_reg_results %>% 
+  filter(grepl("ofc", ROI, ignore.case = T) | grepl("orbit", ROI, ignore.case = T)) %>% 
+  filter(perm_p < 0.05) %>%
+  filter(predictor %in% c("ineq_disadvent_other_var_payoff", "other_var_payoff_ineq_disadvent", "ineq_disadvent_self_var_payoff", "self_var_payoff_ineq_disadvent")) %>%
+  select(sub, electrode, ROI, perm_p, pres_other_legend, pres_self_legend) %>% 
+  distinct() %>%
+  arrange(pres_self_legend, pres_other_legend)
+
+# join with single reg data #
+ofc_sing_mult_df <- left_join(ofc_df, self_single_reg_ofc)
+ofc_sing_mult_df <- left_join(ofc_sing_mult_df, other_single_reg_ofc)
+ofc_sing_mult_df <- left_join(ofc_sing_mult_df, dis_single_reg_ofc)
+
+
+ofc_self_df <- all_pres_mult_reg_results %>% filter(grepl("ofc", ROI, ignore.case = T) | grepl("orbit", ROI, ignore.case = T)) %>% filter(predictor == "ineq_disadvent_other_var_payoff") %>% select(sub, electrode, ROI, perm_p, predictor) %>% distinct()
+ofc_self_elecs <- ofc_self_df %>% filter(perm_p < 0.05)
+
+for(sub_idx in ofc_self_elecs$sub ) {
+    sub_ofc_self_elecs <- ofc_self_elecs %>% filter(sub == sub_idx) %>% pull(electrode)
+    for(elec in sub_ofc_self_elecs) {
+        # plot #
+        other_plot <- betas_pres_mult_reg_results %>%
+          filter(electrode == elec & sub == sub_idx) %>%
+          filter(predictor %in% c("ineq_disadvent_other_var_payoff", "other_var_payoff_ineq_disadvent")) %>%
+          mutate(time = 50 * as.numeric(gsub("bin_", "", bin))) %>%
+          ggplot(., aes(x = time, y = Beta_1, color = predictor)) +
+          geom_line() +
+          theme(panel.background = element_rect(fill = "white"), legend.position = "top") +
+          xlim(0, 1500) +
+          facet_wrap(~pres_other_legend) +
+          ggtitle(paste0("OFC ~ other + dis model ~", elec))
+        
+        self_plot <- betas_pres_mult_reg_results %>%
+          filter(electrode == elec & sub == sub_idx) %>%
+          filter(predictor %in% c("ineq_disadvent_self_var_payoff", "self_var_payoff_ineq_disadvent")) %>%
+           mutate(time = 50 * as.numeric(gsub("bin_", "", bin))) %>%
+          ggplot(., aes(x = time, y = Beta_1, color = predictor)) +
+          geom_line() +
+          theme(panel.background = element_rect(fill = "white"), legend.position = "top") +
+          xlim(0, 1500) +
+          facet_wrap(~pres_self_legend) +
+          ggtitle(paste0("OFC ~ self + dis model ~", elec))
+        
+      plot(other_plot)
+      plot(self_plot)
+    
+    }
+
+}
+```
+
+```{r sanit-check-single-reg}
+
+## electrodes ##
+  # load #
+  file_path_to_elecs_of_interest <- path(here(), "munge", paste0("IR57_elecs_of_interest.csv"))
+  elecs_to_use <- read.csv(file_path_to_elecs_of_interest)
+  # prep #
+  all_elecs <- elecs_to_use %>% select(Electrode)
+  
+### theta ###
+
+## read in data ##
+path_hp_clean <- path(here(), "munge", "IR57", "theta_behave_presentation_rscaler_2575_200.csv")
+power_behave <-  read.csv(path_hp_clean)
+# merge with elecs #
+brain_behave_data <- power_behave %>%
+  filter(grepl(paste(all_elecs$Electrode, collapse = "|"), electrodes))
+# bin names #
+nBins <- colnames(power_behave %>% select(starts_with("bin_")))
+
+## run regressions ##
+# adv ineq #
+run_permuted_regressions_par(brain_behave_data, electrodes = "LOF3-LOF4", regressor = "self_var_payoff", nBins, region_name =  "All", 1000, sub = "IR57", tag = "testing-single-regresion")
+
+# modify old #
+self_var_results_pres_old <- self_var_results_pres %>%
+  filter(electrode == "LOF3-LOF4" & sub == "IR57") %>%
+  mutate(version = "old") %>%
+  select(-type, -epoch, -sub, -region, -predictor)
+
+# read in read_results function from load_collate
+self_var_results_pres_func <- pres_var_reg_df_57 %>%
+  filter(electrode == "LOF3-LOF4" & sub == "IR57") %>%
+  mutate(version = "func") %>%
+  select(-predictor, -region)
+
+# read in medium #
+self_var_results_pres_med <- read_csv('~/Projects/dictator_analysis/dictator_game/dg_behave_analysis/results/IR57/post_eda/All_LOF3-LOF4_self_var_payoff_theta-pres-locked-hilbertRS_results.csv')
+self_var_results_pres_med <- self_var_results_pres_med %>%
+  mutate(version = "med") %>%
+  select(-X1)
+
+# read in new #
+self_var_results_pres_new <- read_csv("../All_LOF3-LOF4_self_var_payoff_testing-single-regresion_results.csv")
+self_var_results_pres_new <- self_var_results_pres_new %>%
+  mutate(version = "new") %>%
+  select(-X1)
+
+# merge #
+self_var_results_pres_check <- rbind(self_var_results_pres_old, self_var_results_pres_func, self_var_results_pres_med, self_var_results_pres_new)
+
+# plot #
+self_var_results_pres_check %>%
+  mutate(time = 50 * as.numeric(gsub("bin_", "", bin))) %>%
+  ggplot(., aes(x = time, y = Beta, color = version)) +
+  geom_jitter(size = 3) +
+  geom_line() +
+  theme(panel.background = element_rect(fill = "white"))
+
+
+```
+
+
+
+Let Model 1 be:
+y = B1*Dis_inequity + B2*Other_payoff, where B1 = B2
+
+Let Model 2 be:
+y = B1*Dis_inequity + B2*Other_payoff, without constraints
+
+ 
+Ming suggested that if we ran anova(mode_1, model_2), then model 1 would be better? 
+
+
+
+
+
+```{r plot-bets, warning=F}
+
+betas_pres_mult_reg_results <- read_csv(path(here(), "results", "multiple_regressions", "betas_pres_mult_reg_results.csv"))
+
+
+betas_pres_other_mult_reg_plot_df <- betas_pres_mult_reg_results %>%
+  filter(pres_other_results > 0) %>%
+  group_by(sub, bin, predictor, pres_other_legend) %>%
+  mutate(sub_lower_beta_1_sem = mean(Beta_1, na.rm = T) - 2*(sd(Beta_1, na.rm = T)/n())) %>%
+  mutate(sub_upper_beta_1_sem = mean(Beta_1, na.rm = T) + 2*(sd(Beta_1, na.rm = T)/n())) %>%
+  mutate(sub_mean_beta_1 = mean(Beta_1, na.rm = T)) %>%
+  group_by(predictor, pres_other_legend, bin) %>%
+  mutate(lower_sem_beta_1 = mean(sub_mean_beta_1) - 2*(sd(sub_mean_beta_1)/n())) %>%
+  mutate(upper_sem_beta_1 = mean(sub_mean_beta_1) + 2*(sd(sub_mean_beta_1)/n())) %>%
+  mutate(mean_beta_1 = mean(sub_mean_beta_1)) %>%
+  mutate_cond(pres_other_results == 2 & predictor == "other_var_payoff_ineq_disadvent", mean_beta_1 = NA, lower_sem_beta_1 = NA, upper_sem_beta_1 = NA) %>%
+  mutate_cond(pres_other_results == 1 & predictor == "ineq_disadvent_other_var_payoff", mean_beta_1 = NA, lower_sem_beta_1 = NA, upper_sem_beta_1 = NA) %>%
+  mutate_cond(pres_other_results == 2 & predictor == "other_var_payoff_ineq_disadvent", sub_mean_beta_1 = NA, sub_lower_beta_1_sem = NA, sub_upper_beta_1_sem = NA) %>%
+  mutate_cond(pres_other_results == 1 & predictor == "ineq_disadvent_other_var_payoff", sub_mean_beta_1 = NA, sub_lower_beta_1_sem = NA, sub_upper_beta_1_sem = NA) %>%
+  mutate(bin = as.numeric(gsub("bin_", "", bin)))
+
+betas_pres_self_mult_reg_plot_df <- betas_pres_mult_reg_results %>%
+  filter(pres_self_results > 0) %>%
+  group_by(sub, bin, predictor, pres_self_legend) %>%
+  mutate(sub_lower_beta_1_sem = mean(Beta_1, na.rm = T) - 2*(sd(Beta_1, na.rm = T)/n())) %>%
+  mutate(sub_upper_beta_1_sem = mean(Beta_1, na.rm = T) + 2*(sd(Beta_1, na.rm = T)/n())) %>%
+  mutate(sub_mean_beta_1 = mean(Beta_1, na.rm = T)) %>%
+  group_by(predictor, pres_self_legend, bin) %>%
+  mutate(lower_sem_beta_1 = mean(sub_mean_beta_1) - 2*(sd(sub_mean_beta_1)/n())) %>%
+  mutate(upper_sem_beta_1 = mean(sub_mean_beta_1) + 2*(sd(sub_mean_beta_1)/n())) %>%
+  mutate(mean_beta_1 = mean(sub_mean_beta_1)) %>%
+  mutate_cond(pres_self_results == 2 & predictor == "self_var_payoff_ineq_disadvent", mean_beta_1 = NA, lower_sem_beta_1 = NA, upper_sem_beta_1 = NA) %>%
+  mutate_cond(pres_self_results == 1 & predictor == "ineq_disadvent_self_var_payoff", mean_beta_1 = NA, lower_sem_beta_1 = NA, upper_sem_beta_1 = NA) %>%
+  mutate_cond(pres_self_results == 2 & predictor == "self_var_payoff_ineq_disadvent", sub_mean_beta_1 = NA, sub_lower_beta_1_sem = NA, sub_upper_beta_1_sem = NA) %>%
+  mutate_cond(pres_self_results == 1 & predictor == "ineq_disadvent_self_var_payoff", sub_mean_beta_1 = NA, sub_lower_beta_1_sem = NA, sub_upper_beta_1_sem = NA) %>%
+  mutate(bin = as.numeric(gsub("bin_", "", bin)))
+
+
+ggthemr("solarized")
+other_plot <- betas_pres_other_mult_reg_plot_df %>%
+  filter(predictor %in% c("ineq_disadvent_other_var_payoff", "other_var_payoff_ineq_disadvent")) %>%
+  ggplot(., aes(x = bin, y = mean_beta_1, color = predictor, fill = predictor)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = lower_sem_beta_1, ymax = upper_sem_beta_1), alpha = .7) +
+  theme(panel.background = element_rect(fill = "white"), legend.position = "top") +
+  xlim(0, 30) +
+  facet_wrap(~pres_other_legend) +
+  ylim(-.02, 0.025) +
+  ggtitle("All Regions ~ Pres Epoch ~ Other Variables")
+
+self_plot <- betas_pres_self_mult_reg_plot_df %>%
+  filter(predictor %in% c("ineq_disadvent_self_var_payoff", "self_var_payoff_ineq_disadvent")) %>%
+  ggplot(., aes(x = bin, y = mean_beta_1, color = predictor, fill = predictor)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = lower_sem_beta_1, ymax = upper_sem_beta_1), alpha = .7) +
+  theme(panel.background = element_rect(fill = "white"), legend.position = "top") +
+  xlim(0, 30) +
+  ylim(-.02, 0.025) +
+  facet_wrap(~pres_self_legend) +
+  ggtitle("All Regions ~ Pres Epoch ~ Self Variables")
+
+plot(arrangeGrob(grobs = list(ggplotGrob(other_plot),ggplotGrob(self_plot)), nrow = 1, ncol = 2))
+
+
+
+```
+
+
+```{r choice}
+
+betas_choice_other_mult_reg_plot_df <- betas_choice_mult_reg_results %>%
+  filter(choice_other_results > 0) %>%
+  group_by(sub, bin, predictor, choice_other_legend) %>%
+  mutate(sub_lower_beta_1_sem = mean(Beta_1, na.rm = T) - 2*(sd(Beta_1, na.rm = T)/n())) %>%
+  mutate(sub_upper_beta_1_sem = mean(Beta_1, na.rm = T) + 2*(sd(Beta_1, na.rm = T)/n())) %>%
+  mutate(sub_mean_beta_1 = mean(Beta_1, na.rm = T)) %>%
+  group_by(predictor, choice_other_legend, bin) %>%
+  mutate(lower_sem_beta_1 = mean(sub_mean_beta_1) - 2*(sd(sub_mean_beta_1)/n())) %>%
+  mutate(upper_sem_beta_1 = mean(sub_mean_beta_1) + 2*(sd(sub_mean_beta_1)/n())) %>%
+  mutate(mean_beta_1 = mean(sub_mean_beta_1)) %>%
+  mutate_cond(choice_other_results == 2 & predictor == "ineq_foregone_other_foregone", mean_beta_1 = NA, lower_sem_beta_1 = NA, upper_sem_beta_1 = NA) %>%
+  mutate_cond(choice_other_results == 1 & predictor == "other_foregone_ineq_foregone", mean_beta_1 = NA, lower_sem_beta_1 = NA, upper_sem_beta_1 = NA) %>%
+  mutate(bin = as.numeric(gsub("post_", "", gsub("pre_", "-", bin))))
+
+betas_choice_self_mult_reg_plot_df <- betas_choice_mult_reg_results %>%
+  filter(choice_self_results > 0) %>%
+  group_by(sub, bin, predictor, choice_self_legend) %>%
+  mutate(sub_lower_beta_1_sem = mean(Beta_1, na.rm = T) - 2*(sd(Beta_1, na.rm = T)/n())) %>%
+  mutate(sub_upper_beta_1_sem = mean(Beta_1, na.rm = T) + 2*(sd(Beta_1, na.rm = T)/n())) %>%
+  mutate(sub_mean_beta_1 = mean(Beta_1, na.rm = T)) %>%
+  group_by(predictor, choice_self_legend, bin) %>%
+  mutate(lower_sem_beta_1 = mean(sub_mean_beta_1) - 2*(sd(sub_mean_beta_1)/n())) %>%
+  mutate(upper_sem_beta_1 = mean(sub_mean_beta_1) + 2*(sd(sub_mean_beta_1)/n())) %>%
+  mutate(mean_beta_1 = mean(sub_mean_beta_1)) %>%
+  mutate_cond(choice_self_results == 2 & predictor == "ineq_foregone_self_foregone", mean_beta_1 = NA, lower_sem_beta_1 = NA, upper_sem_beta_1 = NA) %>%
+  mutate_cond(choice_self_results == 1 & predictor == "self_foregone_ineq_foregone", mean_beta_1 = NA, lower_sem_beta_1 = NA, upper_sem_beta_1 = NA) %>%
+  mutate(bin = as.numeric(gsub("post_", "", gsub("pre_", "-", bin))))
+
+
+
+ggthemr("light")
+other_plot <- betas_choice_other_mult_reg_plot_df %>%
+  filter(predictor %in% c("ineq_foregone_other_foregone", "other_foregone_ineq_foregone")) %>%
+  ggplot(., aes(x = bin, y = mean_beta_1, color = predictor, fill = predictor)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = lower_sem_beta_1, ymax = upper_sem_beta_1), alpha = .7) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "black")  +
+  theme(panel.background = element_rect(fill = "white"), legend.position = "top") +
+  facet_wrap(~choice_other_legend) +
+  # ylim(-.02, 0.025) +
+  ggtitle("All Regions ~ Choice Epoch ~ Other Variables")
+
+self_plot <- betas_choice_self_mult_reg_plot_df %>%
+  filter(predictor %in% c("ineq_foregone_self_foregone", "self_foregone_ineq_foregone")) %>%
+  ggplot(., aes(x = bin, y = mean_beta_1, color = predictor, fill = predictor)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = lower_sem_beta_1, ymax = upper_sem_beta_1), alpha = .7) +
+  theme(panel.background = element_rect(fill = "white"), legend.position = "top") +
+  # ylim(-.02, 0.025) +
+  facet_wrap(~choice_self_legend) +
+  ggtitle("All Regions ~ Choice Epoch ~ Self Variables")
+
+plot(arrangeGrob(grobs = list(ggplotGrob(other_plot),ggplotGrob(self_plot)), nrow = 1, ncol = 2))
+
+
+
+```
+
+
+## Single Subject Plots
+
+```{r one-sub-pplots}
+
+ggthemr("solarized")
+other_plot <- betas_pres_other_mult_reg_plot_df %>%
+  filter(sub == "IR10") %>%
+  filter(predictor %in% c("ineq_disadvent_other_var_payoff", "other_var_payoff_ineq_disadvent")) %>%
+  ggplot(., aes(x = bin, y = sub_mean_beta_1, color = predictor, fill = predictor)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = sub_lower_beta_1_sem, ymax = sub_upper_beta_1_sem), alpha = .7) +
+  theme(panel.background = element_rect(fill = "white"), legend.position = "top") +
+  xlim(0, 30) +
+  facet_wrap(~pres_other_legend) +
+  # ylim(-.02, 0.025) +
+  ggtitle("All Regions ~ Pres Epoch ~ Pres Variables")
+
+self_plot <- betas_pres_self_mult_reg_plot_df %>%
+  filter(sub == "IR10") %>%
+  filter(predictor %in% c("ineq_disadvent_self_var_payoff", "self_var_payoff_ineq_disadvent")) %>%
+  ggplot(., aes(x = bin, y = sub_mean_beta_1, color = predictor, fill = predictor)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = sub_lower_beta_1_sem, ymax = sub_upper_beta_1_sem), alpha = .7) +
+  theme(panel.background = element_rect(fill = "white"), legend.position = "top") +
+  xlim(0, 30) +
+  # ylim(-.02, 0.025) +
+  facet_wrap(~pres_self_legend) +
+  ggtitle("All Regions ~ Pres Epoch ~ Pres Variables")
+
+plot(arrangeGrob(grobs = list(ggplotGrob(other_plot),ggplotGrob(self_plot)), nrow = 1, ncol = 2))
+
+
+
+
+```
+
+
+```{r sub-regions-prep, warning=F}
+
+roi_betas_pres_other_mult_reg_plot_df <- betas_pres_mult_reg_results %>%
+  filter(predictor %in% c("ineq_disadvent_other_var_payoff", "other_var_payoff_ineq_disadvent")) %>%
+  gather(key = "elec_num", value = "elec_name", first_region, second_region) %>%
+  mutate(ofc = if_else(grepl("ofc", elec_name, ignore.case = T), 1,
+                             if_else(grepl("orbit", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(frontopolar = if_else(grepl("polar", elec_name, ignore.case = T), 1,
+                             if_else(grepl("frontopolar", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(insula = if_else(grepl("insula", elec_name, ignore.case = T), 1,
+                           if_else(grepl("insular", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(mfg = if_else(grepl("mfg", elec_name, ignore.case = T), 1,
+                     if_else(grepl("medial frontal", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(temporal_gyr = if_else(grepl("[i|s|m]tg", elec_name, ignore.case = T), 1,
+                     if_else(grepl("temporal gyrus", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(cingulate = if_else(grepl("CC", elec_name, ignore.case = T), 1,
+                           if_else(grepl("cing", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(sts = if_else(grepl("sts", elec_name, ignore.case = T), 1,
+                 if_else(grepl("superior temporal", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(hipp_formation = if_else(grepl("hinal", elec_name, ignore.case = T), 1,
+                           if_else(grepl("ca1", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(amyg = if_else(grepl("amyg", elec_name, ignore.case = T), 1,
+                           if_else(grepl("ca1", elec_name, ignore.case = T), 1, 0))) %>%
+  gather(key = "region", value = "exists",  ofc, frontopolar, insula, mfg, cingulate, sts, hipp_formation, amyg, temporal_gyr) %>%
+  filter(exists == 1) %>%
+  filter(pres_other_results > 0) %>%
+  group_by(sub, bin, predictor, pres_other_legend) %>%
+  mutate(sub_lower_beta_1_sem = mean(Beta_1, na.rm = T) - 2*(sd(Beta_1, na.rm = T)/n())) %>%
+  mutate(sub_upper_beta_1_sem = mean(Beta_1, na.rm = T) + 2*(sd(Beta_1, na.rm = T)/n())) %>%
+  mutate(sub_mean_beta_1 = mean(Beta_1, na.rm = T)) %>%
+  group_by(predictor, pres_other_legend, bin) %>%
+  mutate(lower_sem_beta_1 = mean(sub_mean_beta_1) - 2*(sd(sub_mean_beta_1)/n())) %>%
+  mutate(upper_sem_beta_1 = mean(sub_mean_beta_1) + 2*(sd(sub_mean_beta_1)/n())) %>%
+  mutate(mean_beta_1 = mean(sub_mean_beta_1)) %>%
+  mutate_cond(pres_other_results == 2 & predictor == "other_var_payoff_ineq_disadvent", mean_beta_1 = NA, lower_sem_beta_1 = NA, upper_sem_beta_1 = NA) %>%
+  mutate_cond(pres_other_results == 1 & predictor == "ineq_disadvent_other_var_payoff", mean_beta_1 = NA, lower_sem_beta_1 = NA, upper_sem_beta_1 = NA) %>%
+  mutate_cond(pres_other_results == 2 & predictor == "other_var_payoff_ineq_disadvent", sub_mean_beta_1 = NA, sub_lower_beta_1_sem = NA, sub_upper_beta_1_sem = NA) %>%
+  mutate_cond(pres_other_results == 1 & predictor == "ineq_disadvent_other_var_payoff", sub_mean_beta_1 = NA, sub_lower_beta_1_sem = NA, sub_upper_beta_1_sem = NA) %>%
+  mutate(bin = as.numeric(gsub("bin_", "", bin)))
+
+
+roi_betas_pres_self_mult_reg_plot_df <- betas_pres_mult_reg_results %>%
+  filter(predictor %in% c("ineq_disadvent_self_var_payoff", "self_var_payoff_ineq_disadvent")) %>%
+  gather(key = "elec_num", value = "elec_name", first_region, second_region) %>%
+  mutate(ofc = if_else(grepl("ofc", elec_name, ignore.case = T), 1,
+                             if_else(grepl("orbit", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(frontopolar = if_else(grepl("polar", elec_name, ignore.case = T), 1,
+                             if_else(grepl("frontopolar", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(insula = if_else(grepl("insula", elec_name, ignore.case = T), 1,
+                           if_else(grepl("insular", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(mfg = if_else(grepl("mfg", elec_name, ignore.case = T), 1,
+                     if_else(grepl("medial frontal", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(temporal_gyr = if_else(grepl("[i|s|m]tg", elec_name, ignore.case = T), 1,
+                     if_else(grepl("temporal gyrus", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(cingulate = if_else(grepl("CC", elec_name, ignore.case = T), 1,
+                           if_else(grepl("cing", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(sts = if_else(grepl("sts", elec_name, ignore.case = T), 1,
+                 if_else(grepl("superior temporal", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(hipp_formation = if_else(grepl("hinal", elec_name, ignore.case = T), 1,
+                           if_else(grepl("ca1", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(amyg = if_else(grepl("amyg", elec_name, ignore.case = T), 1,
+                           if_else(grepl("ca1", elec_name, ignore.case = T), 1, 0))) %>%
+  gather(key = "region", value = "exists",  ofc, frontopolar, insula, mfg, cingulate, sts, hipp_formation, amyg, temporal_gyr) %>%
+  filter(exists == 1) %>%
+  filter(pres_self_results > 0) %>%
+  group_by(sub, bin, predictor, pres_self_legend) %>%
+  mutate(sub_lower_beta_1_sem = mean(Beta_1, na.rm = T) - 2*(sd(Beta_1, na.rm = T)/n())) %>%
+  mutate(sub_upper_beta_1_sem = mean(Beta_1, na.rm = T) + 2*(sd(Beta_1, na.rm = T)/n())) %>%
+  mutate(sub_mean_beta_1 = mean(Beta_1, na.rm = T)) %>%
+  group_by(predictor, pres_self_legend, bin) %>%
+  mutate(lower_sem_beta_1 = mean(sub_mean_beta_1) - 2*(sd(sub_mean_beta_1)/n())) %>%
+  mutate(upper_sem_beta_1 = mean(sub_mean_beta_1) + 2*(sd(sub_mean_beta_1)/n())) %>%
+  mutate(mean_beta_1 = mean(sub_mean_beta_1)) %>%
+  mutate_cond(pres_self_results == 2 & predictor == "self_var_payoff_ineq_disadvent", mean_beta_1 = NA, lower_sem_beta_1 = NA, upper_sem_beta_1 = NA) %>%
+  mutate_cond(pres_self_results == 1 & predictor == "ineq_disadvent_self_var_payoff", mean_beta_1 = NA, lower_sem_beta_1 = NA, upper_sem_beta_1 = NA) %>%
+  mutate_cond(pres_self_results == 2 & predictor == "self_var_payoff_ineq_disadvent", sub_mean_beta_1 = NA, sub_lower_beta_1_sem = NA, sub_upper_beta_1_sem = NA) %>%
+  mutate_cond(pres_self_results == 1 & predictor == "ineq_disadvent_self_var_payoff", sub_mean_beta_1 = NA, sub_lower_beta_1_sem = NA, sub_upper_beta_1_sem = NA) %>%
+  mutate(bin = as.numeric(gsub("bin_", "", bin)))
+
+
+```
+
+
+```{r roi-plots}
+
+ggthemr("solarized")
+## Cingulate ##
+cing_1 <- roi_betas_pres_other_mult_reg_plot_df %>%
+  filter(predictor %in% c("other_var_payoff_ineq_disadvent", "ineq_disadvent_other_var_payoff")) %>%
+  filter(region == "cingulate") %>%
+  ggplot(., aes(x = bin, y = mean_beta_1, color = predictor, fill = predictor)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = lower_sem_beta_1, ymax = upper_sem_beta_1), alpha = .7) +
+  theme(panel.background = element_rect(fill = "white"), legend.position = "top") +
+  ylim(-.012, 0.015) + 
+  facet_wrap(~pres_other_legend) +
+  ggtitle("Cingulate ~ Other")
+
+cing_2 <- roi_betas_pres_self_mult_reg_plot_df %>%
+  filter(predictor %in% c("ineq_disadvent_self_var_payoff", "self_var_payoff_ineq_disadvent")) %>%
+  filter(region == "cingulate") %>%
+  ggplot(., aes(x = bin, y = mean_beta_1, color = predictor, fill = predictor)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = lower_sem_beta_1, ymax = upper_sem_beta_1), alpha = .7) +
+  theme(panel.background = element_rect(fill = "white"), legend.position = "top") +
+  ylim(-.012, 0.015) + 
+  facet_wrap(~pres_self_legend) +
+  ggtitle("Cingulate ~ Self")
+
+plot(arrangeGrob(grobs = list(ggplotGrob(cing_1),ggplotGrob(cing_2)), nrow = 1, ncol = 2))
+
+## OFC ##
+ofc_1 <- roi_betas_pres_other_mult_reg_plot_df %>%
+  filter(predictor %in% c("other_var_payoff_ineq_disadvent", "ineq_disadvent_other_var_payoff")) %>%
+  filter(region == "ofc") %>%
+  ggplot(., aes(x = bin, y = mean_beta_1, color = predictor, fill = predictor)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = lower_sem_beta_1, ymax = upper_sem_beta_1), alpha = .7) +
+  theme(panel.background = element_rect(fill = "white"), legend.position = "top") +
+  # ylim(-.012, 0.015) + 
+  facet_wrap(~pres_other_legend) +
+  ggtitle("OFC ~ Other")
+
+```
+
+
+```{r}
+
+ofc_2 <- roi_betas_pres_self_mult_reg_plot_df %>%
+  filter(predictor %in% c("ineq_disadvent_self_var_payoff", "self_var_payoff_ineq_disadvent")) %>%
+  filter(region == "ofc") %>%
+  ggplot(., aes(x = bin, y = mean_beta_1, color = predictor, fill = predictor)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = lower_sem_beta_1, ymax = upper_sem_beta_1), alpha = .7) +
+  theme(panel.background = element_rect(fill = "white"), legend.position = "top") +
+  ylim(-.012, 0.015) + 
+  facet_wrap(~pres_self_legend) +
+  ggtitle("OFC ~ Self")
+
+plot(arrangeGrob(grobs = list(ggplotGrob(ofc_1),ggplotGrob(ofc_2)), nrow = 1, ncol = 2))
+
+## MfG ##
+mfg_1 <- roi_betas_pres_other_mult_reg_plot_df %>%
+  filter(predictor %in% c("other_var_payoff_ineq_disadvent", "ineq_disadvent_other_var_payoff")) %>%
+  filter(region == "mfg") %>%
+  ggplot(., aes(x = bin, y = mean_beta_1, color = predictor, fill = predictor)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = lower_sem_beta_1, ymax = upper_sem_beta_1), alpha = .7) +
+  theme(panel.background = element_rect(fill = "white"), legend.position = "top") +
+  ylim(-.012, 0.015) + 
+  facet_wrap(~pres_other_legend) +
+  ggtitle("MFG ~ Other")
+
+mfg_2 <- roi_betas_pres_self_mult_reg_plot_df %>%
+  filter(predictor %in% c("ineq_disadvent_self_var_payoff", "self_var_payoff_ineq_disadvent")) %>%
+  filter(region == "mfg") %>%
+  ggplot(., aes(x = bin, y = mean_beta_1, color = predictor, fill = predictor)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = lower_sem_beta_1, ymax = upper_sem_beta_1), alpha = .7) +
+  theme(panel.background = element_rect(fill = "white"), legend.position = "top") +
+  ylim(-.012, 0.015) + 
+  facet_wrap(~pres_self_legend) +
+  ggtitle("MFG ~ Self")
+
+plot(arrangeGrob(grobs = list(ggplotGrob(mfg_1),ggplotGrob(mfg_2)), nrow = 1, ncol = 2))
+
+## Temporal Gyrus ##
+tem_1 <- roi_betas_pres_other_mult_reg_plot_df %>%
+  filter(predictor %in% c("other_var_payoff_ineq_disadvent", "ineq_disadvent_other_var_payoff")) %>%
+  filter(region == "temporal_gyr") %>%
+  ggplot(., aes(x = bin, y = mean_beta_1, color = predictor, fill = predictor)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = lower_sem_beta_1, ymax = upper_sem_beta_1), alpha = .7) +
+  theme(panel.background = element_rect(fill = "white"), legend.position = "top") +
+  ylim(-.012, 0.015) + 
+  facet_wrap(~pres_other_legend) +
+  ggtitle("Temporal ~ Other")
+
+tem_2 <- roi_betas_pres_self_mult_reg_plot_df %>%
+  filter(predictor %in% c("ineq_disadvent_self_var_payoff", "self_var_payoff_ineq_disadvent")) %>%
+  filter(region == "temporal_gyr") %>%
+  ggplot(., aes(x = bin, y = mean_beta_1, color = predictor, fill = predictor)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = lower_sem_beta_1, ymax = upper_sem_beta_1), alpha = .7) +
+  theme(panel.background = element_rect(fill = "white"), legend.position = "top") +
+  ylim(-.012, 0.015) + 
+  facet_wrap(~pres_self_legend) +
+  ggtitle("Temporal ~ Self")
+
+plot(arrangeGrob(grobs = list(ggplotGrob(tem_1),ggplotGrob(tem_2)), nrow = 1, ncol = 2))
+
+
+
+```
+
+```{r cingulate-betas}
+
+ggthemr("flat")
+roi_betas_pres_mult_reg_plot_df %>%
+  filter(region == "temporal_gyr") %>%
+  filter(pres_legend == "Ineq Disadvant" & predictor == "ineq_disadvent_other_var_payoff") %>%
+  ggplot(., aes(x = bin, y = sub_mean_beta_1, color = sub, fill = sub)) +
+  geom_line() +
+  # geom_ribbon(aes(ymin = sub_lower_beta_1_sem, ymax = sub_upper_beta_1_sem), alpha = .7) +
+  theme(panel.background = element_rect(fill = "white")) +
+  xlim(0, 30) +
+  ggtitle("Temproal")
+
+```
+
+

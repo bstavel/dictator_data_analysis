@@ -1,0 +1,1867 @@
+---
+title: "Sanity Check February 2021"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo <- FALSE,  # don't print the code chunk
+  warning <- FALSE,  # don't print warnings
+  message <- FALSE,  # don't print messages
+  fig.width <- 12,  # set default width of figures
+  fig.height <- 6,  # set default height of figures
+  fig.align <- "center",  # always align figure in center
+  fig.pos <- "H",  # always plot figure at the exact location of the code chunk
+  cache <- TRUE)  # cache results
+
+## libraries ##
+library(tidyverse)
+library(ggplot2)
+library(magrittr)
+# library(ggthemr)
+library(grid)
+library(gtable)
+library(gridExtra)
+library(wesanderson)
+library(ggsci)
+library(zoo)
+library(kableExtra)
+library(lme4)
+library(RColorBrewer)
+library(doParallel)
+library(parallel)
+library(foreach)
+library(here)
+library(fs)
+library(ggcorrplot)
+library(viridis)
+library(beepr)
+library(lmtest)
+
+## hand written functions ##
+source(path(here(), "R", "load_behave_data.R"))
+source(path(here(), "R", "prep_behave_data.R"))
+source(path(here(), "R", "stretch_start_end.R"))
+source(path(here(), "R", "load_high_gamma_data.R"))
+source(path(here(), "R", "rolling_window_and_baseline.R"))
+source(path(here(), "R", "run_permuted_regressions.R"))
+source(path(here(), "R", "compile_results.R"))
+source(path(here(), "R", "run_filtered_anova.R"))
+source(path(here(), "R", "merge_stepped_anova_results.R"))
+source(path(here(), "R", 'mutate_cond.R'))
+
+## plotting helpers ##
+# ggthemr("solarized")
+
+# ## paralellization ##
+# nCores <- 2
+# registerDoParallel(nCores)
+
+```
+
+
+This script is loads, cleans, and merges the high frequency activity for both presentation-locked and choice-locked data. The results are csvs ready for input to the regression analysis.
+
+```{r behave-prep}
+
+# path to beahvioral files #
+path_to_raw_behave <- fs::path(here(), "../dg_behave_formatted")
+path_to_behave_munge <- fs::path(here(), "munge", "combined_behavioral_data.csv")
+path_to_behave_clean <- fs::path(here(), "munge", "clean_behavioral_data.csv")
+
+# concactenate behavioral data #
+load_behave_data(path_to_raw_behave)
+
+# prep behavioral data #
+prep_behave_data(path_to_behave_munge)
+
+# load clean data #
+behave_data <- read.csv(path_to_behave_clean)
+
+# ad some new variables #
+behave_data <- behave_data %>%
+    mutate(trial_type = if_else(self_var_payoff == other_var_payoff, "equality",
+                                if_else(self_var_payoff > other_var_payoff,
+                                        "Advantageous", "Disadvantageous"))) %>%
+    filter(trial_type != "trial_type") %>%
+    mutate(more_or_less = if_else(abs(ineq_advent) > 0, 1, 0))
+
+# filter to current subject #
+behave_data_19 <- behave_data %>% filter(SID == "DG_s08")
+behave_data_35 <- behave_data %>% filter(SID == "DG_s11")
+behave_data_28 <- behave_data %>% filter(SID == "DG_s10")
+behave_data_39 <- behave_data %>% filter(SID == "DG_s12")
+behave_data_16 <- behave_data %>% filter(SID == "DG_s06")
+behave_data_10 <- behave_data %>% filter(SID == "DG_s04")
+behave_data_57 <- behave_data %>% filter(SID == "DG_s13")
+behave_data_9 <- behave_data %>% filter(SID == "DG_s03")
+behave_data_26 <- behave_data %>% filter(SID == "DG_s09")
+behave_data_cp34 <- behave_data %>% filter(SID == "DG_s14")
+behave_data_da8 <- behave_data %>% filter(SID == "DG_s15")
+
+```
+
+
+```{r viz-steps-of-rolling-averaged-data, eval = F}
+
+
+### IR35 ~ PRESENTATION ###
+
+## function to filter to ROI, baseline, compress, and c=merge within behvaioral data ##
+load_IR35_presentation_visualization_data <- function(file_path_to_power_data, clean_name, band) {
+
+  # necessary paths #
+  file_path_to_electrode_names <- path(here(), "munge", "savio_cluster", "IR35_electrodes_presentation_locked_rscaler_2575.csv")
+  
+  # load data #
+  hg_data <- load_high_gamma_data(file_path_to_power_data, file_path_to_electrode_names)
+  electrode_of_interest <- "LOF4-LOF5"
+ 
+  # filter to good electrodes #
+  hg_data <- hg_data %>% filter(electrodes == electrode_of_interest)
+  
+  # plot theta power ~ no baseline #
+  plot_no_base <- hg_data %>%
+    gather(key = "bin", value = "power", -electrodes, -trial) %>%
+    group_by(bin) %>%
+    mutate(mean_power = mean(power))  %>%
+    mutate(lower_sem_power = mean(power) - 2*(sd(power)/n())) %>%
+    mutate(upper_sem_power = mean(power) + 2*(sd(power)/n())) %>%
+    mutate(time = as.numeric(gsub("time_", "", bin)) - 200) %>%
+    ggplot(., aes(x = time, y = mean_power)) +
+    geom_line() +
+    geom_ribbon(aes(ymin = lower_sem_power, ymax = upper_sem_power), alpha = .5) +
+    geom_vline(xintercept = 0, color = "black") +
+    theme(panel.background = element_rect(fill = "white")) +
+    ggtitle(paste0(band, " ~ No Baseline, No Rolling, ", electrode_of_interest))
+  
+  plot(plot_no_base)
+
+  
+  # save baseline #
+  baseline_data <- hg_data[, 1:200]
+  baseline_data <- cbind(baseline_data, hg_data$electrodes, hg_data$trial)
+  
+   # First separate out indices #
+  indices <- hg_data %>% select(-starts_with("time"))
+  hg_only_df <- hg_data %>% select(starts_with("time"))
+  
+  baseline_df <- hg_only_df %>% select(1:200)
+  baseline <- apply(baseline_df, 1, function(x) mean(x, na.rm = T))
+  
+  # baseline the data #
+  hg_df_baseline <- apply(hg_only_df, 2, function(col) t(as.vector(col - baseline)))
+  
+  # rebind back #
+  hg_clean <- cbind(indices, hg_df_baseline)
+  
+  # replot baseline data #
+  plot_with_base <- hg_clean %>%
+    gather(key = "bin", value = "power", -electrodes, -trial) %>%
+    group_by(bin) %>%
+    mutate(mean_power = mean(power))  %>%
+    mutate(lower_sem_power = mean(power) - 2*(sd(power)/n())) %>%
+    mutate(upper_sem_power = mean(power) + 2*(sd(power)/n())) %>%
+    mutate(time = as.numeric(gsub("time_", "", bin)) - 200) %>%
+    ggplot(., aes(x = time, y = mean_power)) +
+    geom_line() +
+    geom_ribbon(aes(ymin = lower_sem_power, ymax = upper_sem_power), alpha = .5) +
+    geom_vline(xintercept = 0, color = "black") +
+    theme(panel.background = element_rect(fill = "white")) +
+    ggtitle(paste0(band, " ~ With Baseline, No Rolling, ", electrode_of_interest))
+  
+  plot(plot_with_base)
+  
+  # average and baseline #
+  hg_clean_rolled <- rolling_window_and_baseline(hg_data, lWin = 200, lOver = 50, choice_locked = F)
+  
+  plot_with_base_and_roll <- hg_clean_rolled %>%
+    gather(key = "bin", value = "power", -electrodes, -trial) %>%
+    group_by(bin) %>%
+    mutate(mean_power = mean(power))  %>%
+    mutate(lower_sem_power = mean(power) - 2*(sd(power)/n())) %>%
+    mutate(upper_sem_power = mean(power) + 2*(sd(power)/n())) %>%
+    mutate(time = (50 * as.numeric(gsub("bin_", "", bin))) - 200) %>%
+    ggplot(., aes(x = time, y = mean_power)) +
+    geom_line() +
+    geom_ribbon(aes(ymin = lower_sem_power, ymax = upper_sem_power), alpha = .5) +
+    geom_vline(xintercept = 0, color = "black") +
+    theme(panel.background = element_rect(fill = "white")) +
+    ggtitle(paste0(band, " ~ With Baseline, with Rolling, ", electrode_of_interest))
+  
+  plot(plot_with_base_and_roll)
+
+}
+
+## Extract for all f ##
+# delta #
+band <- "delta"
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR35_delta_munge_presentation_locked_rscaler_2575.csv")
+clean_name <- path(here(), "munge", "IR35", "delta_behave_presentation_rscaler_2575_200.csv")
+load_IR35_presentation_visualization_data(file_path_to_power_data, clean_name, band)
+# theta #
+band <- "theta"
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR35_theta_munge_presentation_locked_rscaler_2575.csv")
+clean_name <- path(here(), "munge", "IR35", "theta_behave_presentation_rscaler_2575_200.csv")
+load_IR35_presentation_visualization_data(file_path_to_power_data, clean_name, band)
+# alpha #
+band <- "alpha"
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR35_alpha_munge_presentation_locked_rscaler_2575.csv")
+clean_name <- path(here(), "munge", "IR35", "alpha_behave_presentation_rscaler_2575_200.csv")
+load_IR35_presentation_visualization_data(file_path_to_power_data, clean_name, band)
+# beta #
+band <- "beta"
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR35_beta_munge_presentation_locked_rscaler_2575.csv")
+clean_name <- path(here(), "munge", "IR35", "beta_behave_presentation_rscaler_2575_200.csv")
+load_IR35_presentation_visualization_data(file_path_to_power_data, clean_name, band)
+# gamma #
+band <- "gamma"
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR35_gamma_munge_presentation_locked_rscaler_2575.csv")
+clean_name <- path(here(), "munge", "IR35", "gamma_behave_presentation_rscaler_2575_200.csv")
+load_IR35_presentation_visualization_data(file_path_to_power_data, clean_name, band)
+# hfa #
+band <- "hfa"
+file_path_to_power_data <- path(here(), "munge", "savio_cluster", "IR35_hfa_munge_presentation_locked_rscaler_2575.csv")
+clean_name <- path(here(), "munge", "IR35", "hfa_behave_presentation_rscaler_2575_200.csv")
+load_IR35_presentation_visualization_data(file_path_to_power_data, clean_name, band)
+
+
+
+```
+
+
+```{r all-elecs-print-raw, eval=F}
+
+## function to filter to ROI, baseline, compress, and c=merge within behvaioral data ##
+print_IR35_presentation_visualization_data <- function(file_path_to_power_data, clean_name, band, sub) {
+
+  # necessary paths #
+  file_path_to_electrode_names <- path(here(), "munge", "savio_cluster", paste0(sub, "_electrodes_presentation_locked_rscaler_2575.csv"))
+  file_path_to_elecs_of_interest <- path(here(), "munge", paste0(sub, "_elecs_of_interest.csv"))
+   
+  # load data #
+  hg_data <- load_high_gamma_data(file_path_to_power_data, file_path_to_electrode_names)
+  elecs_to_use <- read.csv(file_path_to_elecs_of_interest)
+  
+  # filter to good electrodes #
+  hg_data <- hg_data %>% filter(grepl(paste(elecs_to_use$Electrode, collapse = "|"), electrodes))
+ 
+  # average and baseline #
+  hg_clean_rolled <- rolling_window_and_baseline(hg_data, lWin = 200, lOver = 50, choice_locked = F)
+  
+  plot_with_base_and_roll <- hg_clean_rolled %>%
+    gather(key = "bin", value = "power", -electrodes, -trial) %>%
+    group_by(electrodes, bin) %>%
+    mutate(mean_power = mean(power))  %>%
+    mutate(lower_sem_power = mean(power) - 2*(sd(power)/n())) %>%
+    mutate(upper_sem_power = mean(power) + 2*(sd(power)/n())) %>%
+    mutate(time = (50 * as.numeric(gsub("bin_", "", bin))) - 200) %>%
+    ggplot(., aes(x = time, y = mean_power)) +
+    geom_line() +
+    geom_ribbon(aes(ymin = lower_sem_power, ymax = upper_sem_power), alpha = .5) +
+    geom_vline(xintercept = 0, color = "black") +
+    theme(panel.background = element_rect(fill = "white")) +
+    facet_wrap(~electrodes)
+    ggtitle(paste0(band, " ~ With Baseline, with Rolling, ", electrode_of_interest))
+  
+  ggsave(path(here(), "figures", "data_checks", paste0(sub, "_", band, "_rolled_power_envelop.pdf")), plot = plot_with_base_and_roll, height = 18, width = 42, units = "in")
+
+}
+
+
+## Extract for all ##
+subs <- c("IR9", "IR10", "IR16", "IR26", "IR28", "IR35", "IR57")
+for( sub in subs) {
+  
+    # delta #
+    band <- "delta"
+    file_path_to_power_data <- path(here(), "munge", "savio_cluster", paste0(sub, "_delta_munge_presentation_locked_rscaler_2575.csv"))
+    print_IR35_presentation_visualization_data(file_path_to_power_data, clean_name, band, sub)
+    # theta #
+    band <- "theta"
+    file_path_to_power_data <- path(here(), "munge", "savio_cluster", paste0(sub, "_theta_munge_presentation_locked_rscaler_2575.csv"))
+    print_IR35_presentation_visualization_data(file_path_to_power_data, clean_name, band, sub)
+    # alpha #
+    band <- "alpha"
+    file_path_to_power_data <- path(here(), "munge", "savio_cluster", paste0(sub, "_alpha_munge_presentation_locked_rscaler_2575.csv"))
+    print_IR35_presentation_visualization_data(file_path_to_power_data, clean_name, band, sub)
+    # beta #
+    band <- "beta"
+    file_path_to_power_data <- path(here(), "munge", "savio_cluster", paste0(sub, "_beta_munge_presentation_locked_rscaler_2575.csv"))
+    print_IR35_presentation_visualization_data(file_path_to_power_data, clean_name, band, sub)
+    # gamma #
+    band <- "gamma"
+    file_path_to_power_data <- path(here(), "munge", "savio_cluster", paste0(sub, "_gamma_munge_presentation_locked_rscaler_2575.csv"))
+    print_IR35_presentation_visualization_data(file_path_to_power_data, clean_name, band, sub)
+    # hfa #
+    band <- "hfa"
+    file_path_to_power_data <- path(here(), "munge", "savio_cluster", paste0(sub, "_hfa_munge_presentation_locked_rscaler_2575.csv"))
+    print_IR35_presentation_visualization_data(file_path_to_power_data, clean_name, band, sub)
+
+
+}
+```
+
+
+```{r behave-plots, eval = F}
+sub <- "IR57"
+
+# load data #
+path_hp_clean <- path(here(), "munge", sub, "theta_behave_presentation_rscaler_2575_200.csv")
+power_behave <-  read.csv(path_hp_clean)
+# merge with elecs #
+brain_behave_data <- power_behave %>%
+  mutate(trial_type = if_else(self_var_payoff == other_var_payoff, "equality",
+                              if_else(self_var_payoff > other_var_payoff,
+                                      "Advantageous", "Disadvantageous"))) %>%
+  filter(trial_type != "equality") %>%
+  mutate(more_or_less = if_else(abs(ineq_advent) > 0, 1, -1)) %>% 
+  mutate(more_or_none = if_else(abs(ineq_advent) > 0, 1, 0)) %>% 
+  mutate(less_or_none = if_else(abs(ineq_advent) > 0, 0, 1)) 
+
+brain_behave_data %>% 
+  filter(electrodes == "ROF2-ROF3") %>%
+  gather(key = "bin", value = "power", starts_with("bin_")) %>%
+  # filter(power > .5 | power < -.5) %>%
+  mutate(time = (50 * as.numeric(gsub("bin_", "", bin)))) %>%
+  ggplot(., aes(x = time, y = more_or_less, color = power)) +
+    geom_jitter(size = 3, alpha = .7) +
+    scale_color_viridis() +
+    theme(panel.background = element_rect(fill = "white")) +
+    ggtitle("more_or_less")
+
+
+tmp <- brain_behave_data %>% 
+  gather(key = "bin", value = "power", starts_with("bin_")) %>%
+  filter(power > .1 | power < -.1) %>%
+  mutate(breaks = cut(power, breaks = c(-20, -2, 0, 2, 20))) %>%
+  mutate(time = (50 * as.numeric(gsub("bin_", "", bin)))) %>%
+  ggplot(., aes(x = time, y = more_or_less, color = breaks)) +
+    geom_jitter(size = 3, alpha = .7) +
+    scale_color_viridis(discrete = T) +
+    theme(panel.background = element_rect(fill = "white")) +
+    facet_wrap(~electrodes) +
+    ggtitle("more_or_less")
+  
+brain_behave_data %>% 
+  gather(key = "bin", value = "power", starts_with("bin_")) %>%
+  mutate(breaks = cut(power, breaks = c(-10, -1, 0, 1, 10))) %>%
+  mutate(time = (50 * as.numeric(gsub("bin_", "", bin)))) %>%
+  ggplot(., aes(x = time, y = more_or_none, fill = breaks)) +
+      geom_jitter(size = 3, alpha = .7) +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"))  +
+      facet_wrap(~electrodes, scales = "free") 
+
+brain_behave_data %>% 
+  gather(key = "bin", value = "power", starts_with("bin_")) %>%
+  mutate(breaks = cut(power, breaks = c(-20, -2, 0, 2, 20))) %>%
+  mutate(time = (50 * as.numeric(gsub("bin_", "", bin)))) %>%
+  ggplot(., aes(x = time, y = less_or_none, color = power)) +
+    geom_tile() +
+    scale_color_viridis(discrete = T) +
+    theme(panel.background = element_rect(fill = "white"))  +
+    facet_wrap(~electrodes, scales = "free") 
+
+
+brain_behave_data %>% 
+  gather(key = "bin", value = "power", starts_with("bin_")) %>%
+  filter(power > .5 | power < -.5) %>%
+  mutate(breaks = cut(power, breaks = c(-20, -2, 0, 2, 20))) %>%
+  mutate(time = (50 * as.numeric(gsub("bin_", "", bin)))) %>%
+  ggplot(., aes(x = time, y = more_or_less * self_var_payoff, color = breaks)) +
+      geom_jitter(size = 3, alpha = .7) +
+      scale_color_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"))  +
+      facet_wrap(~electrodes, scales = "free") 
+    
+  
+# brain_behave_data %>%
+#   filter(electrodes == "ROF2-ROF3") %>%
+#   gather(key = "bin", value = "power", starts_with("bin_")) %>%
+#   filter(more_or_less * self_var_payoff > 0 ) %>%
+#   mutate(breaks = cut(power, breaks = c(-20, -2, 0, 2, 20))) %>%
+#   mutate(time = (50 * as.numeric(gsub("bin_", "", bin)))) %>%
+#   ggplot(., aes(x = time, y = more_or_less * self_var_payoff, color = breaks)) +
+#       geom_point(size = 3, alpha = .7) +
+#       scale_color_viridis(discrete = T) +
+#       theme(panel.background = element_rect(fill = "white"))
+
+
+```
+
+```{r raster-plots-delta}
+
+subs <- c("IR9", "IR10", "IR16", "IR26", "IR28", "IR35", "IR57")
+
+plot_df <- NULL
+for(sub_idx in subs) {
+
+  # load data #
+  path_hp_clean <- path(here(), "munge", sub_idx, "delta_behave_presentation_rscaler_2575_200.csv")
+  power_behave <-  read.csv(path_hp_clean)
+  # merge with elecs #
+  brain_behave_data <- power_behave %>%
+    mutate(trial_type = if_else(self_var_payoff == other_var_payoff, "equality",
+                                if_else(self_var_payoff > other_var_payoff,
+                                        "Advantageous", "Disadvantageous"))) %>%
+    filter(trial_type != "equality") %>%
+    mutate(more_or_less = if_else(abs(ineq_advent) > 0, 1, -1)) %>% 
+    mutate(more_or_none = if_else(abs(ineq_advent) > 0, 1, 0)) %>% 
+    mutate(less_or_none = if_else(abs(ineq_advent) > 0, 0, 1)) %>%
+    mutate(electrode = electrodes)
+  
+  ## get region names ##
+  localizations <- read_csv(path(here(), "munge", "combined_electrode_info_with_bob.csv"))
+  localizations_sub <- localizations %>% filter(subject == sub_idx) %>% select(Electrode, `Loc Meeting`)
+  brain_behave_data_locations <- merge_with_elec_info(brain_behave_data, localizations_sub)
+  
+  # create plotting df 
+  plot_df_tmp <- brain_behave_data_locations %>% 
+    gather(key = "bin", value = "power", starts_with("bin_")) %>%
+    mutate(breaks = cut(power, breaks = c(-20, -5, -4, -3, -2.5, -2, -1.5, -1, -.5, 0, .5, 1, 1.5, 2, 2.5, 3, 4, 5, 20))) %>%
+    mutate(time = (50 * as.numeric(gsub("bin_", "", bin)))) %>%
+    mutate(sub = sub_idx) %>%
+    mutate(electrode_sub = paste0(electrode, " ~ ", sub))
+  
+  if(is.null(plot_df)) {
+    plot_df <- plot_df_tmp
+  } else {
+    plot_df <- rbind(plot_df, plot_df_tmp)
+  }
+
+}
+  
+plot_df_regions_delta <- plot_df %>%
+  gather(key = "elec_num", value = "elec_name", first_region, second_region) %>%
+  mutate(ofc = if_else(grepl("ofc", elec_name, ignore.case = T), 1,
+                             if_else(grepl("orbit", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(frontopolar = if_else(grepl("polar", elec_name, ignore.case = T), 1,
+                             if_else(grepl("frontopolar", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(insula = if_else(grepl("insula", elec_name, ignore.case = T), 1,
+                           if_else(grepl("insular", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(mfg = if_else(grepl("mfg", elec_name, ignore.case = T), 1,
+                     if_else(grepl("medial frontal", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(temporal_gyr = if_else(grepl("[i|s|m]tg", elec_name, ignore.case = T), 1,
+                     if_else(grepl("temporal gyrus", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(cingulate = if_else(grepl("CC", elec_name, ignore.case = T), 1,
+                           if_else(grepl("cing", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(sts = if_else(grepl("sts", elec_name, ignore.case = T), 1,
+                 if_else(grepl("superior temporal", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(hipp_formation = if_else(grepl("hinal", elec_name, ignore.case = T), 1,
+                           if_else(grepl("ca1", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(amyg = if_else(grepl("amyg", elec_name, ignore.case = T), 1,
+                           if_else(grepl("ca1", elec_name, ignore.case = T), 1, 0))) 
+
+plot_df_regions_delta_long <- plot_df_regions_delta %>%
+  gather(key = "region", value = "exists",  ofc, frontopolar, insula, mfg, cingulate, sts, hipp_formation, amyg, temporal_gyr)
+
+# cut to specific region
+plot_ofc <- plot_df_regions_delta_long %>% filter(region == "ofc" & exists == 1)
+plot_ins <- plot_df_regions_delta_long %>% filter(region == "insula" & exists == 1)
+plot_mfg <- plot_df_regions_delta_long %>% filter(region == "mfg" & exists == 1)
+plot_cing <- plot_df_regions_delta_long %>% filter(region == "cingulate" & exists == 1)
+plot_sts <- plot_df_regions_delta_long %>% filter(region == "sts" & exists == 1)
+plot_hipp <- plot_df_regions_delta_long %>% filter(region == "hipp_formation" & exists == 1)
+plot_amyg <- plot_df_regions_delta_long %>% filter(region == "amyg" & exists == 1)
+plot_temp <- plot_df_regions_delta_long %>% filter(region == "temporal_gyr" & exists == 1)
+plot_df_regions_delta_long <- NA
+
+## OFC ##
+# create labeler for ROIs
+roi_labels <- paste(plot_ofc$ROI, "\n elec: ", plot_ofc$electrode_sub)
+names(roi_labels) <- plot_ofc$electrode_sub
+
+plot_ofc %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ OFC")
+
+## Insula ##
+# create labeler for ROIs
+roi_labels <- paste(plot_ins$ROI, "\n elec: ", plot_ins$electrode_sub)
+names(roi_labels) <- plot_ins$electrode_sub
+
+plot_ins %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ Insula")
+
+
+## MFG ##
+# create labeler for ROIs
+roi_labels <- paste(plot_mfg$ROI, "\n elec: ", plot_mfg$electrode_sub)
+names(roi_labels) <- plot_mfg$electrode_sub
+
+plot_mfg %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ MFG")
+
+
+## MFG ##
+# create labeler for ROIs
+roi_labels <- paste(plot_mfg$ROI, "\n elec: ", plot_mfg$electrode_sub)
+names(roi_labels) <- plot_mfg$electrode_sub
+
+plot_mfg %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ MFG")
+
+
+## Cingulate ##
+# create labeler for ROIs
+roi_labels <- paste(plot_cing$ROI, "\n elec: ", plot_cing$electrode_sub)
+names(roi_labels) <- plot_cing$electrode_sub
+
+plot_cing %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ Cingulate")
+
+
+## STS ##
+# create labeler for ROIs
+roi_labels <- paste(plot_sts$ROI, "\n elec: ", plot_sts$electrode_sub)
+names(roi_labels) <- plot_sts$electrode_sub
+
+plot_sts %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ STS")
+
+
+## Hipp. ##
+# create labeler for ROIs
+roi_labels <- paste(plot_hipp$ROI, "\n elec: ", plot_hipp$electrode_sub)
+names(roi_labels) <- plot_hipp$electrode_sub
+
+plot_hipp %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ Hipp.")
+
+
+## Amyg ##
+# create labeler for ROIs
+roi_labels <- paste(plot_amyg$ROI, "\n elec: ", plot_amyg$electrode_sub)
+names(roi_labels) <- plot_amyg$electrode_sub
+
+plot_amyg %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ Amyg.")
+
+
+## Temporal ##
+# create labeler for ROIs
+roi_labels <- paste(plot_temp$ROI, "\n elec: ", plot_temp$electrode_sub)
+names(roi_labels) <- plot_temp$electrode_sub
+
+plot_temp %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ Temporal")
+
+
+```
+
+```{r raster-plots-theta}
+
+subs <- c("IR9", "IR10", "IR16", "IR26", "IR28", "IR35", "IR57")
+
+plot_df <- NULL
+for(sub_idx in subs) {
+
+  # load data #
+  path_hp_clean <- path(here(), "munge", sub_idx, "theta_behave_presentation_rscaler_2575_200.csv")
+  power_behave <-  read.csv(path_hp_clean)
+  # merge with elecs #
+  brain_behave_data <- power_behave %>%
+    mutate(trial_type = if_else(self_var_payoff == other_var_payoff, "equality",
+                                if_else(self_var_payoff > other_var_payoff,
+                                        "Advantageous", "Disadvantageous"))) %>%
+    filter(trial_type != "equality") %>%
+    mutate(more_or_less = if_else(abs(ineq_advent) > 0, 1, -1)) %>% 
+    mutate(more_or_none = if_else(abs(ineq_advent) > 0, 1, 0)) %>% 
+    mutate(less_or_none = if_else(abs(ineq_advent) > 0, 0, 1)) %>%
+    mutate(electrode = electrodes)
+  
+  ## get region names ##
+  localizations <- read_csv(path(here(), "munge", "combined_electrode_info_with_bob.csv"))
+  localizations_sub <- localizations %>% filter(subject == sub_idx) %>% select(Electrode, `Loc Meeting`)
+  brain_behave_data_locations <- merge_with_elec_info(brain_behave_data, localizations_sub)
+  
+  # create plotting df 
+  plot_df_tmp <- brain_behave_data_locations %>% 
+    gather(key = "bin", value = "power", starts_with("bin_")) %>%
+    mutate(breaks = cut(power, breaks = c(-20, -5, -4, -3, -2.5, -2, -1.5, -1, -.5, 0, .5, 1, 1.5, 2, 2.5, 3, 4, 5, 20))) %>%
+    mutate(time = (50 * as.numeric(gsub("bin_", "", bin)))) %>%
+    mutate(sub = sub_idx) %>%
+    mutate(electrode_sub = paste0(electrode, " ~ ", sub))
+  
+  if(is.null(plot_df)) {
+    plot_df <- plot_df_tmp
+  } else {
+    plot_df <- rbind(plot_df, plot_df_tmp)
+  }
+
+}
+  
+plot_df_regions_theta <- plot_df %>%
+  gather(key = "elec_num", value = "elec_name", first_region, second_region) %>%
+  mutate(ofc = if_else(grepl("ofc", elec_name, ignore.case = T), 1,
+                             if_else(grepl("orbit", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(frontopolar = if_else(grepl("polar", elec_name, ignore.case = T), 1,
+                             if_else(grepl("frontopolar", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(insula = if_else(grepl("insula", elec_name, ignore.case = T), 1,
+                           if_else(grepl("insular", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(mfg = if_else(grepl("mfg", elec_name, ignore.case = T), 1,
+                     if_else(grepl("medial frontal", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(temporal_gyr = if_else(grepl("[i|s|m]tg", elec_name, ignore.case = T), 1,
+                     if_else(grepl("temporal gyrus", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(cingulate = if_else(grepl("CC", elec_name, ignore.case = T), 1,
+                           if_else(grepl("cing", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(sts = if_else(grepl("sts", elec_name, ignore.case = T), 1,
+                 if_else(grepl("superior temporal", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(hipp_formation = if_else(grepl("hinal", elec_name, ignore.case = T), 1,
+                           if_else(grepl("ca1", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(amyg = if_else(grepl("amyg", elec_name, ignore.case = T), 1,
+                           if_else(grepl("ca1", elec_name, ignore.case = T), 1, 0))) 
+
+plot_df_regions_theta_long <- plot_df_regions_theta %>%
+  gather(key = "region", value = "exists",  ofc, frontopolar, insula, mfg, cingulate, sts, hipp_formation, amyg, temporal_gyr)
+
+# cut to specific region
+plot_ofc <- plot_df_regions_theta_long %>% filter(region == "ofc" & exists == 1)
+plot_ins <- plot_df_regions_theta_long %>% filter(region == "insula" & exists == 1)
+plot_mfg <- plot_df_regions_theta_long %>% filter(region == "mfg" & exists == 1)
+plot_cing <- plot_df_regions_theta_long %>% filter(region == "cingulate" & exists == 1)
+plot_sts <- plot_df_regions_theta_long %>% filter(region == "sts" & exists == 1)
+plot_hipp <- plot_df_regions_theta_long %>% filter(region == "hipp_formation" & exists == 1)
+plot_amyg <- plot_df_regions_theta_long %>% filter(region == "amyg" & exists == 1)
+plot_temp <- plot_df_regions_theta_long %>% filter(region == "temporal_gyr" & exists == 1)
+plot_df_regions_theta_long <- NA
+
+## OFC ##
+# create labeler for ROIs
+roi_labels <- paste(plot_ofc$ROI, "\n elec: ", plot_ofc$electrode_sub)
+names(roi_labels) <- plot_ofc$electrode_sub
+
+plot_ofc %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ OFC")
+
+## Insula ##
+# create labeler for ROIs
+roi_labels <- paste(plot_ins$ROI, "\n elec: ", plot_ins$electrode_sub)
+names(roi_labels) <- plot_ins$electrode_sub
+
+plot_ins %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ Insula")
+
+
+## MFG ##
+# create labeler for ROIs
+roi_labels <- paste(plot_mfg$ROI, "\n elec: ", plot_mfg$electrode_sub)
+names(roi_labels) <- plot_mfg$electrode_sub
+
+plot_mfg %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ MFG")
+
+
+## MFG ##
+# create labeler for ROIs
+roi_labels <- paste(plot_mfg$ROI, "\n elec: ", plot_mfg$electrode_sub)
+names(roi_labels) <- plot_mfg$electrode_sub
+
+plot_mfg %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ MFG")
+
+
+## Cingulate ##
+# create labeler for ROIs
+roi_labels <- paste(plot_cing$ROI, "\n elec: ", plot_cing$electrode_sub)
+names(roi_labels) <- plot_cing$electrode_sub
+
+plot_cing %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ Cingulate")
+
+
+## STS ##
+# create labeler for ROIs
+roi_labels <- paste(plot_sts$ROI, "\n elec: ", plot_sts$electrode_sub)
+names(roi_labels) <- plot_sts$electrode_sub
+
+plot_sts %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ STS")
+
+
+## Hipp. ##
+# create labeler for ROIs
+roi_labels <- paste(plot_hipp$ROI, "\n elec: ", plot_hipp$electrode_sub)
+names(roi_labels) <- plot_hipp$electrode_sub
+
+plot_hipp %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ Hipp.")
+
+
+## Amyg ##
+# create labeler for ROIs
+roi_labels <- paste(plot_amyg$ROI, "\n elec: ", plot_amyg$electrode_sub)
+names(roi_labels) <- plot_amyg$electrode_sub
+
+plot_amyg %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ Amyg.")
+
+
+## Temporal ##
+# create labeler for ROIs
+roi_labels <- paste(plot_temp$ROI, "\n elec: ", plot_temp$electrode_sub)
+names(roi_labels) <- plot_temp$electrode_sub
+
+plot_temp %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ Temporal")
+
+
+```
+
+
+```{r raster-plots-hfa}
+
+subs <- c("IR9", "IR10", "IR16", "IR26", "IR28", "IR35", "IR57")
+
+plot_df <- NULL
+for(sub_idx in subs) {
+  print(sub_idx)
+  # load data #
+  path_hp_clean <- path(here(), "munge", sub_idx, "alpha_behave_presentation_rscaler_2575_200.csv")
+  power_behave <-  read.csv(path_hp_clean)
+  # merge with elecs #
+  brain_behave_data <- power_behave %>%
+    mutate(trial_type = if_else(self_var_payoff == other_var_payoff, "equality",
+                                if_else(self_var_payoff > other_var_payoff,
+                                        "Advantageous", "Disadvantageous"))) %>%
+    filter(trial_type != "equality") %>%
+    mutate(more_or_less = if_else(abs(ineq_advent) > 0, 1, -1)) %>% 
+    mutate(more_or_none = if_else(abs(ineq_advent) > 0, 1, 0)) %>% 
+    mutate(less_or_none = if_else(abs(ineq_advent) > 0, 0, 1)) %>%
+    mutate(electrode = electrodes)
+  
+  ## get region names ##
+  localizations <- read_csv(path(here(), "munge", "combined_electrode_info_with_bob.csv"))
+  localizations_sub <- localizations %>% filter(subject == sub_idx) %>% select(Electrode, `Loc Meeting`)
+  brain_behave_data_locations <- merge_with_elec_info(brain_behave_data, localizations_sub)
+  
+  # create plotting df 
+  plot_df_tmp <- brain_behave_data_locations %>% 
+    gather(key = "bin", value = "power", starts_with("bin_")) %>%
+    mutate(breaks = cut(power, breaks = c(-20, -5, -3, -2, -1.5, -1, -.6, -.3, -.1, 0, .1, .3, .6, 1, 1.5, 2, 3, 5, 20))) %>%
+    mutate(time = (50 * as.numeric(gsub("bin_", "", bin)))) %>%
+    mutate(sub = sub_idx) %>%
+    mutate(electrode_sub = paste0(electrode, " ~ ", sub))
+  
+  if(is.null(plot_df)) {
+    plot_df <- plot_df_tmp
+  } else {
+    plot_df <- rbind(plot_df, plot_df_tmp %>% select(colnames(plot_df)))
+  }
+
+}
+  
+plot_df_regions_alpha <- plot_df %>%
+  gather(key = "elec_num", value = "elec_name", first_region, second_region) %>%
+  mutate(ofc = if_else(grepl("ofc", elec_name, ignore.case = T), 1,
+                             if_else(grepl("orbit", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(frontopolar = if_else(grepl("polar", elec_name, ignore.case = T), 1,
+                             if_else(grepl("frontopolar", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(insula = if_else(grepl("insula", elec_name, ignore.case = T), 1,
+                           if_else(grepl("insular", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(mfg = if_else(grepl("mfg", elec_name, ignore.case = T), 1,
+                     if_else(grepl("medial frontal", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(temporal_gyr = if_else(grepl("[i|s|m]tg", elec_name, ignore.case = T), 1,
+                     if_else(grepl("temporal gyrus", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(cingulate = if_else(grepl("CC", elec_name, ignore.case = T), 1,
+                           if_else(grepl("cing", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(sts = if_else(grepl("sts", elec_name, ignore.case = T), 1,
+                 if_else(grepl("superior temporal", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(hipp_formation = if_else(grepl("hinal", elec_name, ignore.case = T), 1,
+                           if_else(grepl("ca1", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(amyg = if_else(grepl("amyg", elec_name, ignore.case = T), 1,
+                           if_else(grepl("ca1", elec_name, ignore.case = T), 1, 0))) 
+
+plot_df_regions_alpha_long <- plot_df_regions_alpha %>%
+  gather(key = "region", value = "exists",  ofc, frontopolar, insula, mfg, cingulate, sts, hipp_formation, amyg, temporal_gyr)
+
+# cut to specific region
+plot_ofc <- plot_df_regions_alpha_long %>% filter(region == "ofc" & exists == 1)
+plot_ins <- plot_df_regions_alpha_long %>% filter(region == "insula" & exists == 1)
+plot_mfg <- plot_df_regions_alpha_long %>% filter(region == "mfg" & exists == 1)
+plot_cing <- plot_df_regions_alpha_long %>% filter(region == "cingulate" & exists == 1)
+plot_sts <- plot_df_regions_alpha_long %>% filter(region == "sts" & exists == 1)
+plot_hipp <- plot_df_regions_alpha_long %>% filter(region == "hipp_formation" & exists == 1)
+plot_amyg <- plot_df_regions_alpha_long %>% filter(region == "amyg" & exists == 1)
+plot_temp <- plot_df_regions_alpha_long %>% filter(region == "temporal_gyr" & exists == 1)
+plot_df_regions_alpha_long <- NA
+
+## OFC ##
+# create labeler for ROIs
+roi_labels <- paste(plot_ofc$ROI, "\n elec: ", plot_ofc$electrode_sub)
+names(roi_labels) <- plot_ofc$electrode_sub
+
+plot_ofc %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ OFC")
+
+## Insula ##
+# create labeler for ROIs
+roi_labels <- paste(plot_ins$ROI, "\n elec: ", plot_ins$electrode_sub)
+names(roi_labels) <- plot_ins$electrode_sub
+
+plot_ins %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ Insula")
+
+
+## MFG ##
+# create labeler for ROIs
+roi_labels <- paste(plot_mfg$ROI, "\n elec: ", plot_mfg$electrode_sub)
+names(roi_labels) <- plot_mfg$electrode_sub
+
+plot_mfg %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ MFG")
+
+
+## MFG ##
+# create labeler for ROIs
+roi_labels <- paste(plot_mfg$ROI, "\n elec: ", plot_mfg$electrode_sub)
+names(roi_labels) <- plot_mfg$electrode_sub
+
+plot_mfg %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ MFG")
+
+
+## Cingulate ##
+# create labeler for ROIs
+roi_labels <- paste(plot_cing$ROI, "\n elec: ", plot_cing$electrode_sub)
+names(roi_labels) <- plot_cing$electrode_sub
+
+plot_cing %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ Cingulate")
+
+
+## STS ##
+# create labeler for ROIs
+roi_labels <- paste(plot_sts$ROI, "\n elec: ", plot_sts$electrode_sub)
+names(roi_labels) <- plot_sts$electrode_sub
+
+plot_sts %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ STS")
+
+
+## Hipp. ##
+# create labeler for ROIs
+roi_labels <- paste(plot_hipp$ROI, "\n elec: ", plot_hipp$electrode_sub)
+names(roi_labels) <- plot_hipp$electrode_sub
+
+plot_hipp %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ Hipp.")
+
+
+## Amyg ##
+# create labeler for ROIs
+roi_labels <- paste(plot_amyg$ROI, "\n elec: ", plot_amyg$electrode_sub)
+names(roi_labels) <- plot_amyg$electrode_sub
+
+plot_amyg %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ Amyg.")
+
+
+## Temporal ##
+# create labeler for ROIs
+roi_labels <- paste(plot_temp$ROI, "\n elec: ", plot_temp$electrode_sub)
+names(roi_labels) <- plot_temp$electrode_sub
+
+plot_temp %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ Temporal")
+
+
+```
+
+```{r raster-plots-beta}
+
+subs <- c("IR9", "IR10", "IR16", "IR26", "IR28", "IR35", "IR57")
+
+plot_df <- NULL
+for(sub_idx in subs) {
+  print(sub_idx)
+  # load data #
+  path_hp_clean <- path(here(), "munge", sub_idx, "beta_behave_presentation_rscaler_2575_200.csv")
+  power_behave <-  read.csv(path_hp_clean)
+  # merge with elecs #
+  brain_behave_data <- power_behave %>%
+    mutate(trial_type = if_else(self_var_payoff == other_var_payoff, "equality",
+                                if_else(self_var_payoff > other_var_payoff,
+                                        "Advantageous", "Disadvantageous"))) %>%
+    filter(trial_type != "equality") %>%
+    mutate(more_or_less = if_else(abs(ineq_advent) > 0, 1, -1)) %>% 
+    mutate(more_or_none = if_else(abs(ineq_advent) > 0, 1, 0)) %>% 
+    mutate(less_or_none = if_else(abs(ineq_advent) > 0, 0, 1)) %>%
+    mutate(electrode = electrodes)
+  
+  ## get region names ##
+  localizations <- read_csv(path(here(), "munge", "combined_electrode_info_with_bob.csv"))
+  localizations_sub <- localizations %>% filter(subject == sub_idx) %>% select(Electrode, `Loc Meeting`)
+  brain_behave_data_locations <- merge_with_elec_info(brain_behave_data, localizations_sub)
+  
+  # create plotting df 
+  plot_df_tmp <- brain_behave_data_locations %>% 
+    gather(key = "bin", value = "power", starts_with("bin_")) %>%
+    mutate(breaks = cut(power, breaks = c(-20, -5, -3, -2, -1.5, -1, -.6, -.3, -.1, 0, .1, .3, .6, 1, 1.5, 2, 3, 5, 20))) %>%
+    mutate(time = (50 * as.numeric(gsub("bin_", "", bin)))) %>%
+    mutate(sub = sub_idx) %>%
+    mutate(electrode_sub = paste0(electrode, " ~ ", sub))
+  
+  if(is.null(plot_df)) {
+    plot_df <- plot_df_tmp
+  } else {
+    plot_df <- rbind(plot_df, plot_df_tmp %>% select(colnames(plot_df)))
+  }
+
+}
+  
+plot_df_regions_beta <- plot_df %>%
+  gather(key = "elec_num", value = "elec_name", first_region, second_region) %>%
+  mutate(ofc = if_else(grepl("ofc", elec_name, ignore.case = T), 1,
+                             if_else(grepl("orbit", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(frontopolar = if_else(grepl("polar", elec_name, ignore.case = T), 1,
+                             if_else(grepl("frontopolar", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(insula = if_else(grepl("insula", elec_name, ignore.case = T), 1,
+                           if_else(grepl("insular", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(mfg = if_else(grepl("mfg", elec_name, ignore.case = T), 1,
+                     if_else(grepl("medial frontal", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(temporal_gyr = if_else(grepl("[i|s|m]tg", elec_name, ignore.case = T), 1,
+                     if_else(grepl("temporal gyrus", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(cingulate = if_else(grepl("CC", elec_name, ignore.case = T), 1,
+                           if_else(grepl("cing", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(sts = if_else(grepl("sts", elec_name, ignore.case = T), 1,
+                 if_else(grepl("superior temporal", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(hipp_formation = if_else(grepl("hinal", elec_name, ignore.case = T), 1,
+                           if_else(grepl("ca1", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(amyg = if_else(grepl("amyg", elec_name, ignore.case = T), 1,
+                           if_else(grepl("ca1", elec_name, ignore.case = T), 1, 0))) 
+
+plot_df_regions_beta_long <- plot_df_regions_beta %>%
+  gather(key = "region", value = "exists",  ofc, frontopolar, insula, mfg, cingulate, sts, hipp_formation, amyg, temporal_gyr)
+
+# cut to specific region
+plot_ofc <- plot_df_regions_beta_long %>% filter(region == "ofc" & exists == 1)
+plot_ins <- plot_df_regions_beta_long %>% filter(region == "insula" & exists == 1)
+plot_mfg <- plot_df_regions_beta_long %>% filter(region == "mfg" & exists == 1)
+plot_cing <- plot_df_regions_beta_long %>% filter(region == "cingulate" & exists == 1)
+plot_sts <- plot_df_regions_beta_long %>% filter(region == "sts" & exists == 1)
+plot_hipp <- plot_df_regions_beta_long %>% filter(region == "hipp_formation" & exists == 1)
+plot_amyg <- plot_df_regions_beta_long %>% filter(region == "amyg" & exists == 1)
+plot_temp <- plot_df_regions_beta_long %>% filter(region == "temporal_gyr" & exists == 1)
+plot_df_regions_beta_long <- NA
+
+## OFC ##
+# create labeler for ROIs
+roi_labels <- paste(plot_ofc$ROI, "\n elec: ", plot_ofc$electrode_sub)
+names(roi_labels) <- plot_ofc$electrode_sub
+
+plot_ofc %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ OFC")
+
+## Insula ##
+# create labeler for ROIs
+roi_labels <- paste(plot_ins$ROI, "\n elec: ", plot_ins$electrode_sub)
+names(roi_labels) <- plot_ins$electrode_sub
+
+plot_ins %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ Insula")
+
+
+## MFG ##
+# create labeler for ROIs
+roi_labels <- paste(plot_mfg$ROI, "\n elec: ", plot_mfg$electrode_sub)
+names(roi_labels) <- plot_mfg$electrode_sub
+
+plot_mfg %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ MFG")
+
+
+## MFG ##
+# create labeler for ROIs
+roi_labels <- paste(plot_mfg$ROI, "\n elec: ", plot_mfg$electrode_sub)
+names(roi_labels) <- plot_mfg$electrode_sub
+
+plot_mfg %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ MFG")
+
+
+## Cingulate ##
+# create labeler for ROIs
+roi_labels <- paste(plot_cing$ROI, "\n elec: ", plot_cing$electrode_sub)
+names(roi_labels) <- plot_cing$electrode_sub
+
+plot_cing %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ Cingulate")
+
+
+## STS ##
+# create labeler for ROIs
+roi_labels <- paste(plot_sts$ROI, "\n elec: ", plot_sts$electrode_sub)
+names(roi_labels) <- plot_sts$electrode_sub
+
+plot_sts %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ STS")
+
+
+## Hipp. ##
+# create labeler for ROIs
+roi_labels <- paste(plot_hipp$ROI, "\n elec: ", plot_hipp$electrode_sub)
+names(roi_labels) <- plot_hipp$electrode_sub
+
+plot_hipp %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ Hipp.")
+
+
+## Amyg ##
+# create labeler for ROIs
+roi_labels <- paste(plot_amyg$ROI, "\n elec: ", plot_amyg$electrode_sub)
+names(roi_labels) <- plot_amyg$electrode_sub
+
+plot_amyg %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ Amyg.")
+
+
+## Temporal ##
+# create labeler for ROIs
+roi_labels <- paste(plot_temp$ROI, "\n elec: ", plot_temp$electrode_sub)
+names(roi_labels) <- plot_temp$electrode_sub
+
+plot_temp %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ Temporal")
+
+
+```
+
+```{r raster-plots-gamm}
+
+subs <- c("IR9", "IR10", "IR16", "IR26", "IR28", "IR35", "IR57")
+
+plot_df <- NULL
+for(sub_idx in subs) {
+  print(sub_idx)
+  # load data #
+  path_hp_clean <- path(here(), "munge", sub_idx, "gamma_behave_presentation_rscaler_2575_200.csv")
+  power_behave <-  read.csv(path_hp_clean)
+  # merge with elecs #
+  brain_behave_data <- power_behave %>%
+    mutate(trial_type = if_else(self_var_payoff == other_var_payoff, "equality",
+                                if_else(self_var_payoff > other_var_payoff,
+                                        "Advantageous", "Disadvantageous"))) %>%
+    filter(trial_type != "equality") %>%
+    mutate(more_or_less = if_else(abs(ineq_advent) > 0, 1, -1)) %>% 
+    mutate(more_or_none = if_else(abs(ineq_advent) > 0, 1, 0)) %>% 
+    mutate(less_or_none = if_else(abs(ineq_advent) > 0, 0, 1)) %>%
+    mutate(electrode = electrodes)
+  
+  ## get region names ##
+  localizations <- read_csv(path(here(), "munge", "combined_electrode_info_with_bob.csv"))
+  localizations_sub <- localizations %>% filter(subject == sub_idx) %>% select(Electrode, `Loc Meeting`)
+  brain_behave_data_locations <- merge_with_elec_info(brain_behave_data, localizations_sub)
+  
+  # create plotting df 
+  plot_df_tmp <- brain_behave_data_locations %>% 
+    gather(key = "bin", value = "power", starts_with("bin_")) %>%
+    mutate(breaks = cut(power, breaks = c(-20, -5, -3, -2, -1.5, -1, -.6, -.3, -.1, 0, .1, .3, .6, 1, 1.5, 2, 3, 5, 20))) %>%
+    mutate(time = (50 * as.numeric(gsub("bin_", "", bin)))) %>%
+    mutate(sub = sub_idx) %>%
+    mutate(electrode_sub = paste0(electrode, " ~ ", sub))
+  
+  if(is.null(plot_df)) {
+    plot_df <- plot_df_tmp
+  } else {
+    plot_df <- rbind(plot_df, plot_df_tmp %>% select(colnames(plot_df)))
+  }
+
+}
+  
+plot_df_regions_gamma <- plot_df %>%
+  gather(key = "elec_num", value = "elec_name", first_region, second_region) %>%
+  mutate(ofc = if_else(grepl("ofc", elec_name, ignore.case = T), 1,
+                             if_else(grepl("orbit", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(frontopolar = if_else(grepl("polar", elec_name, ignore.case = T), 1,
+                             if_else(grepl("frontopolar", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(insula = if_else(grepl("insula", elec_name, ignore.case = T), 1,
+                           if_else(grepl("insular", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(mfg = if_else(grepl("mfg", elec_name, ignore.case = T), 1,
+                     if_else(grepl("medial frontal", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(temporal_gyr = if_else(grepl("[i|s|m]tg", elec_name, ignore.case = T), 1,
+                     if_else(grepl("temporal gyrus", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(cingulate = if_else(grepl("CC", elec_name, ignore.case = T), 1,
+                           if_else(grepl("cing", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(sts = if_else(grepl("sts", elec_name, ignore.case = T), 1,
+                 if_else(grepl("superior temporal", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(hipp_formation = if_else(grepl("hinal", elec_name, ignore.case = T), 1,
+                           if_else(grepl("ca1", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(amyg = if_else(grepl("amyg", elec_name, ignore.case = T), 1,
+                           if_else(grepl("ca1", elec_name, ignore.case = T), 1, 0)))
+
+plot_df_regions_gamma_long <- plot_df_regions_gamma %>%
+  gather(key = "region", value = "exists",  ofc, frontopolar, insula, mfg, cingulate, sts, hipp_formation, amyg, temporal_gyr)
+
+# cut to specific region
+plot_ofc <- plot_df_regions_gamma_long %>% filter(region == "ofc" & exists == 1)
+plot_ins <- plot_df_regions_gamma_long %>% filter(region == "insula" & exists == 1)
+plot_mfg <- plot_df_regions_gamma_long %>% filter(region == "mfg" & exists == 1)
+plot_cing <- plot_df_regions_gamma_long %>% filter(region == "cingulate" & exists == 1)
+plot_sts <- plot_df_regions_gamma_long %>% filter(region == "sts" & exists == 1)
+plot_hipp <- plot_df_regions_gamma_long %>% filter(region == "hipp_formation" & exists == 1)
+plot_amyg <- plot_df_regions_gamma_long %>% filter(region == "amyg" & exists == 1)
+plot_temp <- plot_df_regions_gamma_long %>% filter(region == "temporal_gyr" & exists == 1)
+
+## OFC ##
+# create labeler for ROIs
+roi_labels <- paste(plot_ofc$ROI, "\n elec: ", plot_ofc$electrode_sub)
+names(roi_labels) <- plot_ofc$electrode_sub
+
+plot_ofc %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ OFC")
+
+## Insula ##
+# create labeler for ROIs
+roi_labels <- paste(plot_ins$ROI, "\n elec: ", plot_ins$electrode_sub)
+names(roi_labels) <- plot_ins$electrode_sub
+
+plot_ins %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ Insula")
+
+
+## MFG ##
+# create labeler for ROIs
+roi_labels <- paste(plot_mfg$ROI, "\n elec: ", plot_mfg$electrode_sub)
+names(roi_labels) <- plot_mfg$electrode_sub
+
+plot_mfg %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ MFG")
+
+
+## MFG ##
+# create labeler for ROIs
+roi_labels <- paste(plot_mfg$ROI, "\n elec: ", plot_mfg$electrode_sub)
+names(roi_labels) <- plot_mfg$electrode_sub
+
+plot_mfg %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ MFG")
+
+
+## Cingulate ##
+# create labeler for ROIs
+roi_labels <- paste(plot_cing$ROI, "\n elec: ", plot_cing$electrode_sub)
+names(roi_labels) <- plot_cing$electrode_sub
+
+plot_cing %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ Cingulate")
+
+
+## STS ##
+# create labeler for ROIs
+roi_labels <- paste(plot_sts$ROI, "\n elec: ", plot_sts$electrode_sub)
+names(roi_labels) <- plot_sts$electrode_sub
+
+plot_sts %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ STS")
+
+
+## Hipp. ##
+# create labeler for ROIs
+roi_labels <- paste(plot_hipp$ROI, "\n elec: ", plot_hipp$electrode_sub)
+names(roi_labels) <- plot_hipp$electrode_sub
+
+plot_hipp %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ Hipp.")
+
+
+## Amyg ##
+# create labeler for ROIs
+roi_labels <- paste(plot_amyg$ROI, "\n elec: ", plot_amyg$electrode_sub)
+names(roi_labels) <- plot_amyg$electrode_sub
+
+plot_amyg %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ Amyg.")
+
+
+## Temporal ##
+# create labeler for ROIs
+roi_labels <- paste(plot_temp$ROI, "\n elec: ", plot_temp$electrode_sub)
+names(roi_labels) <- plot_temp$electrode_sub
+
+plot_temp %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ Temporal")
+
+
+```
+
+```{r raster-plots-hfa}
+
+subs <- c("IR9", "IR10", "IR16", "IR26", "IR28", "IR35", "IR57")
+
+plot_df <- NULL
+for(sub_idx in subs) {
+  print(sub_idx)
+  # load data #
+  path_hp_clean <- path(here(), "munge", sub_idx, "hfa_behave_presentation_rscaler_2575_200.csv")
+  power_behave <-  read.csv(path_hp_clean)
+  # merge with elecs #
+  brain_behave_data <- power_behave %>%
+    mutate(trial_type = if_else(self_var_payoff == other_var_payoff, "equality",
+                                if_else(self_var_payoff > other_var_payoff,
+                                        "Advantageous", "Disadvantageous"))) %>%
+    filter(trial_type != "equality") %>%
+    mutate(more_or_less = if_else(abs(ineq_advent) > 0, 1, -1)) %>% 
+    mutate(more_or_none = if_else(abs(ineq_advent) > 0, 1, 0)) %>% 
+    mutate(less_or_none = if_else(abs(ineq_advent) > 0, 0, 1)) %>%
+    mutate(electrode = electrodes)
+  
+  ## get region names ##
+  localizations <- read_csv(path(here(), "munge", "combined_electrode_info_with_bob.csv"))
+  localizations_sub <- localizations %>% filter(subject == sub_idx) %>% select(Electrode, `Loc Meeting`)
+  brain_behave_data_locations <- merge_with_elec_info(brain_behave_data, localizations_sub)
+  
+  # create plotting df 
+  plot_df_tmp <- brain_behave_data_locations %>% 
+    gather(key = "bin", value = "power", starts_with("bin_")) %>%
+    mutate(breaks = cut(power, breaks = c(-20, -5, -3, -2, -1.5, -1, -.6, -.3, -.1, 0, .1, .3, .6, 1, 1.5, 2, 3, 5, 20))) %>%
+    mutate(time = (50 * as.numeric(gsub("bin_", "", bin)))) %>%
+    mutate(sub = sub_idx) %>%
+    mutate(electrode_sub = paste0(electrode, " ~ ", sub))
+  
+  if(is.null(plot_df)) {
+    plot_df <- plot_df_tmp
+  } else {
+    plot_df <- rbind(plot_df, plot_df_tmp %>% select(colnames(plot_df)))
+  }
+
+}
+  
+plot_df_regions_hfa <- plot_df %>%
+  gather(key = "elec_num", value = "elec_name", first_region, second_region) %>%
+  mutate(ofc = if_else(grepl("ofc", elec_name, ignore.case = T), 1,
+                             if_else(grepl("orbit", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(frontopolar = if_else(grepl("polar", elec_name, ignore.case = T), 1,
+                             if_else(grepl("frontopolar", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(insula = if_else(grepl("insula", elec_name, ignore.case = T), 1,
+                           if_else(grepl("insular", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(mfg = if_else(grepl("mfg", elec_name, ignore.case = T), 1,
+                     if_else(grepl("medial frontal", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(temporal_gyr = if_else(grepl("[i|s|m]tg", elec_name, ignore.case = T), 1,
+                     if_else(grepl("temporal gyrus", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(cingulate = if_else(grepl("CC", elec_name, ignore.case = T), 1,
+                           if_else(grepl("cing", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(sts = if_else(grepl("sts", elec_name, ignore.case = T), 1,
+                 if_else(grepl("superior temporal", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(hipp_formation = if_else(grepl("hinal", elec_name, ignore.case = T), 1,
+                           if_else(grepl("ca1", elec_name, ignore.case = T), 1, 0))) %>%
+  mutate(amyg = if_else(grepl("amyg", elec_name, ignore.case = T), 1,
+                           if_else(grepl("ca1", elec_name, ignore.case = T), 1, 0))) 
+
+plot_df_regions_hfa_long <- plot_df_regions_hfa %>%
+  gather(key = "region", value = "exists",  ofc, frontopolar, insula, mfg, cingulate, sts, hipp_formation, amyg, temporal_gyr)
+
+
+# cut to specific region
+plot_ofc <- plot_df_regions_hfa_long %>% filter(region == "ofc" & exists == 1)
+plot_ins <- plot_df_regions_hfa_long %>% filter(region == "insula" & exists == 1)
+plot_mfg <- plot_df_regions_hfa_long %>% filter(region == "mfg" & exists == 1)
+plot_cing <- plot_df_regions_hfa_long %>% filter(region == "cingulate" & exists == 1)
+plot_sts <- plot_df_regions_hfa_long %>% filter(region == "sts" & exists == 1)
+plot_hipp <- plot_df_regions_hfa_long %>% filter(region == "hipp_formation" & exists == 1)
+plot_amyg <- plot_df_regions_hfa_long %>% filter(region == "amyg" & exists == 1)
+plot_temp <- plot_df_regions_hfa_long %>% filter(region == "temporal_gyr" & exists == 1)
+
+## OFC ##
+# create labeler for ROIs
+roi_labels <- paste(plot_ofc$ROI, "\n elec: ", plot_ofc$electrode_sub)
+names(roi_labels) <- plot_ofc$electrode_sub
+
+plot_ofc %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ OFC")
+
+## Insula ##
+# create labeler for ROIs
+roi_labels <- paste(plot_ins$ROI, "\n elec: ", plot_ins$electrode_sub)
+names(roi_labels) <- plot_ins$electrode_sub
+
+plot_ins %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ Insula")
+
+
+## MFG ##
+# create labeler for ROIs
+roi_labels <- paste(plot_mfg$ROI, "\n elec: ", plot_mfg$electrode_sub)
+names(roi_labels) <- plot_mfg$electrode_sub
+
+plot_mfg %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ MFG")
+
+
+## MFG ##
+# create labeler for ROIs
+roi_labels <- paste(plot_mfg$ROI, "\n elec: ", plot_mfg$electrode_sub)
+names(roi_labels) <- plot_mfg$electrode_sub
+
+plot_mfg %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ MFG")
+
+
+## Cingulate ##
+# create labeler for ROIs
+roi_labels <- paste(plot_cing$ROI, "\n elec: ", plot_cing$electrode_sub)
+names(roi_labels) <- plot_cing$electrode_sub
+
+plot_cing %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ Cingulate")
+
+
+## STS ##
+# create labeler for ROIs
+roi_labels <- paste(plot_sts$ROI, "\n elec: ", plot_sts$electrode_sub)
+names(roi_labels) <- plot_sts$electrode_sub
+
+plot_sts %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ STS")
+
+
+## Hipp. ##
+# create labeler for ROIs
+roi_labels <- paste(plot_hipp$ROI, "\n elec: ", plot_hipp$electrode_sub)
+names(roi_labels) <- plot_hipp$electrode_sub
+
+plot_hipp %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ Hipp.")
+
+
+## Amyg ##
+# create labeler for ROIs
+roi_labels <- paste(plot_amyg$ROI, "\n elec: ", plot_amyg$electrode_sub)
+names(roi_labels) <- plot_amyg$electrode_sub
+
+plot_amyg %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ Amyg.")
+
+
+## Temporal ##
+# create labeler for ROIs
+roi_labels <- paste(plot_temp$ROI, "\n elec: ", plot_temp$electrode_sub)
+names(roi_labels) <- plot_temp$electrode_sub
+
+plot_temp %>%    
+  ggplot(., aes(x = time, y = more_or_less, fill = breaks)) +
+      geom_tile() +
+      scale_fill_viridis(discrete = T) +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "none")  +
+      facet_wrap(~electrode_sub, labeller = as_labeller(roi_labels)) +
+      ggtitle("More or Less ~ Temporal")
+
+
+```
+
+
+```{r ming-plots-theta}
+# read in interaction data #
+all_freqs_pres_inter_results <- read_csv(path(here(), 'results', 'all_subs_ineraction_analysis_self_var_more_or_less.csv'))
+
+# only theta #
+all_freqs_pres_inter_results_theta <- all_freqs_pres_inter_results %>% filter(frequency == "theta")
+
+# bind with raw data #
+interaction_theta_data <- full_join(all_freqs_pres_inter_results_theta, plot_df_regions_theta, by = c("electrode", "bin", "sub"))
+
+# prep for plot #
+interaction_theta_data_plot_df <- interaction_theta_data %>%
+  select(-electrodes, -frontopolar, -amyg, -hipp_formation) %>%
+  filter(perm_p < 0.05 & p_inter < 0.05) %>%
+  mutate(self_interaction_bins = cut(self_var_payoff * more_or_less, breaks = c(-20, -10, 0, 19, 31))) %>%
+  filter(ofc == 1 | insula == 1 | mfg == 1 | temporal_gyr == 1 | cingulate == 1 | sts == 1) %>%
+  gather(key = "region", value = "exists", ofc, insula, mfg, temporal_gyr, cingulate, sts) %>%
+  filter(exists == 1) %>%
+  group_by(electrode, sub, self_interaction_bins, region) %>%
+  mutate(average_theta_elec = mean(abs(power))) %>%
+  ungroup() %>%
+  select(self_interaction_bins, sub, average_theta_elec, region, electrode) %>%
+  distinct() %>%
+  group_by(self_interaction_bins, sub, region) %>%
+  mutate(average_theta_sub = mean(average_theta_elec)) %>%
+  group_by(self_interaction_bins, region) %>%
+  mutate(average_theta = mean(average_theta_sub))
+
+interaction_theta_data_plot_df %>%
+  ggplot(., aes(x = self_interaction_bins)) +
+  geom_col(aes(y = average_theta), fill = "#C3457E", alpha = .7, position = "dodge") +
+  geom_jitter(aes(y = average_theta_elec, color = average_theta_elec), size = 3) +
+  theme(panel.background = element_rect(fill = "white")) +
+  scale_color_viridis_c() +
+  facet_wrap(~region, ncol = 7) +
+  ggtitle("More or Less")
+
+
+# prep for plot #
+interaction_theta_data_plot_df <- interaction_theta_data %>%
+  select(-electrodes, -frontopolar, -amyg, -hipp_formation) %>%
+  filter(perm_p < 0.05 & p_inter < 0.05) %>%
+  mutate(self_interaction_bins = cut(self_var_payoff, breaks = c(0, 8, 12, 16, 25, 30))) %>%
+  filter(ofc == 1 | insula == 1 | mfg == 1 | temporal_gyr == 1 | cingulate == 1 | sts == 1) %>%
+  gather(key = "region", value = "exists", ofc, insula, mfg, temporal_gyr, cingulate, sts) %>%
+  filter(exists == 1) %>%
+  group_by(electrode, sub, self_interaction_bins, region) %>%
+  mutate(average_theta_elec = mean(abs(power))) %>%
+  ungroup() %>%
+  select(self_interaction_bins, sub, average_theta_elec, region, electrode) %>%
+  distinct() %>%
+  group_by(self_interaction_bins, sub, region) %>%
+  mutate(average_theta_sub = mean(average_theta_elec)) %>%
+  group_by(self_interaction_bins, region) %>%
+  mutate(average_theta = mean(average_theta_sub))
+  
+interaction_theta_data_plot_df %>%
+  ggplot(., aes(x = self_interaction_bins)) +
+  # geom_linerange(aes(ymin = lower_sem_sub, ymax =  upper_sem_sub), color = "grey") +
+  geom_col(aes(y = average_theta), fill = "#C3457E", alpha = .7, position = "dodge") +
+  geom_jitter(aes(y = average_theta_elec, color = average_theta_elec), size = 5) +
+  theme(panel.background = element_rect(fill = "white")) +
+  scale_color_viridis_c() +
+  facet_wrap(~region, ncol = 7) +
+  ggtitle("Self Var Payoff")
+
+
+# prep for plot #
+interaction_theta_data_plot_df <- interaction_theta_data %>%
+  select(-electrodes, -frontopolar, -amyg, -hipp_formation) %>%
+  filter(perm_p < 0.05 & p_inter < 0.05) %>%
+  mutate(self_interaction_bins = cut(self_var_payoff * more_or_none, breaks = c(-1, 8, 12, 16, 25, 30))) %>%
+  filter(ofc == 1 | insula == 1 | mfg == 1 | temporal_gyr == 1 | cingulate == 1 | sts == 1) %>%
+  gather(key = "region", value = "exists", ofc, insula, mfg, temporal_gyr, cingulate, sts) %>%
+  filter(exists == 1) %>%
+  group_by(electrode, sub, self_interaction_bins, region) %>%
+  mutate(average_theta_elec = mean(abs(power))) %>%
+  ungroup() %>%
+  select(self_interaction_bins, sub, average_theta_elec, region, electrode) %>%
+  distinct() %>%
+  group_by(self_interaction_bins, sub, region) %>%
+  mutate(average_theta_sub = mean(average_theta_elec)) %>%
+  group_by(self_interaction_bins, region) %>%
+  mutate(average_theta = mean(average_theta_sub))
+  
+interaction_theta_data_plot_df %>%
+  ggplot(., aes(x = self_interaction_bins)) +
+  # geom_linerange(aes(ymin = lower_sem_sub, ymax =  upper_sem_sub), color = "grey") +
+  geom_col(aes(y = average_theta), fill = "#C3457E", alpha = .7, position = "dodge") +
+  geom_jitter(aes(y = average_theta_elec, color = average_theta_elec), size = 5) +
+  theme(panel.background = element_rect(fill = "white")) +
+  scale_color_viridis_c() +
+  facet_wrap(~region, ncol = 7) +
+  ggtitle("More or None")
+
+# prep for plot #
+interaction_theta_data_plot_df <- interaction_theta_data %>%
+  select(-electrodes, -frontopolar, -amyg, -hipp_formation) %>%
+  filter(perm_p < 0.05 & p_inter < 0.05) %>%
+  mutate(self_interaction_bins = cut(self_var_payoff * less_or_none, breaks = c(-1, 3, 9, 11, 16))) %>%
+  filter(ofc == 1 | insula == 1 | mfg == 1 | temporal_gyr == 1 | cingulate == 1 | sts == 1) %>%
+  gather(key = "region", value = "exists", ofc, insula, mfg, temporal_gyr, cingulate, sts) %>%
+  filter(exists == 1) %>%
+  group_by(electrode, sub, self_interaction_bins, region) %>%
+  mutate(average_theta_elec = mean(abs(power))) %>%
+  ungroup() %>%
+  select(self_interaction_bins, sub, average_theta_elec, region, electrode) %>%
+  distinct() %>%
+  group_by(self_interaction_bins, sub, region) %>%
+  mutate(average_theta_sub = mean(average_theta_elec)) %>%
+  group_by(self_interaction_bins, region) %>%
+  mutate(average_theta = mean(average_theta_sub))
+  
+interaction_theta_data_plot_df %>%
+  ggplot(., aes(x = self_interaction_bins)) +
+  # geom_linerange(aes(ymin = lower_sem_sub, ymax =  upper_sem_sub), color = "grey") +
+  geom_col(aes(y = average_theta), fill = "#C3457E", alpha = .7, position = "dodge") +
+  geom_jitter(aes(y = average_theta_elec, color = average_theta_elec), size = 5) +
+  theme(panel.background = element_rect(fill = "white")) +
+  scale_color_viridis_c() +
+  facet_wrap(~region, ncol = 7) +
+  ggtitle("Less or None")
+
+```
+
+
+
+```{r ming-plots-hfa}
+# read in interaction data #
+all_freqs_pres_inter_results <- read_csv(path(here(), 'results', 'all_subs_ineraction_analysis_self_var_more_or_less.csv'))
+
+# only hfa #
+all_freqs_pres_inter_results_hfa <- all_freqs_pres_inter_results %>% filter(frequency == "hfa")
+
+# bind with raw data #
+interaction_hfa_data <- full_join(all_freqs_pres_inter_results_hfa, plot_df_regions_hfa, by = c("electrode", "bin", "sub"))
+
+# prep for plot #
+interaction_hfa_data_plot_df <- interaction_hfa_data %>%
+  select(-electrodes, -frontopolar, -amyg, -hipp_formation) %>%
+  filter(perm_p < 0.05 & p_inter < 0.05) %>%
+  mutate(self_interaction_bins = cut(self_var_payoff * more_or_less, breaks = c(-20, -10, 0, 19, 31))) %>%
+  filter(ofc == 1 | insula == 1 | mfg == 1 | temporal_gyr == 1 | cingulate == 1 | sts == 1) %>%
+  gather(key = "region", value = "exists", ofc, insula, mfg, temporal_gyr, cingulate, sts) %>%
+  filter(exists == 1) %>%
+  group_by(electrode, sub, self_interaction_bins, region) %>%
+  mutate(average_hfa_elec = mean(abs(power))) %>%
+  ungroup() %>%
+  select(self_interaction_bins, sub, average_hfa_elec, region, electrode) %>%
+  distinct() %>%
+  group_by(self_interaction_bins, sub, region) %>%
+  mutate(average_hfa_sub = mean(average_hfa_elec)) %>%
+  group_by(self_interaction_bins, region) %>%
+  mutate(average_hfa = mean(average_hfa_sub))
+
+interaction_hfa_data_plot_df %>%
+  ggplot(., aes(x = self_interaction_bins)) +
+  geom_col(aes(y = average_hfa), fill = "#C3457E", alpha = .7, position = "dodge") +
+  geom_jitter(aes(y = average_hfa_elec, color = average_hfa_elec), size = 3) +
+  theme(panel.background = element_rect(fill = "white")) +
+  scale_color_viridis_c() +
+  facet_wrap(~region, ncol = 7) +
+  ggtitle("More or Less")
+
+
+# prep for plot #
+interaction_hfa_data_plot_df <- interaction_hfa_data %>%
+  select(-electrodes, -frontopolar, -amyg, -hipp_formation) %>%
+  filter(perm_p < 0.05 & p_inter < 0.05) %>%
+  mutate(self_interaction_bins = cut(self_var_payoff, breaks = c(0, 8, 12, 16, 25, 30))) %>%
+  filter(ofc == 1 | insula == 1 | mfg == 1 | temporal_gyr == 1 | cingulate == 1 | sts == 1) %>%
+  gather(key = "region", value = "exists", ofc, insula, mfg, temporal_gyr, cingulate, sts) %>%
+  filter(exists == 1) %>%
+  group_by(electrode, sub, self_interaction_bins, region) %>%
+  mutate(average_hfa_elec = mean(abs(power))) %>%
+  ungroup() %>%
+  select(self_interaction_bins, sub, average_hfa_elec, region, electrode) %>%
+  distinct() %>%
+  group_by(self_interaction_bins, sub, region) %>%
+  mutate(average_hfa_sub = mean(average_hfa_elec)) %>%
+  group_by(self_interaction_bins, region) %>%
+  mutate(average_hfa = mean(average_hfa_sub))
+  
+interaction_hfa_data_plot_df %>%
+  ggplot(., aes(x = self_interaction_bins)) +
+  # geom_linerange(aes(ymin = lower_sem_sub, ymax =  upper_sem_sub), color = "grey") +
+  geom_col(aes(y = average_hfa), fill = "#C3457E", alpha = .7, position = "dodge") +
+  geom_jitter(aes(y = average_hfa_elec, color = average_hfa_elec), size = 5) +
+  theme(panel.background = element_rect(fill = "white")) +
+  scale_color_viridis_c() +
+  facet_wrap(~region, ncol = 7) +
+  ggtitle("Self Var Payoff")
+
+
+# prep for plot #
+interaction_hfa_data_plot_df <- interaction_hfa_data %>%
+  select(-electrodes, -frontopolar, -amyg, -hipp_formation) %>%
+  filter(perm_p < 0.05 & p_inter < 0.05) %>%
+  mutate(self_interaction_bins = cut(self_var_payoff * more_or_none, breaks = c(-1, 8, 12, 16, 25, 30))) %>%
+  filter(ofc == 1 | insula == 1 | mfg == 1 | temporal_gyr == 1 | cingulate == 1 | sts == 1) %>%
+  gather(key = "region", value = "exists", ofc, insula, mfg, temporal_gyr, cingulate, sts) %>%
+  filter(exists == 1) %>%
+  group_by(electrode, sub, self_interaction_bins, region) %>%
+  mutate(average_hfa_elec = mean(abs(power))) %>%
+  ungroup() %>%
+  select(self_interaction_bins, sub, average_hfa_elec, region, electrode) %>%
+  distinct() %>%
+  group_by(self_interaction_bins, sub, region) %>%
+  mutate(average_hfa_sub = mean(average_hfa_elec)) %>%
+  group_by(self_interaction_bins, region) %>%
+  mutate(average_hfa = mean(average_hfa_sub))
+  
+interaction_hfa_data_plot_df %>%
+  ggplot(., aes(x = self_interaction_bins)) +
+  # geom_linerange(aes(ymin = lower_sem_sub, ymax =  upper_sem_sub), color = "grey") +
+  geom_col(aes(y = average_hfa), fill = "#C3457E", alpha = .7, position = "dodge") +
+  geom_jitter(aes(y = average_hfa_elec, color = average_hfa_elec), size = 5) +
+  theme(panel.background = element_rect(fill = "white")) +
+  scale_color_viridis_c() +
+  facet_wrap(~region, ncol = 7) +
+  ggtitle("More or None")
+
+# prep for plot #
+interaction_hfa_data_plot_df <- interaction_hfa_data %>%
+  select(-electrodes, -frontopolar, -amyg, -hipp_formation) %>%
+  filter(ofc == 1 | insula == 1 | mfg == 1 | temporal_gyr == 1 | cingulate == 1 | sts == 1) %>%
+  gather(key = "region", value = "exists", ofc, insula, mfg, temporal_gyr, cingulate, sts) %>%
+  filter(exists == 1) %>%
+  group_by(electrode, sub, self_interaction_bins, region) %>%
+  mutate(average_hfa_elec = mean(abs(power))) %>%
+  ungroup() %>%
+  select(self_interaction_bins, sub, average_hfa_elec, region, electrode) %>%
+  distinct() %>%
+  group_by(self_interaction_bins, sub, region) %>%
+  mutate(average_hfa_sub = mean(average_hfa_elec)) %>%
+  group_by(self_interaction_bins, region) %>%
+  mutate(average_hfa = mean(average_hfa_sub))
+  
+interaction_hfa_data_plot_df %>%
+  ggplot(., aes(x = self_interaction_bins)) +
+  # geom_linerange(aes(ymin = lower_sem_sub, ymax =  upper_sem_sub), color = "grey") +
+  geom_col(aes(y = average_hfa), fill = "#C3457E", alpha = .7, position = "dodge") +
+  geom_jitter(aes(y = average_hfa_elec, color = average_hfa_elec), size = 5) +
+  theme(panel.background = element_rect(fill = "white")) +
+  scale_color_viridis_c() +
+  facet_wrap(~region, ncol = 7) +
+  ggtitle("Less or None")
+
+```
+
+
