@@ -1,6 +1,8 @@
 ---
 title: "R Notebook"
-output: html_notebook
+output:
+  html_document:
+    df_print: paged
 ---
 
 ```{r setup, include=FALSE}
@@ -70,7 +72,438 @@ look at the multiple regressions and see if you can deduce what is going on by l
 then try ming plan on a subset of those
 
 
+```{r create-ineq_disadvent-dfs}
+# load results for self var #
+ineq_disadvent_results_pres <- load_and_collate_reg_results(tag = "ineq_disadvent_theta-pres-locked-hilbertRS", epoch = "presentation", folder = "post_eda")
+ineq_disadvent_results_choice <- load_and_collate_reg_results(tag = "ineq_disadvent_theta-choice-locked-hilbertRS", epoch = "choice", folder = "post_eda")
+
+# change predictor #
+ineq_disadvent_results_pres <- ineq_disadvent_results_pres %>% mutate(predictor = "ineq_disadvent") %>% mutate(type = "single")
+ineq_disadvent_results_choice <- ineq_disadvent_results_choice %>% mutate(predictor = "ineq_disadvent") %>% mutate(type = "single")
+
+```
+
+```{r create-self-payoff-dfs}
+# load results for self var #
+self_var_results_pres <- load_and_collate_reg_results("self_var_payoff_theta-pres-locked-hilbertRS", epoch = "presentation", folder = "post_eda")
+self_var_results_choice <- load_and_collate_reg_results("self_var_payoff_theta-choice-locked-hilbertRS", epoch = "choice", folder = "post_eda")
+
+# change predictor #
+self_var_results_pres <- self_var_results_pres %>% mutate(predictor = "self_var_payoff") %>% mutate(type = "single")
+self_var_results_choice <- self_var_results_choice %>% mutate(predictor = "self_var_payoff") %>% mutate(type = "single")
+
+```
+
+```{r create-other-payoff-dfs}
+# load results for self var #
+other_var_results_pres <- load_and_collate_reg_results(tag = "other_var_payoff_theta-pres-locked-hilbertRS", epoch = "presentation", folder = "post_eda")
+other_var_results_choice <- load_and_collate_reg_results(tag = "other_var_payoff_theta-choice-locked-hilbertRS", epoch = "choice", folder = "post_eda")
+
+# change predictor #
+other_var_results_pres <- other_var_results_pres %>% mutate(predictor = "other_var_payoff") %>% mutate(type = "single")
+other_var_results_choice <- other_var_results_choice %>% mutate(predictor = "other_var_payoff") %>% mutate(type = "single")
+
+```
+
+
+```{r create-pie-size-dfs}
+# load results for self var #
+pie_size_results_pres <- load_and_collate_reg_results(tag = "pie_size_theta-pres-locked-hilbertRS", epoch = "presentation", folder = "post_eda")
+
+# change predictor #
+pie_size_results_pres <- pie_size_results_pres %>% mutate(predictor = "pie_size") %>% mutate(type = "single")
+
+```
 
 
 
+```{r localization-data}
 
+merge_all_subs_with_elec_info <- function(df, localizations) {
+## merge df with elec info, stored in localizations
+## creates new var of form ROI1-ROI2  
+## also cleans elec names
+  
+  # only the localization columns we need #
+  localizations <- localizations %>% select(Electrode, subject, `Loc Meeting`)
+  
+  # clean the names
+  df <- df %>%
+    mutate(electrode = gsub("POL ", "", electrode)) %>%
+    mutate(electrode = gsub(" POL", "", electrode)) %>%
+    mutate(electrode = gsub("-Ref", "", electrode)) %>%
+    mutate(electrode = gsub("-Ref-", "-", electrode)) 
+  
+  # separate two electrodes
+  df <- df %>%
+    mutate(first_elec= gsub("-.*", "", electrode)) %>%
+    mutate(second_elec = gsub(".*-", "", electrode))
+  # join on first electrode
+  df <- left_join(df,
+                 localizations,
+                 by = c("sub" = "subject", "first_elec" = "Electrode"))
+  # rename to `first_region`
+  df <- df %>%
+    rename(first_region = `Loc Meeting`)
+  # join on second electrode and rename
+  df <-  left_join(df,
+             localizations,
+             by = c("sub" = "subject", "second_elec" = "Electrode")) %>%
+    rename(second_region = `Loc Meeting`) 
+  # paste into useful format
+  df <- df %>% mutate(ROI = paste0(first_region, "-", second_region))
+  
+  return(df)
+
+}
+
+# read in raw localizations data #
+localizations <- read_csv(path(here(), "munge", "combined_electrode_info_with_bob.csv"))
+ineq_disadvent_localized_results_pres <- merge_all_subs_with_elec_info(ineq_disadvent_results_pres, localizations)
+
+# significant and ofc electrodes only 
+ofc_electrodes_of_interest <- ineq_disadvent_localized_results_pres %>% 
+  filter(grepl("ofc", ROI, ignore.case = T) | grepl("orbit", ROI, ignore.case = T)) %>% 
+  filter(perm_p < 0.05)
+
+ofc_non_sig_electrodes_of_interest <- ineq_disadvent_localized_results_pres %>% 
+  filter(grepl("ofc", ROI, ignore.case = T) | grepl("orbit", ROI, ignore.case = T)) %>% 
+  filter(perm_p >= 0.05)
+
+
+```
+
+```{r merge-with-other-single-regs}
+
+## subset only perm p and merging columns of other main regressors, rename for table view ##
+# self var payoff #
+self_var_results_pres_short <- self_var_results_pres %>% 
+  rename(self_only = perm_p) %>%
+  select(sub, electrode, self_only)
+# other var payoff #  
+other_var_results_pres_short <- other_var_results_pres %>% 
+  rename(other_only = perm_p) %>%
+  select(sub, electrode, other_only)
+# other var payoff #  
+pie_size_results_pres_short <- pie_size_results_pres %>% 
+  rename(pie_size = perm_p) %>%
+  select(sub, electrode, pie_size)
+  
+## merge with ofc elecs of interest #  
+ofc_all_sing_regs <- left_join(ofc_electrodes_of_interest, self_var_results_pres_short)
+
+ofc_all_sing_regs <- left_join(ofc_all_sing_regs, other_var_results_pres_short)
+
+ofc_all_sing_regs <- left_join(ofc_all_sing_regs, pie_size_results_pres_short)
+
+## not sig versions ##
+not_sig_ofc_all_sing_regs <- left_join(ofc_non_sig_electrodes_of_interest, self_var_results_pres_short)
+
+not_sig_ofc_all_sing_regs <- left_join(not_sig_ofc_all_sing_regs, other_var_results_pres_short)
+
+not_sig_ofc_all_sing_regs <- left_join(not_sig_ofc_all_sing_regs, pie_size_results_pres_short)
+
+```
+
+
+```{r load-multiple-regs-dfs}
+
+# load results for self var #
+multiple_results_pres <- load_and_collate_reg_results(tag = "multiple-theta-pres-locked-hilbertRS", epoch = "presentation", folder = "post_eda/multiple_regressions")
+
+# cut down variables #
+multiple_results_pres <- multiple_results_pres  %>% mutate(type = "multiple")
+
+# df for merging with single regs #
+multiple_results_pres_short <- multiple_results_pres %>% 
+  select(sub, electrode, perm_p, predictor) %>%
+  distinct() %>%
+  pivot_wider(names_from = predictor, values_from = perm_p)
+
+```
+
+```{r merge-mult-and-single-reg-dfs}
+## sig versions ##
+ofc_mult_and_single_df <- left_join(ofc_all_sing_regs, multiple_results_pres_short)
+
+ofc_mult_and_single_table <- left_join(ofc_all_sing_regs %>% select(sub, electrode, predictor, perm_p, self_only, other_only, pie_size), multiple_results_pres_short) %>% distinct()
+
+## no sig versions ##
+not_sig_ofc_mult_and_single_df <- left_join(not_sig_ofc_all_sing_regs, multiple_results_pres_short)
+
+not_sig_ofc_mult_and_single_table <- left_join(not_sig_ofc_all_sing_regs %>% select(sub, electrode, predictor, perm_p, self_only, other_only, pie_size), multiple_results_pres_short) %>% distinct()
+
+```
+
+## Significant Dis Inequity + Not Significant for Other or Self
+
+```{r plot-betas-for-sig_dis-no-sig-other-self, warning=F}
+
+for(sub_idx in unique(ofc_non_sig_electrodes_of_interest$sub)) {
+  
+  elecs_to_plot <- ofc_mult_and_single_table %>% filter(sub == sub_idx & self_only > 0.05 & other_only > 0.05) %>% pull(electrode)
+  
+  for(elec in unique(elecs_to_plot)) {
+
+    multiple_results_pres_elec <- multiple_results_pres %>%
+      filter(bin != "bin_37") %>%
+      filter(sub == sub_idx & electrode == elec) %>%
+      filter(predictor == "other_var_payoff_self_var_payoff") %>%
+      mutate(time = 50 * as.numeric(gsub("bin_", "", bin))) %>%
+      mutate(Beta = Beta_1 - Beta_2)
+    
+    ofc_elec_of_interest <- ofc_electrodes_of_interest %>%
+      filter(sub == sub_idx & electrode == elec) %>%
+      mutate(time = 50 * as.numeric(gsub("bin_", "", bin))) %>%
+      mutate(sig_time = if_else(p < 0.05, time, -999)) %>%
+      mutate(sig_time = replace(sig_time, sig_time == -999, NA))
+    
+    colors <- c("Dis. Ineq." = "#f9c74f", "Other - Self" = "#43aa8b", "Other, Mult. Reg" = "#f94144", "Self, Mult. Reg" = "#277da1")
+    
+    correlation <- round(cor(multiple_results_pres_elec$Beta, ofc_elec_of_interest$Beta), 2)
+    
+    p <- ggplot() +
+      geom_point(data = ofc_elec_of_interest, aes(x = time, y = Beta, color = "Dis. Ineq.")) + # Yellow
+      geom_line(data = ofc_elec_of_interest, aes(x = time, y = Beta, color = "Dis. Ineq.")) +
+      geom_text(data = ofc_elec_of_interest, aes(x = sig_time), y = 0.032, label = "*", color = "black", size = 7) +
+      geom_point(data = multiple_results_pres_elec, aes(x = time, y = Beta, color = "Other - Self")) + # green
+      geom_line(data = multiple_results_pres_elec, aes(x = time, y = Beta, color = "Other - Self")) +
+      geom_point(data = multiple_results_pres_elec, aes(x = time, y = Beta_1, color = "Other, Mult. Reg")) + # red, other
+      geom_line(data = multiple_results_pres_elec, aes(x = time, y = Beta_1, color = "Other, Mult. Reg")) +
+      geom_point(data = multiple_results_pres_elec, aes(x = time, y = Beta_2, color = "Self, Mult. Reg")) + # blue, self
+      geom_line(data = multiple_results_pres_elec, aes(x = time, y = Beta_2, color = "Self, Mult. Reg")) +
+      ylim(-0.032, 0.032) +
+      labs(color = "Legend") +
+      theme(panel.background = element_rect(fill = "white")) +
+      scale_color_manual(values = colors) +
+      ggtitle(paste(sub_idx, elec, correlation, sep = " ~ "))
+
+    plot(p)
+    
+  } 
+  
+}  
+
+
+
+```
+
+
+## Significant Dis Inequity + Not Significant for Other or Self
+
+```{r plot-betas-for-sig_dis, warning=F}
+
+for(sub_idx in unique(ofc_non_sig_electrodes_of_interest$sub)) {
+  
+  elecs_to_plot <- ofc_mult_and_single_table %>% filter(sub == sub_idx & (self_only <= 0.05 | other_only <= 0.05)) %>% pull(electrode)
+  
+  for(elec in unique(elecs_to_plot)) {
+
+    multiple_results_pres_elec <- multiple_results_pres %>%
+      filter(bin != "bin_37") %>%
+      filter(sub == sub_idx & electrode == elec) %>%
+      filter(predictor == "other_var_payoff_self_var_payoff") %>%
+      mutate(time = 50 * as.numeric(gsub("bin_", "", bin))) %>%
+      mutate(Beta = Beta_1 - Beta_2)
+    
+    ofc_elec_of_interest <- ofc_electrodes_of_interest %>%
+      filter(sub == sub_idx & electrode == elec) %>%
+      mutate(time = 50 * as.numeric(gsub("bin_", "", bin))) %>%
+      mutate(sig_time = if_else(p < 0.05, time, -999)) %>%
+      mutate(sig_time = replace(sig_time, sig_time == -999, NA))
+    
+    correlation <- round(cor(multiple_results_pres_elec$Beta, ofc_elec_of_interest$Beta), 2)
+    
+    
+    
+    colors <- c("Dis. Ineq." = "#f9c74f", "Other - Self" = "#43aa8b", "Other, Mult. Reg" = "#f94144", "Self, Mult. Reg" = "#277da1")
+    
+    p <- ggplot() +
+      geom_point(data = ofc_elec_of_interest, aes(x = time, y = Beta, color = "Dis. Ineq.")) + # Yellow
+      geom_line(data = ofc_elec_of_interest, aes(x = time, y = Beta, color = "Dis. Ineq.")) +
+      geom_text(data = ofc_elec_of_interest, aes(x = sig_time), y = 0.042, label = "*", color = "black", size = 7) +
+      geom_point(data = multiple_results_pres_elec, aes(x = time, y = Beta, color = "Other - Self")) + # green
+      geom_line(data = multiple_results_pres_elec, aes(x = time, y = Beta, color = "Other - Self")) +
+      geom_point(data = multiple_results_pres_elec, aes(x = time, y = Beta_1, color = "Other, Mult. Reg")) + # red, other
+      geom_line(data = multiple_results_pres_elec, aes(x = time, y = Beta_1, color = "Other, Mult. Reg")) +
+      geom_point(data = multiple_results_pres_elec, aes(x = time, y = Beta_2, color = "Self, Mult. Reg")) + # blue, self
+      geom_line(data = multiple_results_pres_elec, aes(x = time, y = Beta_2, color = "Self, Mult. Reg")) +
+      ylim(-0.04, 0.042) +
+      labs(color = "Legend") +
+      theme(panel.background = element_rect(fill = "white")) +
+      scale_color_manual(values = colors) +
+      ggtitle(paste(sub_idx, elec, correlation, sep = " ~ "))
+
+    plot(p)
+    
+  } 
+  
+}  
+
+
+
+```
+
+## Not sig versions ##
+
+```{r non-sig-elecs}
+
+for(sub_idx in unique(ofc_non_sig_electrodes_of_interest$sub)) {
+  
+  elecs_to_plot <- ofc_non_sig_electrodes_of_interest %>% filter(sub == sub_idx) %>% pull(electrode)
+  
+  for(elec in unique(elecs_to_plot)) {
+
+      multiple_results_pres_elec <- multiple_results_pres %>%
+        filter(bin != "bin_37") %>%
+        filter(sub == sub_idx & electrode == elec) %>%
+        filter(predictor == "other_var_payoff_self_var_payoff") %>%
+        mutate(time = 50 * as.numeric(gsub("bin_", "", bin))) %>%
+        mutate(Beta = Beta_1 - Beta_2)
+      
+      ofc_elec_of_interest <- ofc_non_sig_electrodes_of_interest %>%
+        filter(sub == sub_idx & electrode == elec) %>%
+        mutate(time = 50 * as.numeric(gsub("bin_", "", bin))) 
+      
+    correlation <- round(cor(multiple_results_pres_elec$Beta, ofc_elec_of_interest$Beta), 2)
+      
+    colors <- c("Dis. Ineq." = "#f9c74f", "Other - Self" = "#43aa8b", "Other, Mult. Reg" = "#f94144", "Self, Mult. Reg" = "#277da1")
+    
+    p <- ggplot() +
+      geom_point(data = ofc_elec_of_interest, aes(x = time, y = Beta, color = "Dis. Ineq.")) + # Yellow
+      geom_line(data = ofc_elec_of_interest, aes(x = time, y = Beta, color = "Dis. Ineq.")) +
+      geom_point(data = multiple_results_pres_elec, aes(x = time, y = Beta, color = "Other - Self")) + # green
+      geom_line(data = multiple_results_pres_elec, aes(x = time, y = Beta, color = "Other - Self")) +
+      geom_point(data = multiple_results_pres_elec, aes(x = time, y = Beta_1, color = "Other, Mult. Reg")) + # red, other
+      geom_line(data = multiple_results_pres_elec, aes(x = time, y = Beta_1, color = "Other, Mult. Reg")) +
+      geom_point(data = multiple_results_pres_elec, aes(x = time, y = Beta_2, color = "Self, Mult. Reg")) + # blue, self
+      geom_line(data = multiple_results_pres_elec, aes(x = time, y = Beta_2, color = "Self, Mult. Reg")) +
+      ylim(-0.032, 0.032) +
+      labs(color = "Legend") +
+      theme(panel.background = element_rect(fill = "white")) +
+      scale_color_manual(values = colors) +
+      ggtitle(paste(sub_idx, elec, correlation, sep = " ~ "))
+
+    plot(p)
+      
+  }
+
+}
+
+
+```
+
+
+
+```{r ranadom, warning=F, eval = F}
+
+tmp <- tmp %>%
+  mutate(other_times_beta = other * -0.0063152950) %>%
+  mutate(self_times_beta = self * 0.0086419716) %>%
+  mutate(dis_ineq_times_mult_beta = dis * -0.0149572665 ) %>%
+  mutate(dis_ineq_times_single_beta = dis * -0.014764410) %>%
+  mutate(sum_other_and_self = other_times_beta + self_times_beta ) %>%
+  mutate(sum_other_and_self_inter = sum_other_and_self -  dis_ineq_times_mult_beta)
+
+brain_behave_data_elec %>%
+  select(bin_13, ineq_disadvent, other_var_payoff, self_var_payoff) %>%
+  gather(key = "regressor", value = "value", -bin_13) %>%
+  # filter(regressor == "ineq_disadvent") %>%
+  ggplot(., aes(x = value, y = bin_13, color = regressor, fill = regressor)) +
+  geom_point() +
+  geom_smooth() +
+  theme(panel.background = element_rect(fill = "white"))
+
+```
+
+```{r csvs-dvoraah}
+
+## stuff for Dvorah
+ multiple_results_pres_elec <- multiple_results_pres %>%
+        filter(sub == "IR28" & electrode == "LOF2-LOF3") %>%
+        filter(predictor == "other_var_payoff_self_var_payoff") %>%
+        mutate(time = 50 * as.numeric(gsub("bin_", "", bin))) %>%
+        mutate(Beta = Beta_1 - Beta_2)
+      
+      ofc_elec_of_interest <- ofc_electrodes_of_interest %>%
+        filter(sub == "IR28" & electrode == "LOF2-LOF3") %>%
+        mutate(time = 50 * as.numeric(gsub("bin_", "", bin))) 
+      
+write_csv(ofc_elec_of_interest, "IR28_LOF2-LOF3_ineq_disadvent_reg_results.csv")
+write_csv(multiple_results_pres_elec, "IR28_LOF2-LOF3_other_var_self_var_multiple_reg_results.csv")
+
+```
+
+
+```{r clue-to-switch-frameworks}
+
+ multiple_results_pres_elec <- multiple_results_pres %>%
+        filter(bin != "bin_37") %>%
+        filter(sub == "IR35" & electrode == "LOF3-LOF4") %>%
+        filter(predictor == "ineq_disadvent_other_var_payoff") %>%
+        mutate(time = 50 * as.numeric(gsub("bin_", "", bin))) %>%
+        mutate(Beta = Beta_1 - Beta_2)
+      
+      ofc_elec_of_interest <- self_var_results_pres %>%
+        filter(sub == "IR35" & electrode == "LOF3-LOF4" & predictor == "self_var_payoff") %>%
+        mutate(time = 50 * as.numeric(gsub("bin_", "", bin))) 
+      
+    
+    # colors <- c("Dis. Ineq." = "#f9c74f", "Other - Self" = "#43aa8b", "Other, Mult. Reg" = "#f94144", "Self, Mult. Reg" = "#277da1")
+    colors <- c("Self Var" = "#f9c74f", "Other, Mult. Reg" = "#f94144", "Dis Ineq, Mult. Reg" = "#277da1")
+    
+    p <- ggplot() +
+      geom_point(data = ofc_elec_of_interest, aes(x = time, y = Beta, color = "Self Var")) + # Yellow
+      geom_line(data = ofc_elec_of_interest, aes(x = time, y = Beta, color = "Self Var")) +
+      # geom_point(data = multiple_results_pres_elec, aes(x = time, y = Beta, color = "Other - Self")) + # green
+      # geom_line(data = multiple_results_pres_elec, aes(x = time, y = Beta, color = "Other - Self")) +
+      geom_point(data = multiple_results_pres_elec, aes(x = time, y = Beta_1, color = "Dis Ineq, Mult. Reg")) + # red, other
+      geom_line(data = multiple_results_pres_elec, aes(x = time, y = Beta_1, color = "Dis Ineq, Mult. Reg")) +
+      geom_point(data = multiple_results_pres_elec, aes(x = time, y = Beta_2, color = "Other, Mult. Reg")) + # blue, self
+      geom_line(data = multiple_results_pres_elec, aes(x = time, y = Beta_2, color = "Other, Mult. Reg")) +
+      # ylim(-0.032, 0.032) +
+      labs(color = "Legend") +
+      theme(panel.background = element_rect(fill = "white")) +
+      scale_color_manual(values = colors) +
+      ggtitle(paste("IR35", "LOF3-LOF4", sep = " ~ "))
+
+  plot(p)
+
+```
+
+
+
+```{r pie-siz}
+
+## plots with pie size ##
+
+hold <- multiple_results_pres %>% filter(sub == "IR28" & electrode == "LOF2-LOF3" & predictor == "other_var_payoff_self_var_payoff")
+hold2 <- pie_size_results_pres %>% filter(sub == "IR28" & electrode == "LOF2-LOF3")
+
+pie_size <- rbind(hold %>% select(bin, R2, type), hold2 %>% select(bin, R2, type))
+
+ggthemr("light")
+pie_size %>%
+  mutate(model = replace(type, type == "single", "Pie Size")) %>%
+  mutate(model = replace(model, type == "multiple", "Other - Self")) %>%
+  mutate(time = 50 * as.numeric(gsub("bin_", "", bin))) %>%
+  ggplot(., aes(x = time, y = R2, color = model)) +
+  geom_point() +
+  geom_line() +
+  theme(panel.background = element_rect(fill = "white")) 
+
+hold <- hold %>% select(bin, Beta_1, Beta_2)  %>% gather(key = "tmp", value = "Beta", -bin) %>% rename(type = tmp)
+pie_size <- rbind(hold %>% select(bin, Beta, type), hold2 %>% select(bin, Beta, type))
+
+pie_size %>%
+  mutate(model = replace(type, type == "single", "Pie Size")) %>%
+  mutate(model = replace(model, type == "Beta_1", "Other")) %>%
+  mutate(model = replace(model, type == "Beta_2", "Self")) %>%
+  mutate(time = 50 * as.numeric(gsub("bin_", "", bin))) %>%
+  distinct() %>%
+  ggplot(., aes(x = time, y = Beta, color = model)) +
+  geom_point() +
+  geom_line() +
+  theme(panel.background = element_rect(fill = "white")) 
+
+```
