@@ -58,22 +58,31 @@ for(sub in subs){
       mutate(self_var_payoff_adv = (as.numeric(other_var_payoff < self_var_payoff)) * self_var_payoff) %>%
       mutate(self_var_payoff_dis = (as.numeric(other_var_payoff > self_var_payoff)) * self_var_payoff) %>%
       mutate(other_var_payoff_adv = (as.numeric(other_var_payoff < self_var_payoff)) * other_var_payoff) %>%
-      mutate(other_var_payoff_dis = (as.numeric(other_var_payoff > self_var_payoff)) * other_var_payoff)      
+      mutate(other_var_payoff_dis = (as.numeric(other_var_payoff > self_var_payoff)) * other_var_payoff)  %>%
+      mutate(trial_type = if_else(self_var_payoff == other_var_payoff, "equality",
+                                  if_else(self_var_payoff > other_var_payoff,
+                                          "Advantageous", "Disadvantageous"))) %>%
+      filter(trial_type != "equality") %>%
+      mutate(more_or_less = if_else(abs(ineq_advent) > 0, 1, -1)) %>% 
+      mutate(more_or_none = if_else(abs(ineq_advent) > 0, 1, 0)) 
+    
     all_electrodes <- unique(brain_behave_data$electrodes)
     # bin names #
-    nBins <- colnames(power_behave %>% select(starts_with("bin_")))
+    nBins <- colnames(power_behave %>% select(starts_with("bin_")))[1:15]
     
     ## run regressions ##
+    # more_or_none #
+    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "more_or_none", nBins, region_name =  "All", niter, sub = sub, tag = "theta-pres-locked-hilbertRS")
     # # pie size #
     # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "pie_size", nBins, region_name =  "All", niter, sub = sub, tag = "theta-pres-locked-hilbertRS")
-    # self_var_payoff_adv #
-    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff_adv", nBins, region_name =  "All", niter, sub = sub, tag = "theta-pres-locked-hilbertRS")
-    # self_var_payoff_dis #
-    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff_dis", nBins, region_name =  "All", niter, sub = sub, tag = "theta-pres-locked-hilbertRS")
-    # other_var_payoff_adv #
-    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff_adv", nBins, region_name =  "All", niter, sub = sub, tag = "theta-pres-locked-hilbertRS")
-    # other_var_payoff_dis #
-    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff_dis", nBins, region_name =  "All", niter, sub = sub, tag = "theta-pres-locked-hilbertRS")
+    # # self_var_payoff_adv #
+    # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff_adv", nBins, region_name =  "All", niter, sub = sub, tag = "theta-pres-locked-hilbertRS")
+    # # self_var_payoff_dis #
+    # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff_dis", nBins, region_name =  "All", niter, sub = sub, tag = "theta-pres-locked-hilbertRS")
+    # # other_var_payoff_adv #
+    # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff_adv", nBins, region_name =  "All", niter, sub = sub, tag = "theta-pres-locked-hilbertRS")
+    # # other_var_payoff_dis #
+    # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff_dis", nBins, region_name =  "All", niter, sub = sub, tag = "theta-pres-locked-hilbertRS")
     # # disadv ineq #
     # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "ineq_disadvent", nBins, region_name =  "All", niter, sub = sub, tag = "theta-pres-locked-hilbertRS")
     # # self payoff #
@@ -84,10 +93,10 @@ for(sub in subs){
     # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_foregone", nBins, region_name =  "All", niter, sub = sub, tag = "theta-pres-locked-hilbertRS")
     # # other foregone #
     # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_foregone", nBins, region_name =  "All", niter, sub = sub, tag = "theta-pres-locked-hilbertRS")
-    # # self var paroff #
-    # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff", nBins, region_name =  "All", niter, sub = sub, tag = "theta-pres-locked-hilbertRS")
-    # # other var payoff #
-    # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff", nBins, region_name =  "All", niter, sub = sub, tag = "theta-pres-locked-hilbertRS")
+    # self var paroff #
+    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff", nBins, region_name =  "All", niter, sub = sub, tag = "theta-pres-locked-hilbertRS")
+    # other var payoff #
+    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff", nBins, region_name =  "All", niter, sub = sub, tag = "theta-pres-locked-hilbertRS")
     # # self diff #
     # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_diff", nBins, region_name =  "All", niter, sub = sub, tag = "theta-pres-locked-hilbertRS")
     # # other diff #
@@ -106,23 +115,31 @@ for(sub in subs){
       mutate(self_var_payoff_adv = (as.numeric(other_var_payoff < self_var_payoff)) * self_var_payoff) %>%       
       mutate(self_var_payoff_dis = (as.numeric(other_var_payoff > self_var_payoff)) * self_var_payoff) %>%       
       mutate(other_var_payoff_adv = (as.numeric(other_var_payoff < self_var_payoff)) * other_var_payoff) %>%      
-      mutate(other_var_payoff_dis = (as.numeric(other_var_payoff > self_var_payoff)) * other_var_payoff)
+      mutate(other_var_payoff_dis = (as.numeric(other_var_payoff > self_var_payoff)) * other_var_payoff)  %>%
+      mutate(trial_type = if_else(self_var_payoff == other_var_payoff, "equality",
+                                  if_else(self_var_payoff > other_var_payoff,
+                                          "Advantageous", "Disadvantageous"))) %>%
+      filter(trial_type != "equality") %>%
+      mutate(more_or_less = if_else(abs(ineq_advent) > 0, 1, -1)) %>% 
+      mutate(more_or_none = if_else(abs(ineq_advent) > 0, 1, 0)) 
     all_electrodes <- unique(brain_behave_data$electrodes)
     # bin names #
-    nBins <- colnames(power_behave %>% select(starts_with("bin_")))
+    nBins <- colnames(power_behave %>% select(starts_with("bin_")))[1:15]
 
     ## run regressions ##
 
+    # more_or_none #
+    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "more_or_none", nBins, region_name =  "All", niter, sub = sub, tag = "hfa-pres-locked-hilbertRS")
     # # pie size #
     # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "pie_size", nBins, region_name =  "All", niter, sub = sub, tag = "hfa-pres-locked-hilbertRS")
-    # self_var_payoff_adv #
-    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff_adv", nBins, region_name =  "All", niter, sub = sub, tag = "hfa-pres-locked-hilbertRS")
-    # self_var_payoff_dis #
-    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff_dis", nBins, region_name =  "All", niter, sub = sub, tag = "hfa-pres-locked-hilbertRS")
-    # other_var_payoff_adv #
-    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff_adv", nBins, region_name =  "All", niter, sub = sub, tag = "hfa-pres-locked-hilbertRS")
-    # other_var_payoff_dis #
-    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff_dis", nBins, region_name =  "All", niter, sub = sub, tag = "hfa-pres-locked-hilbertRS")
+    # # self_var_payoff_adv #
+    # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff_adv", nBins, region_name =  "All", niter, sub = sub, tag = "hfa-pres-locked-hilbertRS")
+    # # self_var_payoff_dis #
+    # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff_dis", nBins, region_name =  "All", niter, sub = sub, tag = "hfa-pres-locked-hilbertRS")
+    # # other_var_payoff_adv #
+    # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff_adv", nBins, region_name =  "All", niter, sub = sub, tag = "hfa-pres-locked-hilbertRS")
+    # # other_var_payoff_dis #
+    # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff_dis", nBins, region_name =  "All", niter, sub = sub, tag = "hfa-pres-locked-hilbertRS")
     # # disadv ineq #
     # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "ineq_disadvent", nBins, region_name =  "All", niter, sub = sub, tag = "hfa-pres-locked-hilbertRS")
     # # self payoff #
@@ -133,10 +150,10 @@ for(sub in subs){
     # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_foregone", nBins, region_name =  "All", niter, sub = sub, tag = "hfa-pres-locked-hilbertRS")
     # # other foregone #
     # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_foregone", nBins, region_name =  "All", niter, sub = sub, tag = "hfa-pres-locked-hilbertRS")
-    # # self var paroff #
-    # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff", nBins, region_name =  "All", niter, sub = sub, tag = "hfa-pres-locked-hilbertRS")
-    # # other var payoff #
-    # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff", nBins, region_name =  "All", niter, sub = sub, tag = "hfa-pres-locked-hilbertRS")
+    # self var paroff #
+    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff", nBins, region_name =  "All", niter, sub = sub, tag = "hfa-pres-locked-hilbertRS")
+    # other var payoff #
+    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff", nBins, region_name =  "All", niter, sub = sub, tag = "hfa-pres-locked-hilbertRS")
     # # # self diff #
     # # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_diff", nBins, region_name =  "All", niter, sub = sub, tag = "hfa-pres-locked-hilbertRS")
     # # # other diff #
@@ -155,23 +172,30 @@ for(sub in subs){
       mutate(self_var_payoff_adv = (as.numeric(other_var_payoff < self_var_payoff)) * self_var_payoff) %>%       
       mutate(self_var_payoff_dis = (as.numeric(other_var_payoff > self_var_payoff)) * self_var_payoff) %>%       
       mutate(other_var_payoff_adv = (as.numeric(other_var_payoff < self_var_payoff)) * other_var_payoff) %>%       
-      mutate(other_var_payoff_dis = (as.numeric(other_var_payoff > self_var_payoff)) * other_var_payoff)
+      mutate(other_var_payoff_dis = (as.numeric(other_var_payoff > self_var_payoff)) * other_var_payoff)  %>%
+      mutate(trial_type = if_else(self_var_payoff == other_var_payoff, "equality",
+                                  if_else(self_var_payoff > other_var_payoff,
+                                          "Advantageous", "Disadvantageous"))) %>%
+      filter(trial_type != "equality") %>%
+      mutate(more_or_less = if_else(abs(ineq_advent) > 0, 1, -1)) %>% 
+      mutate(more_or_none = if_else(abs(ineq_advent) > 0, 1, 0)) 
     all_electrodes <- unique(brain_behave_data$electrodes)
     # bin names #
-    nBins <- colnames(power_behave %>% select(starts_with("bin_")))
+    nBins <- colnames(power_behave %>% select(starts_with("bin_")))[1:15]
 
     ## run regressions ##
-
+    # more_or_none #
+    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "more_or_none", nBins, region_name =  "All", niter, sub = sub, tag = "beta-pres-locked-hilbertRS")
     # # # pie size #
     # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "pie_size", nBins, region_name =  "All", niter, sub = sub, tag = "beta-pres-locked-hilbertRS")
-    # self_var_payoff_adv #
-    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff_adv", nBins, region_name =  "All", niter, sub = sub, tag = "beta-pres-locked-hilbertRS")
-    # self_var_payoff_dis #
-    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff_dis", nBins, region_name =  "All", niter, sub = sub, tag = "beta-pres-locked-hilbertRS")
-    # other_var_payoff_adv #
-    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff_adv", nBins, region_name =  "All", niter, sub = sub, tag = "beta-pres-locked-hilbertRS")
-    # other_var_payoff_dis #
-    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff_dis", nBins, region_name =  "All", niter, sub = sub, tag = "beta-pres-locked-hilbertRS")
+    # # self_var_payoff_adv #
+    # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff_adv", nBins, region_name =  "All", niter, sub = sub, tag = "beta-pres-locked-hilbertRS")
+    # # self_var_payoff_dis #
+    # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff_dis", nBins, region_name =  "All", niter, sub = sub, tag = "beta-pres-locked-hilbertRS")
+    # # other_var_payoff_adv #
+    # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff_adv", nBins, region_name =  "All", niter, sub = sub, tag = "beta-pres-locked-hilbertRS")
+    # # other_var_payoff_dis #
+    # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff_dis", nBins, region_name =  "All", niter, sub = sub, tag = "beta-pres-locked-hilbertRS")
     # # disadv ineq #
     # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "ineq_disadvent", nBins, region_name =  "All", niter, sub = sub, tag = "beta-pres-locked-hilbertRS")
     # # self payoff #
@@ -182,10 +206,10 @@ for(sub in subs){
     # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_foregone", nBins, region_name =  "All", niter, sub = sub, tag = "beta-pres-locked-hilbertRS")
     # # other foregone #
     # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_foregone", nBins, region_name =  "All", niter, sub = sub, tag = "beta-pres-locked-hilbertRS")
-    # # self var paroff #
-    # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff", nBins, region_name =  "All", niter, sub = sub, tag = "beta-pres-locked-hilbertRS")
-    # # other var payoff #
-    # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff", nBins, region_name =  "All", niter, sub = sub, tag = "beta-pres-locked-hilbertRS")
+    # self var paroff #
+    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff", nBins, region_name =  "All", niter, sub = sub, tag = "beta-pres-locked-hilbertRS")
+    # other var payoff #
+    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff", nBins, region_name =  "All", niter, sub = sub, tag = "beta-pres-locked-hilbertRS")
     # # self diff #
     # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_diff", nBins, region_name =  "All", niter, sub = sub, tag = "beta-pres-locked-hilbertRS")
     # # other diff #
@@ -204,23 +228,30 @@ for(sub in subs){
       mutate(self_var_payoff_adv = (as.numeric(other_var_payoff < self_var_payoff)) * self_var_payoff) %>%       
       mutate(self_var_payoff_dis = (as.numeric(other_var_payoff > self_var_payoff)) * self_var_payoff) %>%       
       mutate(other_var_payoff_adv = (as.numeric(other_var_payoff < self_var_payoff)) * other_var_payoff) %>%       
-      mutate(other_var_payoff_dis = (as.numeric(other_var_payoff > self_var_payoff)) * other_var_payoff)
+      mutate(other_var_payoff_dis = (as.numeric(other_var_payoff > self_var_payoff)) * other_var_payoff)  %>%
+      mutate(trial_type = if_else(self_var_payoff == other_var_payoff, "equality",
+                                  if_else(self_var_payoff > other_var_payoff,
+                                          "Advantageous", "Disadvantageous"))) %>%
+      filter(trial_type != "equality") %>%
+      mutate(more_or_less = if_else(abs(ineq_advent) > 0, 1, -1)) %>% 
+      mutate(more_or_none = if_else(abs(ineq_advent) > 0, 1, 0)) 
     all_electrodes <- unique(brain_behave_data$electrodes)
     # bin names #
-    nBins <- colnames(power_behave %>% select(starts_with("bin_")))
+    nBins <- colnames(power_behave %>% select(starts_with("bin_")))[1:15]
 
     ## run regressions ##
-
+    # more_or_none #
+    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "more_or_none", nBins, region_name =  "All", niter, sub = sub, tag = "gamma-pres-locked-hilbertRS")
     # # pie size #
     # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "pie_size", nBins, region_name =  "All", niter, sub = sub, tag = "gamma-pres-locked-hilbertRS")
-    # self_var_payoff_adv #
-    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff_adv", nBins, region_name =  "All", niter, sub = sub, tag = "gamma-pres-locked-hilbertRS")
-    # self_var_payoff_dis #
-    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff_dis", nBins, region_name =  "All", niter, sub = sub, tag = "gamma-pres-locked-hilbertRS")
-    # other_var_payoff_adv #
-    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff_adv", nBins, region_name =  "All", niter, sub = sub, tag = "gamma-pres-locked-hilbertRS")
-    # other_var_payoff_dis #
-    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff_dis", nBins, region_name =  "All", niter, sub = sub, tag = "gamma-pres-locked-hilbertRS")
+    # # self_var_payoff_adv #
+    # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff_adv", nBins, region_name =  "All", niter, sub = sub, tag = "gamma-pres-locked-hilbertRS")
+    # # self_var_payoff_dis #
+    # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff_dis", nBins, region_name =  "All", niter, sub = sub, tag = "gamma-pres-locked-hilbertRS")
+    # # other_var_payoff_adv #
+    # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff_adv", nBins, region_name =  "All", niter, sub = sub, tag = "gamma-pres-locked-hilbertRS")
+    # # other_var_payoff_dis #
+    # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff_dis", nBins, region_name =  "All", niter, sub = sub, tag = "gamma-pres-locked-hilbertRS")
     # # disadv ineq #
     # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "ineq_disadvent", nBins, region_name =  "All", niter, sub = sub, tag = "gamma-pres-locked-hilbertRS")
     # # self payoff #
@@ -231,10 +262,10 @@ for(sub in subs){
     # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_foregone", nBins, region_name =  "All", niter, sub = sub, tag = "gamma-pres-locked-hilbertRS")
     # # other foregone #
     # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_foregone", nBins, region_name =  "All", niter, sub = sub, tag = "gamma-pres-locked-hilbertRS")
-    # # self var paroff #
-    # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff", nBins, region_name =  "All", niter, sub = sub, tag = "gamma-pres-locked-hilbertRS")
-    # # other var payoff #
-    # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff", nBins, region_name =  "All", niter, sub = sub, tag = "gamma-pres-locked-hilbertRS")
+    # self var paroff #
+    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff", nBins, region_name =  "All", niter, sub = sub, tag = "gamma-pres-locked-hilbertRS")
+    # other var payoff #
+    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff", nBins, region_name =  "All", niter, sub = sub, tag = "gamma-pres-locked-hilbertRS")
     # # self diff #
     # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_diff", nBins, region_name =  "All", niter, sub = sub, tag = "gamma-pres-locked-hilbertRS")
     # # other diff #
@@ -252,23 +283,30 @@ for(sub in subs){
       mutate(self_var_payoff_adv = (as.numeric(other_var_payoff < self_var_payoff)) * self_var_payoff) %>%      
       mutate(self_var_payoff_dis = (as.numeric(other_var_payoff > self_var_payoff)) * self_var_payoff) %>%       
       mutate(other_var_payoff_adv = (as.numeric(other_var_payoff < self_var_payoff)) * other_var_payoff) %>%      
-      mutate(other_var_payoff_dis = (as.numeric(other_var_payoff > self_var_payoff)) * other_var_payoff)
+      mutate(other_var_payoff_dis = (as.numeric(other_var_payoff > self_var_payoff)) * other_var_payoff)  %>%
+      mutate(trial_type = if_else(self_var_payoff == other_var_payoff, "equality",
+                                  if_else(self_var_payoff > other_var_payoff,
+                                          "Advantageous", "Disadvantageous"))) %>%
+      filter(trial_type != "equality") %>%
+      mutate(more_or_less = if_else(abs(ineq_advent) > 0, 1, -1)) %>% 
+      mutate(more_or_none = if_else(abs(ineq_advent) > 0, 1, 0)) 
     all_electrodes <- unique(brain_behave_data$electrodes)
     # bin names #
-    nBins <- colnames(power_behave %>% select(starts_with("bin_")))
+    nBins <- colnames(power_behave %>% select(starts_with("bin_")))[1:15]
 
     ## run regressions ##
-
+    # more_or_none #
+    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "more_or_none", nBins, region_name =  "All", niter, sub = sub, tag = "alpha-pres-locked-hilbertRS")
     # # pie size #
     # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "pie_size", nBins, region_name =  "All", niter, sub = sub, tag = "alpha-pres-locked-hilbertRS")
-    # self_var_payoff_adv #
-    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff_adv", nBins, region_name =  "All", niter, sub = sub, tag = "alpha-pres-locked-hilbertRS")
-    # self_var_payoff_dis #
-    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff_dis", nBins, region_name =  "All", niter, sub = sub, tag = "alpha-pres-locked-hilbertRS")
-    # other_var_payoff_adv #
-    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff_adv", nBins, region_name =  "All", niter, sub = sub, tag = "alpha-pres-locked-hilbertRS")
-    # other_var_payoff_dis #
-    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff_dis", nBins, region_name =  "All", niter, sub = sub, tag = "alpha-pres-locked-hilbertRS")
+    # # self_var_payoff_adv #
+    # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff_adv", nBins, region_name =  "All", niter, sub = sub, tag = "alpha-pres-locked-hilbertRS")
+    # # self_var_payoff_dis #
+    # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff_dis", nBins, region_name =  "All", niter, sub = sub, tag = "alpha-pres-locked-hilbertRS")
+    # # other_var_payoff_adv #
+    # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff_adv", nBins, region_name =  "All", niter, sub = sub, tag = "alpha-pres-locked-hilbertRS")
+    # # other_var_payoff_dis #
+    # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff_dis", nBins, region_name =  "All", niter, sub = sub, tag = "alpha-pres-locked-hilbertRS")
     # # disadv ineq #
     # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "ineq_disadvent", nBins, region_name =  "All", niter, sub = sub, tag = "alpha-pres-locked-hilbertRS")
     # # self payoff #
@@ -279,10 +317,10 @@ for(sub in subs){
     # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_foregone", nBins, region_name =  "All", niter, sub = sub, tag = "alpha-pres-locked-hilbertRS")
     # # other foregone #
     # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_foregone", nBins, region_name =  "All", niter, sub = sub, tag = "alpha-pres-locked-hilbertRS")
-    # # self var paroff #
-    # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff", nBins, region_name =  "All", niter, sub = sub, tag = "alpha-pres-locked-hilbertRS")
-    # # other var payoff #
-    # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff", nBins, region_name =  "All", niter, sub = sub, tag = "alpha-pres-locked-hilbertRS")
+    # self var paroff #
+    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff", nBins, region_name =  "All", niter, sub = sub, tag = "alpha-pres-locked-hilbertRS")
+    # other var payoff #
+    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff", nBins, region_name =  "All", niter, sub = sub, tag = "alpha-pres-locked-hilbertRS")
     # # self diff #
     # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_diff", nBins, region_name =  "All", niter, sub = sub, tag = "alpha-pres-locked-hilbertRS")
     # # other diff #
@@ -300,23 +338,30 @@ for(sub in subs){
       mutate(self_var_payoff_adv = (as.numeric(other_var_payoff < self_var_payoff)) * self_var_payoff) %>%       
       mutate(self_var_payoff_dis = (as.numeric(other_var_payoff > self_var_payoff)) * self_var_payoff) %>%       
       mutate(other_var_payoff_adv = (as.numeric(other_var_payoff < self_var_payoff)) * other_var_payoff) %>%      
-      mutate(other_var_payoff_dis = (as.numeric(other_var_payoff > self_var_payoff)) * other_var_payoff)
+      mutate(other_var_payoff_dis = (as.numeric(other_var_payoff > self_var_payoff)) * other_var_payoff)  %>%
+      mutate(trial_type = if_else(self_var_payoff == other_var_payoff, "equality",
+                                  if_else(self_var_payoff > other_var_payoff,
+                                          "Advantageous", "Disadvantageous"))) %>%
+      filter(trial_type != "equality") %>%
+      mutate(more_or_less = if_else(abs(ineq_advent) > 0, 1, -1)) %>% 
+      mutate(more_or_none = if_else(abs(ineq_advent) > 0, 1, 0)) 
     all_electrodes <- unique(brain_behave_data$electrodes)
     # bin names #
-    nBins <- colnames(power_behave %>% select(starts_with("bin_")))
+    nBins <- colnames(power_behave %>% select(starts_with("bin_")))[1:15]
 
     ## run regressions ##
-
+    # more_or_none #
+    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "more_or_none", nBins, region_name =  "All", niter, sub = sub, tag = "delta-pres-locked-hilbertRS")
     # # pie size #
     # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "pie_size", nBins, region_name =  "All", niter, sub = sub, tag = "delta-pres-locked-hilbertRS")
-    # self_var_payoff_adv #
-    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff_adv", nBins, region_name =  "All", niter, sub = sub, tag = "delta-pres-locked-hilbertRS")
-    # self_var_payoff_dis #
-    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff_dis", nBins, region_name =  "All", niter, sub = sub, tag = "delta-pres-locked-hilbertRS")
-    # other_var_payoff_adv #
-    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff_adv", nBins, region_name =  "All", niter, sub = sub, tag = "delta-pres-locked-hilbertRS")
-    # other_var_payoff_dis #
-    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff_dis", nBins, region_name =  "All", niter, sub = sub, tag = "delta-pres-locked-hilbertRS")
+    # # self_var_payoff_adv #
+    # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff_adv", nBins, region_name =  "All", niter, sub = sub, tag = "delta-pres-locked-hilbertRS")
+    # # self_var_payoff_dis #
+    # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff_dis", nBins, region_name =  "All", niter, sub = sub, tag = "delta-pres-locked-hilbertRS")
+    # # other_var_payoff_adv #
+    # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff_adv", nBins, region_name =  "All", niter, sub = sub, tag = "delta-pres-locked-hilbertRS")
+    # # other_var_payoff_dis #
+    # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff_dis", nBins, region_name =  "All", niter, sub = sub, tag = "delta-pres-locked-hilbertRS")
     # # disadv ineq #
     # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "ineq_disadvent", nBins, region_name =  "All", niter, sub = sub, tag = "delta-pres-locked-hilbertRS")
     # # self payoff #
@@ -327,10 +372,10 @@ for(sub in subs){
     # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_foregone", nBins, region_name =  "All", niter, sub = sub, tag = "delta-pres-locked-hilbertRS")
     # # other foregone #
     # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_foregone", nBins, region_name =  "All", niter, sub = sub, tag = "delta-pres-locked-hilbertRS")
-    # # self var paroff #
-    # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff", nBins, region_name =  "All", niter, sub = sub, tag = "delta-pres-locked-hilbertRS")
-    # # other var payoff #
-    # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff", nBins, region_name =  "All", niter, sub = sub, tag = "delta-pres-locked-hilbertRS")
+    # self var paroff #
+    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_var_payoff", nBins, region_name =  "All", niter, sub = sub, tag = "delta-pres-locked-hilbertRS")
+    # other var payoff #
+    run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "other_var_payoff", nBins, region_name =  "All", niter, sub = sub, tag = "delta-pres-locked-hilbertRS")
     # # self diff #
     # run_permuted_regressions_par(brain_behave_data, electrodes = all_electrodes, regressor = "self_diff", nBins, region_name =  "All", niter, sub = sub, tag = "delta-pres-locked-hilbertRS")
     # # other diff #

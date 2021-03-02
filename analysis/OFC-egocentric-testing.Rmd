@@ -49,12 +49,13 @@ source(path(here(), "R", "run_permuted_regressions_par.R"))
 source(path(here(), "R", "compile_mult_reg_results.R"))
 source(path(here(), "R", "run_filtered_anova.R"))
 source(path(here(), "R", "merge_stepped_anova_results.R"))
-# source('~/Projects/nice_r_functions/ggpaired_pretty.R')
 source(path(here(), "R", 'mutate_cond.R'))
+source(path(here(), "R", 'load_interaction_results_and_combine.R'))
 source(path(here(), "R", "load_and_collate_reg_results.R"))
 
 ## plotting helpers ##
 ggthemr("solarized")
+getPalette = colorRampPalette(brewer.pal(9, "Set1"))
 
 ## parallelization ##
 nCores <- 2
@@ -91,6 +92,33 @@ self_var_results_choice <- load_and_collate_reg_results("self_var_payoff_theta-c
 # change predictor #
 self_var_results_pres <- self_var_results_pres %>% mutate(predictor = "self_var_payoff") %>% mutate(type = "single")
 self_var_results_choice <- self_var_results_choice %>% mutate(predictor = "self_var_payoff") %>% mutate(type = "single")
+
+```
+
+```{r create-self-payoff-adv-dfs}
+# load results for self var #
+self_var_adv_results_pres <- load_and_collate_reg_results("self_var_payoff_adv_theta-pres-locked-hilbertRS", epoch = "presentation", folder = "post_eda")
+
+# change predictor #
+self_var_adv_results_pres <- self_var_adv_results_pres %>% mutate(predictor = "self_var_payoff_adv") %>% mutate(type = "single")
+
+```
+
+```{r create-trial-type-dfs}
+# load results for self var #
+trial_type_results_pres <- load_and_collate_reg_results("trial_type_theta-pres-locked-hilbertRS", epoch = "presentation", folder = "post_eda")
+
+# change predictor #
+trial_type_results_pres <- trial_type_results_pres %>% mutate(predictor = "trial_type") %>% mutate(type = "single")
+
+```
+
+```{r create-self-payoff-dis-dfs}
+# load results for self var #
+self_var_dis_results_pres <- load_and_collate_reg_results("self_var_payoff_dis_theta-pres-locked-hilbertRS", epoch = "presentation", folder = "post_eda")
+
+# change predictor #
+self_var_dis_results_pres <- self_var_dis_results_pres %>% mutate(predictor = "self_var_payoff_dis") %>% mutate(type = "single")
 
 ```
 
@@ -435,7 +463,7 @@ write_csv(multiple_results_pres_elec, "IR28_LOF2-LOF3_other_var_self_var_multipl
 ```
 
 
-```{r clue-to-switch-frameworks}
+```{r clue-to-switch-frameworks-self_vvar_version}
 
  multiple_results_pres_elec <- multiple_results_pres %>%
         filter(bin != "bin_37") %>%
@@ -471,6 +499,120 @@ write_csv(multiple_results_pres_elec, "IR28_LOF2-LOF3_other_var_self_var_multipl
 
 ```
 
+```{r clue-to-switch-frameworks-self_var_dis_version, warning=F}
+
+ multiple_results_pres_elec <- multiple_results_pres %>%
+        filter(bin != "bin_37") %>%
+        filter(sub == "IR35" & electrode == "LOF3-LOF4") %>%
+        filter(predictor == "ineq_disadvent_other_var_payoff") %>%
+        mutate(time = 50 * as.numeric(gsub("bin_", "", bin))) %>%
+        mutate(Beta = Beta_1 - Beta_2) %>%
+        mutate(sig_time = if_else(p_1 < 0.05, time, -999)) %>%
+        mutate(sig_time = replace(sig_time, sig_time == -999, NA))
+      
+      ofc_elec_of_interest <- self_var_dis_results_pres %>%
+        filter(sub == "IR35" & electrode == "LOF3-LOF4" & predictor == "self_var_payoff_dis") %>%
+        mutate(time = 50 * as.numeric(gsub("bin_", "", bin))) 
+      
+    
+    # colors <- c("Dis. Ineq." = "#f9c74f", "Other - Self" = "#43aa8b", "Other, Mult. Reg" = "#f94144", "Self, Mult. Reg" = "#277da1")
+    colors <- c("Self Var" = "#f9c74f", "Other, Mult. Reg" = "#f94144", "Dis Ineq, Mult. Reg" = "#277da1")
+    
+    p1 <- ggplot() +
+      geom_point(data = ofc_elec_of_interest, aes(x = time, y = Beta, color = "Self Var")) + # Yellow
+      geom_line(data = ofc_elec_of_interest, aes(x = time, y = Beta, color = "Self Var")) +
+      geom_text(data = multiple_results_pres_elec, aes(x = sig_time), y = 0.045, label = "*", color = "black", size = 7) +
+      geom_point(data = multiple_results_pres_elec, aes(x = time, y = Beta_1, color = "Dis Ineq, Mult. Reg")) + # red, other
+      geom_line(data = multiple_results_pres_elec, aes(x = time, y = Beta_1, color = "Dis Ineq, Mult. Reg")) +
+      geom_point(data = multiple_results_pres_elec, aes(x = time, y = Beta_2, color = "Other, Mult. Reg")) + # blue, self
+      geom_line(data = multiple_results_pres_elec, aes(x = time, y = Beta_2, color = "Other, Mult. Reg")) +
+      labs(color = "Legend") +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "top") +
+      scale_color_manual(values = colors) +
+      ggtitle(paste("Betas", "IR35", "LOF3-LOF4", sep = " ~ "))
+
+
+  
+  colors_R2 <-  colors <- c("Self Var, Single Reg." = "grey", "Mult. Reg" = "black")
+  p2 <- ggplot() +
+      geom_point(data = ofc_elec_of_interest, aes(x = time, y = R2, color = "Self Var, Single Reg.")) + # Yellow
+      geom_line(data = ofc_elec_of_interest, aes(x = time, y = R2, color = "Self Var, Single Reg.")) +
+      geom_text(data = multiple_results_pres_elec, aes(x = sig_time), y = 0.045, label = "*", color = "black", size = 7) +
+      geom_point(data = multiple_results_pres_elec, aes(x = time, y = R2, color = "Mult. Reg")) + # red, other
+      geom_line(data = multiple_results_pres_elec, aes(x = time, y = R2, color = "Mult. Reg")) +
+      labs(color = "Legend") +
+      theme(panel.background = element_rect(fill = "white"), legend.position = "top") +
+      scale_color_manual(values = colors_R2) +
+      ggtitle(paste("R2", "IR35", "LOF3-LOF4", sep = " ~ "))
+
+
+
+plot(arrangeGrob(grobs = list(ggplotGrob(p1),ggplotGrob(p2)), nrow = 1, ncol = 2))
+
+  
+```
+
+```{r diagnostics}
+
+## read in data ##
+path_hp_clean <- path(here(), "munge", "IR35", "theta_behave_presentation_rscaler_2575_200.csv")
+power_behave <-  read.csv(path_hp_clean)
+
+# add in new behavior vars #
+brain_behave_data <- power_behave %>%
+      filter(electrodes == "LOF3-LOF4") %>%
+      mutate(pie_size = self_var_payoff + other_var_payoff) %>%
+      mutate(self_var_payoff_adv = (as.numeric(other_var_payoff < self_var_payoff)) * self_var_payoff) %>%
+      mutate(self_var_payoff_dis = (as.numeric(other_var_payoff > self_var_payoff)) * self_var_payoff) %>%
+      mutate(other_var_payoff_adv = (as.numeric(other_var_payoff < self_var_payoff)) * other_var_payoff) %>%
+      mutate(other_var_payoff_dis = (as.numeric(other_var_payoff > self_var_payoff)) * other_var_payoff)  
+
+
+brain_behave_data %>%
+  ggplot(., aes(y = bin_11, x = self_var_payoff_dis)) +
+  geom_point() +
+  geom_smooth() +
+  theme(panel.background = element_rect(fill = "white"), legend.position = "top") +
+  ggtitle("self_var_payoff_dis")
+
+brain_behave_data %>%
+  ggplot(., aes(y = bin_11, x = ineq_disadvent)) +
+  geom_point() +
+  geom_smooth() +
+  theme(panel.background = element_rect(fill = "white"), legend.position = "top") +
+  ggtitle("ineq_disadvent")
+
+
+brain_behave_data %>%
+  ggplot(., aes(y = bin_11, x = other_var_payoff)) +
+  geom_point() +
+  geom_smooth() +
+  theme(panel.background = element_rect(fill = "white"), legend.position = "top") +
+  ggtitle("other_var_payoff")
+
+
+model_2 <- lm(bin_11 ~ ineq_disadvent + other_var_payoff, data = brain_behave_data)
+summary(model_2)
+
+
+brain_behave_data %>%
+  mutate(y_pred = 0.04338 * ineq_disadvent + -0.04177 * other_var_payoff) %>%
+  ggplot(., aes(y = bin_11, x = y_pred)) +
+  geom_point() +
+  geom_smooth() +
+  theme(panel.background = element_rect(fill = "white"), legend.position = "top") +
+  ggtitle("model prediction")
+
+
+brain_behave_data %>%
+  filter(ineq_disadvent != 0) %>%
+  ggplot(., aes(y = bin_11, x = ineq_disadvent)) +
+  geom_point() +
+  theme(panel.background = element_rect(fill = "white"), legend.position = "top") +
+  ggtitle("ineq_disadvent no zeroes")
+
+
+```
 
 
 ```{r pie-siz}
@@ -507,3 +649,306 @@ pie_size %>%
   theme(panel.background = element_rect(fill = "white")) 
 
 ```
+
+### Trial Type Models
+
+```{r trial-types}
+
+# add in anatomy #
+trial_type_localized_results_pres <- merge_all_subs_with_elec_info(trial_type_results_pres, localizations)
+
+# cut to ofc #
+ofc_trial_type_results_pres <- trial_type_localized_results_pres %>% filter(grepl("ofc", ROI, ignore.case = T) | grepl("orbit", ROI, ignore.case = T))
+
+ofc_trial_type_results_pres %>%
+    select(perm_p, sub, electrode) %>%
+    mutate(sig = perm_p < 0.05) %>%
+    distinct() %>%
+    add_count(sig) %>%
+    select(n, sig) %>%
+    distinct() %>%
+    kable(caption = name) %>%
+    kable_styling()
+
+
+trial_plot <- ofc_trial_type_results_pres %>%
+  filter(perm_p < 0.5) %>%
+  mutate(time = 50 * as.numeric(gsub("bin_", "", bin))) %>%
+  mutate(sub_elec = paste(sub, electrode, sep = "_")) %>%
+  mutate(sig_time = if_else(p < 0.05, time, -999)) %>%
+  mutate(sig_time = replace(sig_time, sig_time == -999, NA)) %>%
+  ggplot(., aes(x = time, y = R2, color = electrode)) +
+  geom_text(aes(x = sig_time, color = electrode), y = 0.045, label = "*", size = 7) +
+  geom_line() +
+  geom_point() +
+  scale_color_manual(values = getPalette(7)) +
+  theme(panel.background = element_rect(fill = "white"), legend.position = "top") +
+  facet_wrap(~sub) +
+  ggtitle("Trial Type")
+
+
+plot(arrangeGrob(grobs = list(ggplotGrob(trial_plot),ggplotGrob(p_self)), nrow = 1, ncol = 2))
+
+
+```
+
+
+electrodes that encode self, some that encode, other and some that do both
+
+```{r diagnose-models}
+
+# add in new behavior vars #
+brain_behave_data_trial <- power_behave %>%
+  filter(electrodes == "LOF1-LOF2") %>%
+  mutate(trial_type = if_else(self_var_payoff == other_var_payoff, "equality",
+                            if_else(self_var_payoff > other_var_payoff,
+                                    "Advantageous", "Disadvantageous"))) %>%
+  filter(trial_type != "equality") %>%
+  group_by(trial_type) %>%
+  mutate(mean_bin = mean(bin_24)) %>%
+  select(bin_24, trial_type, mean_bin)
+
+brain_behave_data_trial %>%  
+  ggplot(., aes(x = trial_type, y = bin_24)) +
+  geom_point() +
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar",
+                 width = .3, color = "black") +
+  theme(panel.background = element_rect(fill = "white"))
+
+summary(lm(bin_24 ~ trial_type, data = brain_behave_data_trial))
+
+```
+
+
+### self var models 
+
+```{r trial-types}
+
+# add in anatomy #
+self_var_localized_results_pres <- merge_all_subs_with_elec_info(self_var_results_pres, localizations)
+
+# cut to ofc #
+ofc_self_var_results_pres <- self_var_localized_results_pres %>% filter(grepl("ofc", ROI, ignore.case = T) | grepl("orbit", ROI, ignore.case = T))
+
+ofc_self_var_results_pres %>%
+    select(perm_p, sub, electrode) %>%
+    mutate(sig = perm_p < 0.05) %>%
+    distinct() %>%
+    add_count(sig) %>%
+    select(n, sig) %>%
+    distinct() %>%
+    kable(caption = name) %>%
+    kable_styling()
+
+
+p_self <- ofc_self_var_results_pres %>%
+  filter(perm_p < 0.5) %>%
+  mutate(time = 50 * as.numeric(gsub("bin_", "", bin))) %>%
+  mutate(sub_elec = paste(sub, electrode, sep = "_")) %>%
+  mutate(sig_time = if_else(p < 0.05, time, -999)) %>%
+  mutate(sig_time = replace(sig_time, sig_time == -999, NA)) %>%
+  ggplot(., aes(x = time, y = R2, color = electrode)) +
+  geom_text(aes(x = sig_time, color = electrode), y = 0.045, label = "*", size = 7) +
+  geom_line() +
+  geom_point() +
+  scale_color_manual(values = getPalette(7)) +
+  theme(panel.background = element_rect(fill = "white"), legend.position = "top") +
+  facet_wrap(~sub) +
+  ggtitle("Self Var Payoff")
+
+
+```
+
+### other var models 
+
+```{r other-var, warning = F}
+
+freq_bands <- c("hfa")
+
+for(freq in freq_bands) {
+
+  # load results for self var #
+  other_var_results_pres <- load_and_collate_reg_results(tag = paste0("other_var_payoff_", freq, "-pres-locked-hilbertRS"), epoch = "presentation", folder = "post_eda")
+  
+  # change predictor #
+  other_var_results_pres <- other_var_results_pres %>% mutate(predictor = "other_var_payoff") %>% mutate(type = "single")
+  
+  
+  # add in anatomy #
+  other_var_localized_results_pres <- merge_all_subs_with_elec_info(other_var_results_pres, localizations)
+  
+  # cut to ofc #
+  ofc_other_var_results_pres <- other_var_localized_results_pres %>% filter(grepl("ofc", ROI, ignore.case = T) | grepl("orbit", ROI, ignore.case = T))
+  
+  table <- ofc_other_var_results_pres %>%
+      select(perm_p, sub, electrode) %>%
+      mutate(sig = perm_p < 0.05) %>%
+      distinct() %>%
+      add_count(sig) %>%
+      select(n, sig) %>%
+      distinct() %>%
+      kable(caption = name) %>%
+      kable_styling()
+  
+  plot(table)
+  
+  
+  p <- ofc_other_var_results_pres %>%
+    filter(perm_p < 0.5) %>%
+    mutate(time = 50 * as.numeric(gsub("bin_", "", bin))) %>%
+    mutate(sub_elec = paste(sub, electrode, sep = "_")) %>%
+    mutate(sig_time = if_else(p < 0.05, time, -999)) %>%
+    mutate(sig_time = replace(sig_time, sig_time == -999, NA)) %>%
+    ggplot(., aes(x = time, y = R2, color = electrode)) +
+    geom_text(aes(x = sig_time, color = electrode), y = 0.045, label = "*", size = 7) +
+    geom_line() +
+    geom_point() +
+    ylim(0, 0.046) +
+    scale_color_manual(values = getPalette(7)) +
+    theme(panel.background = element_rect(fill = "white")) +
+    facet_wrap(~sub) +
+    ggtitle(paste0("Other Var Payoff", freq, sep = " ~ "))
+  
+  plot(p)
+
+}
+
+
+```
+### pie size
+
+```{r pie-size, warning=F}
+
+# add in anatomy #
+pie_size_localized_results_pres <- merge_all_subs_with_elec_info(pie_size_results_pres, localizations)
+
+# cut to ofc #
+ofc_pie_size_results_pres <- pie_size_localized_results_pres %>% filter(grepl("ofc", ROI, ignore.case = T) | grepl("orbit", ROI, ignore.case = T))
+
+ofc_pie_size_results_pres %>%
+    select(perm_p, sub, electrode) %>%
+    mutate(sig = perm_p < 0.05) %>%
+    distinct() %>%
+    add_count(sig) %>%
+    select(n, sig) %>%
+    distinct() %>%
+    kable(caption = name) %>%
+    kable_styling()
+
+
+ofc_pie_size_results_pres %>%
+  filter(perm_p < 0.5) %>%
+  mutate(time = 50 * as.numeric(gsub("bin_", "", bin))) %>%
+  mutate(sub_elec = paste(sub, electrode, sep = "_")) %>%
+  mutate(sig_time = if_else(p < 0.05, time, -999)) %>%
+  mutate(sig_time = replace(sig_time, sig_time == -999, NA)) %>%
+  ggplot(., aes(x = time, y = R2, color = electrode)) +
+  geom_text(aes(x = sig_time, color = electrode), y = 0.03, label = "*", size = 7) +
+  geom_line() +
+  geom_point() +
+  ylim(0, 0.032) +
+  scale_color_manual(values = getPalette(7)) +
+  theme(panel.background = element_rect(fill = "white")) +
+  facet_wrap(~sub) +
+  ggtitle("Pie Size")
+
+
+```
+
+
+### Interaction Models
+
+
+```{r load_interaction-data}
+
+delta_pres_inter_reg_results <- load_interaction_results_and_combine(epoch = "presentation", freq = "delta", pred = "self_var_payoff_less_or_none")
+theta_pres_inter_reg_results <- load_interaction_results_and_combine(epoch = "presentation", freq = "theta", pred = "self_var_payoff_less_or_none")
+alpha_pres_inter_reg_results <- load_interaction_results_and_combine(epoch = "presentation", freq = "alpha", pred = "self_var_payoff_less_or_none")
+gamma_pres_inter_reg_results <- load_interaction_results_and_combine(epoch = "presentation", freq = "gamma", pred = "self_var_payoff_less_or_none")
+beta_pres_inter_reg_results <- load_interaction_results_and_combine(epoch = "presentation", freq = "beta", pred = "self_var_payoff_less_or_none")
+hfaa_pres_inter_reg_results <- load_interaction_results_and_combine(epoch = "presentation", freq = "hfa", pred = "self_var_payoff_less_or_none")
+
+
+feqs_df <- list(delta_pres_inter_reg_results %>% mutate(freq = "delta"), 
+                theta_pres_inter_reg_results %>% mutate(freq = "theta"), 
+                alpha_pres_inter_reg_results %>% mutate(freq = "alpha"), 
+                beta_pres_inter_reg_results %>% mutate(freq = "beta"),
+                gamma_pres_inter_reg_results %>% mutate(freq = "gamma"),
+                hfaa_pres_inter_reg_results %>% mutate(freq = "hfa"))
+
+# print tables #
+for(df in feqs_df) {
+  
+  ofc_df_pres_inter_reg_results <-  df %>% filter(grepl("ofc", ROI, ignore.case = T) | grepl("orbit", ROI, ignore.case = T))
+  
+  name <- paste("OFC Results", unique(ofc_df_pres_inter_reg_results$freq), sep = " ~ ")
+  
+ table <- ofc_df_pres_inter_reg_results %>%
+    select(perm_p, sub, electrode) %>%
+    mutate(sig = perm_p < 0.05) %>%
+    distinct() %>%
+    add_count(sig) %>%
+    select(n, sig) %>%
+    distinct() %>%
+    kable(caption = name) %>%
+    kable_styling()
+ 
+ print(table)
+
+}
+
+# get elecs #
+sig_ofc_inter_elecs <- NA
+for(df in feqs_df) {
+  
+  ofc_df_pres_inter_reg_results <-  df %>% filter(grepl("ofc", ROI, ignore.case = T) | grepl("orbit", ROI, ignore.case = T))
+  
+  
+ tmp_df <- ofc_df_pres_inter_reg_results %>%
+    select(perm_p, sub, electrode, freq) %>%
+    filter(perm_p < 0.05) %>%
+    distinct()
+    
+ 
+ if(is.na(sig_ofc_inter_elecs)) {
+   sig_ofc_inter_elecs <- tmp_df
+ } else(
+   sig_ofc_inter_elecs <- rbind(sig_ofc_inter_elecs, tmp_df)
+ )
+
+}
+
+sig_ofc_inter_elecs %>%
+  pivot_wider(names_from = freq, values_from = perm_p) %>%
+  kable() %>%
+  kable_styling()
+
+```
+
+
+### subject specific ##
+
+```{r IR10}
+
+IR10_self_var_results_pres <- self_var_localized_results_pres %>%
+  filter(sub == "IR10") %>%
+  filter(grepl("ofc", ROI, ignore.case = T) | grepl("orbit", ROI, ignore.case = T)) %>%
+  mutate(sig = perm_p < 0.05)
+
+
+# IR10 doesn't have OFC electrodes!
+
+```
+
+```{r IR26}
+
+IR26_self_var_results_pres <- self_var_localized_results_pres %>%
+  filter(sub == "IR26") %>%
+  filter(grepl("ofc", ROI, ignore.case = T) | grepl("orbit", ROI, ignore.case = T)) %>%
+  mutate(sig = perm_p < 0.05)
+
+
+# IR26 has 3 OFC electrodes, but none are sig!
+
+```
+
